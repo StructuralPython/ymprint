@@ -1,0 +1,22 @@
+_doc:
+  page-size: letter
+  landscape: false
+  margins:
+    top: 1
+    left: 1
+    right: 1
+    bottom: 1
+  background: /home/engineering/report_template.pdf
+  first-page:
+    page-size: letter
+    landscape: false
+    landscape: false
+    margins:
+      top: 1
+      left: 1
+      right: 1
+      bottom: 1
+    background: /homee/engineering/report_tempalte_first_page.pdf
+    
+
+  

@@ -1,0 +1,35 @@
+_tablestyle:
+  cell-padding:
+    top:
+    left:
+    right:
+    bottom:
+    
+  headers:
+    text: 
+      font:
+      size:
+      color:
+      bold: 
+    row:
+      color: 
+      lines:
+        - above
+        - below
+        - between
+  body:
+    text:
+      font:
+      size:
+      color:
+    rows:
+      color:
+        even:
+        odd:
+      lines:
+        - above
+        - below
+        - between
+        
+      
+      
