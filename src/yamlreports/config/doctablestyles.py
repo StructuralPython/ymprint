@@ -1,8 +1,10 @@
 from typing import List, Literal
 from pydantic import BaseModel, Field, ConfigDict, field_validator
+from reportlab.platypus import TableStyle
 
 # Import the core text style class as requested
 from .docstyles import TextStyle
+from .helpers import convert_color
 
 
 # --- Mixins ---
@@ -31,31 +33,22 @@ class RowColors(BaseModel):
 class HeaderRow(BaseModel):
     color: str
     lines: List[Literal["above", "below", "between"]]
-
-    @field_validator("lines")
-    @classmethod
-    def validate_lines_constraints(cls, v: List[str]) -> List[str]:
-        # Validate that there are at most 3 items
-        if len(v) > 3:
-            raise ValueError("The lines list can contain a maximum of 3 values.")
-        # Validate uniqueness so values aren't repeated (e.g., ['above', 'above'])
-        if len(set(v)) != len(v):
-            raise ValueError("The lines list must contain unique values.")
-        return v
+    
+    @property
+    def rl_color(self):
+        return convert_color(self.color)
 
 
 class BodyRows(BaseModel):
     color: str | RowColors
     lines: List[Literal["above", "below", "between"]]
 
-    @field_validator("lines")
-    @classmethod
-    def validate_lines_constraints(cls, v: List[str]) -> List[str]:
-        if len(v) > 3:
-            raise ValueError("The lines list can contain a maximum of 3 values.")
-        if len(set(v)) != len(v):
-            raise ValueError("The lines list must contain unique values.")
-        return v
+    @property
+    def rl_color(self):
+        if isinstance(self.color, str):
+            return convert_color(self.color)
+        elif isinstance(self.color, RowColors):
+            return [convert_color(self.color.odd), convert_color(self.color.even)]
 
 
 class Headers(BaseModel):
@@ -75,3 +68,26 @@ class TableStyle(BaseModel):
     cell_padding: CellPadding = Field(..., alias="cell-padding")
     headers: Headers
     body: Body
+
+    def to_rlobject(self) -> TableStyle:
+        """
+        Returns a ReportLab TableStyle Object
+        """
+        table_commands = [
+            # HEADER STYLES
+            ("BACKGROUND", (0, 0), (-1, 0), self.headers.row.color),
+            ("TEXTCOLOR", (0, 0), (-1, 0), self.headers.text.color),
+            ("FONTNAME", (0, 0), (-1, 0), self.headers.text.font),
+            ("FONTSIZE", (0, 0), (-1, 0), self.headers.text.size),
+            # BODY STYLES
+            ("FONTNAME", (0, 1), (-1, -1), self.body.text.font),
+            ("FONTSIZE", (0, 1), (-1, -1), self.body.text.size),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), self.body.rows.rl_color),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("TOPPADDING", (0, 0), (-1, -1), self.cell_padding.top),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), self.cell_padding.bottom),
+            ("LEFTPADDING", (0, 0), (-1, -1), self.cell_padding.left),
+            ("RIGHTPADDING", (0, 0), (-1, -1), self.cell_padding.right),
+        ]
+        # headers, body?
+        return TableStyle(table_commands)

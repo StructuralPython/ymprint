@@ -3,6 +3,8 @@ from typing import TypeAlias
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib import colors
 
+from .helpers import convert_color
+
 
 class TextStyle(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
@@ -12,17 +14,10 @@ class TextStyle(BaseModel):
     color: str
 
     @property
-    def rlcolor(self) -> colors.Color:
-        """
-        Converts self.color into a ReportLab Color
-        """
-        # For named colors
-        if hasattr(colors, self.color):
-            return getattr(colors, self.color)
-        if isinstance(self.color, str):
-            return colors.HexColor(self.color.lstrip("#"))
-        # Fallback
-        return colors.Color(0, 0, 0)
+    def rl_color(self):
+        return convert_color(self.color)
+
+
 
 
 class SpacingMixin:
@@ -48,21 +43,21 @@ class ReportStyles(BaseModel):
     body: BodyTextStyle
     headings: HeadingTextStyle
 
-    def to_rlstyle(self)  -> ParagraphStyle:
+    def to_rlobject(self) -> ParagraphStyle:
         """
         Returns a reportlab.lib.style.ParagraphStyle
         """
         leading = self.body.spacing * self.body.size
-        ParagraphStyle(
+        pstyle = ParagraphStyle(
             "name",
             fontName=self.body.font,
             fontSize=self.body.size,
             leading=leading,
+            bulletFontName=self.body.bullets.font,
             bulletFontSize=self.body.bullets.size,
             textColor=self.body.rlcolor,
-
-
         )
+        return pstyle
 
 
 StyleContainer: dict[str, ReportStyles]
