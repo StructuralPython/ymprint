@@ -23,8 +23,8 @@ class HeadingTextStyle(TextStyle):
     pass
 
 # --- Enclosing Document Style Model ---
-class MarkdownStyles(BaseModel):
+class ReportStyles(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    body: BodyText
-    headings: HeadingText
+    body: BodyTextStyle
+    headings: HeadingTextStyle

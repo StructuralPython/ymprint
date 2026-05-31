@@ -2,7 +2,7 @@ from typing import List, Literal
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 # Import the core text style class as requested
-from docstyles import TextStyle
+from .docstyles import TextStyle
 
 
 # --- Mixins ---
@@ -69,16 +69,9 @@ class Body(BaseModel):
 
 
 # --- Main Style Container Model ---
-class TableStyleContainer(BaseModel):
+class TableStyle(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     cell_padding: CellPadding = Field(..., alias="cell-padding")
     headers: Headers
     body: Body
-
-
-# --- Root Model ---
-class RootModel(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-    
-    table_style: TableStyleContainer = Field(..., alias="_tablestyle")

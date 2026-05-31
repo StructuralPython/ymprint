@@ -10,7 +10,6 @@ _doc:
   first-page:
     page-size: letter
     landscape: false
-    landscape: false
     margins:
       top: 1
       left: 1
