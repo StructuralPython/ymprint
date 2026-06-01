@@ -1,6 +1,8 @@
+import pathlib
 from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
+import reportlab.lib.pagesizes as rl_pagesizes
 
 
 class Margins(BaseModel):
@@ -23,6 +25,36 @@ class DocConfig(BaseModel):
     # Self-reference to the Doc model itself for the 'first-page'
     # Wrapped in Optional because the nested first-page won't have its own first-page
     first_page: Optional["DocConfig"] = Field(default=None, alias="first-page")
+
+    def build(self, destination: str | pathlib.Path, title: str = "", author: str = ""):
+        """
+        Returns a rl object
+        """
+        doc = BaseDocTemplate(
+            str(destination),
+            pagesize = self.page_size,
+            leftMargin = self.margins.left,
+            rightMargin = self.margins.right,
+            topMargin = self.margins.top,
+            bottomMargin=self.margins.bottom,
+            title=title,
+            author=author,
+        )
+        if hasattr(rl_pagesizes, self.page_size.upper()):
+            page_dims = getattr(rl_pagesizes, self.page_size.upper())
+        else:
+            raise ValueError(f"Page size of {self.page_size.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes) if attr.isupper()]}")
+        page_width, page_height = page_dims
+        main_frame = Frame(
+            x1=self.margins.left,
+            y1=self.margins.bottom,
+            width = page_width - self.margins.left - self.margins.right,
+            height = page_height - self.margins.top - self.margins.bottom,
+        )
+        if self.first_page is not None:
+            pass
+
+
 
 
     # def build(self, output_path: str, title: str = "", author: str = "") -> BaseDocTemplate:
