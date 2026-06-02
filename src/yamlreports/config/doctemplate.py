@@ -50,53 +50,34 @@ class DocConfig(BaseModel):
             y1=self.margins.bottom,
             width = page_width - self.margins.left - self.margins.right,
             height = page_height - self.margins.top - self.margins.bottom,
+            id='main',
+            leftPadding=0,
+            rightPadding=0,
+            topPadding=0,
+            bottomPadding=0
         )
+        frames = [main_frame]
         if self.first_page is not None:
-            pass
+            first_frame = Frame(
+                x1=self.first_page.margins.left,
+                y1=self.first_page.margins.bottom,
+                width=page_width - self.first_page.margins.left - self.first_page.margins.right,
+                height=page_height - self.first_page.margins.top - self.first_page.margins.bottom,
+                id='first',
+                leftPadding=0,
+                rightPadding=0,
+                topPadding=0,
+                bottomPadding=0,
+            )
+            frames = [first_frame, main_frame]
+        page_template = PageTemplate(
+            id='report',
+            pagesize=(page_width, page_height),
+            frames=frames,
+        )
+        doc.addPageTemplates([page_template])
+        return doc
 
-
-
-
-    # def build(self, output_path: str, title: str = "", author: str = "") -> BaseDocTemplate:
-    #     """
-    #     Construct and return a ``BaseDocTemplate`` wired to *output_path*
-    #     with a single ``Frame`` that spans the printable area.
-    #     """
-    #     page_size = _PAGE_SIZES.get(self.page_size.upper(), A4)
-    #     page_w, page_h = page_size
-
-    #     doc = BaseDocTemplate(
-    #         output_path,
-    #         pagesize=page_size,
-    #         leftMargin=self.left_margin,
-    #         rightMargin=self.right_margin,
-    #         topMargin=self.top_margin,
-    #         bottomMargin=self.bottom_margin,
-    #         title=title,
-    #         author=author,
-    #     )
-
-    #     # single story frame occupying the full printable area
-    #     story_frame = Frame(
-    #         x1=self.left_margin,
-    #         y1=self.bottom_margin,
-    #         width=page_w - self.left_margin - self.right_margin,
-    #         height=page_h - self.top_margin - self.bottom_margin,
-    #         id="story",
-    #         leftPadding=0,
-    #         rightPadding=0,
-    #         topPadding=0,
-    #         bottomPadding=0,
-    #     )
-
-    #     page_template = PageTemplate(
-    #         id="main",
-    #         frames=[story_frame],
-    #         onPage=self.draw_page_graphics,
-    #     )
-    #     doc.addPageTemplates([page_template])
-
-    #     return doc
 
 
 # CRITICAL: This compiles the forward reference ("Doc") now that the class is defined.

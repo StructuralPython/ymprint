@@ -1,6 +1,6 @@
 from typing import List, Literal
 from pydantic import BaseModel, Field, ConfigDict, field_validator
-from reportlab.platypus import TableStyle
+from reportlab.platypus import TableStyle as RLTableStyle
 
 # Import the core text style class as requested
 from .docstyles import TextStyle
@@ -69,7 +69,7 @@ class TableStyle(BaseModel):
     headers: Headers
     body: Body
 
-    def to_rlobject(self) -> TableStyle:
+    def build(self) -> RLTableStyle:
         """
         Returns a ReportLab TableStyle Object
         """
@@ -89,5 +89,4 @@ class TableStyle(BaseModel):
             ("LEFTPADDING", (0, 0), (-1, -1), self.cell_padding.left),
             ("RIGHTPADDING", (0, 0), (-1, -1), self.cell_padding.right),
         ]
-        # headers, body?
-        return TableStyle(table_commands)
+        return RLTableStyle(table_commands)
