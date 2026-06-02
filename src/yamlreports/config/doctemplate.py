@@ -30,9 +30,13 @@ class DocConfig(BaseModel):
         """
         Returns a rl object
         """
+        if hasattr(rl_pagesizes, self.page_size.upper()):
+            page_dims = getattr(rl_pagesizes, self.page_size.upper())
+        else:
+            raise ValueError(f"Page size of {self.page_size.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes) if attr.isupper()]}")
         doc = BaseDocTemplate(
             str(destination),
-            pagesize = self.page_size,
+            pagesize = page_dims,
             leftMargin = self.margins.left,
             rightMargin = self.margins.right,
             topMargin = self.margins.top,
@@ -40,10 +44,6 @@ class DocConfig(BaseModel):
             title=title,
             author=author,
         )
-        if hasattr(rl_pagesizes, self.page_size.upper()):
-            page_dims = getattr(rl_pagesizes, self.page_size.upper())
-        else:
-            raise ValueError(f"Page size of {self.page_size.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes) if attr.isupper()]}")
         page_width, page_height = page_dims
         main_frame = Frame(
             x1=self.margins.left,
@@ -70,6 +70,7 @@ class DocConfig(BaseModel):
                 bottomPadding=0,
             )
             frames = [first_frame, main_frame]
+        
         page_template = PageTemplate(
             id='report',
             pagesize=(page_width, page_height),

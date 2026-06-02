@@ -10,14 +10,17 @@ EX_TABLE_STYLE_CONFIG_PATH = TEST_DATA / "tablestyle.yml"
 
 def test_load_doc_config():
     data = load_yaml(EX_DOC_CONFIG_PATH)
-    config.DocConfig.model_validate(data['_doc'])
+    document = config.DocConfig.model_validate(data['_doc'])
+    document.build(pathlib.Path())
 
 
 def test_load_style_config():
     data = load_yaml(EX_STYLE_CONFIG_PATH)
-    config.ReportStyles.model_validate(data['_style'])
+    styles = config.ReportStyles.model_validate(data['_style'])
+    styles.build()
 
 def test_load_tablestyle():
     data = load_yaml(EX_TABLE_STYLE_CONFIG_PATH)
-    config.TableStyle.model_validate(data['_tablestyle'])
+    table_style = config.TableStyle.model_validate(data['_tablestyle'])
+    table_style.build()
 
