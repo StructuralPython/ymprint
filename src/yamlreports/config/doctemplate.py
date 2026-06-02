@@ -31,7 +31,8 @@ class DocConfig(BaseModel):
         Returns a rl object
         """
         if hasattr(rl_pagesizes, self.page_size.upper()):
-            page_dims = getattr(rl_pagesizes, self.page_size.upper())
+            page_dims = get_pagesize(self.page_size)
+            # page_dims = getattr(rl_pagesizes, self.page_size.upper())
         else:
             raise ValueError(f"Page size of {self.page_size.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes) if attr.isupper()]}")
         doc = BaseDocTemplate(
