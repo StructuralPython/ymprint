@@ -61,5 +61,7 @@ def test_load_doc_config():
     # Keys that do not exist in the model are silently passed over (e.g. ['_doc']['first-page']['cat'])
     document = config.DocConfig.model_validate(doc_data['_doc'])
 
+    assert not hasattr(document.first_page, 'cat')
+
     # assert document.first_page.cat
 
