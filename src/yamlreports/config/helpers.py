@@ -15,7 +15,8 @@ def convert_color(color_spec: str) -> colors.Color:
 
 
 def get_pagesize(page_spec: str) -> tuple[float, float]:
-    if page_spec.upper() in rl_pagesizes:
-        page_dims = getattr(rl_pagesizes, self.page_size.upper())
+    if page_spec.upper() in dir(rl_pagesizes):
+        page_dims = getattr(rl_pagesizes, page_spec.upper())
+        return page_dims
     else:
-        raise ValueError(f"Page size of {self.page_size.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes)]}")
+        raise ValueError(f"Page size of {page_spec.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes)]}")

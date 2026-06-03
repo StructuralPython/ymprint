@@ -1,3 +1,4 @@
+import collections
 from ruamel.yaml import YAML
 import pathlib
 

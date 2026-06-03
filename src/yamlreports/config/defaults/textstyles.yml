@@ -1,0 +1,16 @@
+_style:
+  headings:
+    font: Helvetica
+    color: "#111111"
+    size: 24 # Optional
+  body:
+    font: Times
+    color: black
+    size: 10 # pts
+    spacing: 14 # pts
+    bullets:
+      font: Helvetica
+      size: 12
+      color: black
+      symbol: "-"
+      spacing: 10

@@ -1,2 +1,1 @@
 from yamlreports import config
-from yamlreports.context_building import build_context
