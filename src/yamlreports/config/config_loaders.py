@@ -35,18 +35,18 @@ def load_report_config(source_data: dict, report_config_path: str | pathlib.Path
     if not report_config_path.exists():
         raise FileNotFoundError(f"The supplied path for the report_config_path does not exist. Here is what you passed:\n\n{str(report_config_path)}")
     
-    if report_config_path.is_file:
+    if report_config_path.is_file():
         config_data = load_yaml(report_config_path)
         config_styles = config_data.get("_style", {})
         config_tablestyles = config_data.get("_tablestyle", {})
         config_doctemplate = config_data.get("_doctemplate", {})
-    elif report_config_path.is_dir:
+    elif report_config_path.is_dir():
         config_styles, config_tablestyles, config_doctemplate = load_config_directory(report_config_path)
 
     # Third, load content-level config
-    content_styles = source_data.get("_style", {})
-    content_tablestyles = source_data.get("_tablestyle", {})
-    content_doctemplate = source_data.get("_doc", {})
+    content_styles = {"_style": source_data.get("_style", {})}
+    content_tablestyles = {"_tablestyle": source_data.get("_tablestyle", {})}
+    content_doctemplate = {"_doc": source_data.get("_doc", {})}
 
     # Use chainmaps and recursively iterate over all keys within the config tree
     # (using the default trees as the source of all current keys) to build a dict

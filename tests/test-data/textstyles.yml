@@ -7,7 +7,6 @@ _style:
     font: Times
     color: black
     size: 10 # pts
-    spacing: 14 # pts
     bullets:
       font: Helvetica
       size: 12

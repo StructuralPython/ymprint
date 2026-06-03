@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 import reportlab.lib.pagesizes as rl_pagesizes
+from .helpers import get_pagesize
 
 
 class Margins(BaseModel):
@@ -11,20 +12,23 @@ class Margins(BaseModel):
     right: float
     bottom: float
 
-
-class DocConfig(BaseModel):
-    # Enable population by field name so you can instantiate using either 
-    # the python attribute name OR the YAML hyphenated alias.
-    model_config = ConfigDict(populate_by_name=True)
-
-    page_size: str = Field(..., alias="page-size")
-    landscape: bool
+class PageConfig(BaseModel):
+    # model_config = ConfigDict(populate_by_name=True)
     margins: Margins
-    background: str
-    
-    # Self-reference to the Doc model itself for the 'first-page'
-    # Wrapped in Optional because the nested first-page won't have its own first-page
-    first_page: Optional["DocConfig"] = Field(default=None, alias="first-page")
+    background: Optional[str] = None
+
+class PageSizeMixin:
+    page_size: str = Field(alias='page-size')
+
+class LandscapeMixin:
+    landscape: bool = Field(default = True)
+
+class FirstPageMixin:
+    first_page: Optional[PageConfig] = Field(default = None, alias='first-page')
+
+
+class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
+    pass
 
     def build(self, destination: str | pathlib.Path, title: str = "", author: str = ""):
         """
@@ -82,5 +86,5 @@ class DocConfig(BaseModel):
 
 
 
-# CRITICAL: This compiles the forward reference ("Doc") now that the class is defined.
-DocConfig.model_rebuild()
+# # CRITICAL: This compiles the forward reference ("Doc") now that the class is defined.
+# DocConfig.model_rebuild()
