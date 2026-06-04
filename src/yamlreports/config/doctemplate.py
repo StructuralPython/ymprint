@@ -30,18 +30,50 @@ class FirstPageMixin:
 class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
     pass
 
-    def build(self, destination: str | pathlib.Path, title: str = "", author: str = ""):
-        """
-        Returns a rl object
-        """
+    @property
+    def page_dims(self):
         if hasattr(rl_pagesizes, self.page_size.upper()):
             page_dims = get_pagesize(self.page_size)
             # page_dims = getattr(rl_pagesizes, self.page_size.upper())
         else:
             raise ValueError(f"Page size of {self.page_size.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes) if attr.isupper()]}")
+
+    def available_width(self, first_or_others: str):
+        if first_or_others == "first":
+            if getattr(self, 'first_page', None) is not None:
+                return self.page_dims[0] - self.first_page.margins.left - self.first_page.margins.right
+            else:
+                return self.page_dims[0] - self.margins.left - self.margins.right
+        else:
+            return self.page_dims[0] - self.margins.left - self.margins.right
+        
+    def available_height(self, first_or_others: str):
+        if first_or_others == "first":
+            if getattr(self, 'first_page', None) is not None:
+                return self.page_dims[1] - self.first_page.margins.top - self.first_page.margins.bottom
+            else:
+                self.page_dims[1] - self.margins.top - self.margins.bottom
+        else:
+            return self.page_dims[1] - self.margins.top - self.margins.bottom
+        
+    def page_anchor(self, first_or_others: str):
+        if first_or_others == 'first':
+            if getattr(self, 'first_page', None) is not None:
+                return [self.first_page.margins.left, self.first_page.margins.bottom]
+            else:
+                return []
+        else:
+            return [self.margins.left, self.margins.bottom]
+
+    
+    
+    def build(self, destination: str | pathlib.Path, title: str = "", author: str = ""):
+        """
+        Returns a rl object
+        """
         doc = BaseDocTemplate(
             str(destination),
-            pagesize = page_dims,
+            pagesize = self.page_dims,
             leftMargin = self.margins.left,
             rightMargin = self.margins.right,
             topMargin = self.margins.top,
@@ -49,7 +81,7 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
             title=title,
             author=author,
         )
-        page_width, page_height = page_dims
+        page_width, page_height = self.page_dims
         main_frame = Frame(
             x1=self.margins.left,
             y1=self.margins.bottom,

@@ -34,17 +34,17 @@ def build_context(
             },
         },
         "vars": document_vars,
-        "page_dims": [..., ...],
+        "page_dims": doctemplate.page_dims,
         "frames": {
             "first_page": {
-                "anchor": [..., ...],
-                "width": ...,
-                "height": ...,
+                "anchor": doctemplate.page_anchor('first'),
+                "width": doctemplate.available_width('first'),
+                "height": doctemplate.available_height('first'),
             },
             "other_pages": {
-                "anchor": [..., ...],
-                "width": ...,
-                "height": ...,
+                "anchor": doctemplate.page_anchor('others'),
+                "width": doctemplate.available_width('others'),
+                "height": doctemplate.available_height('others'),
             }
         },
         "source_path": source_path,
