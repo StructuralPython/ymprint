@@ -4,16 +4,7 @@ from .config.config_loaders import load_report_config
 from .config import ReportStyles, TableStyle, DocConfig
 from .context_builder import build_context
 from reportlab.platypus.flowables import Flowable
-from reportlab.platypus import (
-    Paragraph,
-    Spacer,
-    Table,
-    TableStyle,
-    ListFlowable,
-    ListItem,
-    HRFlowable,
-    KeepTogether,
-)
+
 
 def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.Path, report_config_path: str | pathlib.Path) -> None:
     """
