@@ -4,6 +4,7 @@ from reportlab.lib import pagesizes
 from .config import ReportStyles, TableStyle, DocConfig
 
 def build_context(
+        content_yaml: dict,
         text_styles_yaml: dict, 
         doctemplate_yaml: dict, 
         tablestyles_yaml: dict, 
@@ -12,9 +13,11 @@ def build_context(
         destination_path: str | pathlib.Path
     ) -> dict:
     stylesheet = ReportStyles.model_validate(text_styles_yaml['_style']).build()
-    doctemplate = DocConfig.model_validate(doctemplate_yaml['_doc']).build(destination_path)
+    doctemplate = DocConfig.model_validate(doctemplate_yaml['_doc'])
+    rl_basedoctemplate = doctemplate.build(destination_path)
     tablestyles = TableStyle.model_validate(tablestyles_yaml['_tablestyle']).build()
     context = {
+        "content": content_yaml,
         "styles": {
             "yaml": text_styles_yaml,
             "rl": {
@@ -24,7 +27,7 @@ def build_context(
         "doctemplate": {
             "yaml": doctemplate_yaml,
             "rl": {
-                "_doc": doctemplate
+                "_doc": rl_basedoctemplate,
             },
         },
         "tablestyles": {

@@ -2,16 +2,16 @@ _doc:
   page-size: a4
   landscape: false
   margins:
-    top: 1
-    left: 1
-    right: 1
-    bottom: 1
+    top: 72.0
+    left: 72.0
+    right: 72.0
+    bottom: 72.0
   background: null
   first-page:
     cat: here
     margins:
-      top: 1
-      left: 1
-      right: 1
-      bottom: 1
+      top: 72.0
+      left: 72.0
+      right: 72.0
+      bottom: 72.0
     background: null

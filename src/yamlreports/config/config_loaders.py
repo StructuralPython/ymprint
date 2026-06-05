@@ -1,6 +1,7 @@
 from ..yaml_loader import load_yaml
 import collections
 import pathlib
+from typing import Optional
 
 class DeepChainMap(collections.ChainMap):
     """
@@ -21,29 +22,36 @@ class DeepChainMap(collections.ChainMap):
         return values[0]
     
 
-def load_report_config(source_data: dict, report_config_path: str | pathlib.Path) -> tuple[dict, dict, dict]:
+def load_report_config(source_data: Optional[dict] = None, report_config_path: Optional[str | pathlib.Path] = None) -> tuple[dict, dict, dict]:
     """
     Returns a ChainMap of all the config data found in either the source_data or the 'report_config_path',
     which can either be a directory of config files or a specific file that contains all config data.
     """
-    report_config_path = pathlib.Path(report_config_path)
+    if report_config_path is not None:
+        report_config_path = pathlib.Path(report_config_path)
     # First load defaults
     default_styles, default_tablestyles, default_doctemplate = load_config_directory(
         pathlib.Path(__file__).parent / 'defaults'
     )
     # Next load supplied config
-    if not report_config_path.exists():
+    if report_config_path is not None and not report_config_path.exists():
         raise FileNotFoundError(f"The supplied path for the report_config_path does not exist. Here is what you passed:\n\n{str(report_config_path)}")
     
-    if report_config_path.is_file():
+    if report_config_path is not None and report_config_path.is_file():
         config_data = load_yaml(report_config_path)
         config_styles = config_data.get("_style", {})
         config_tablestyles = config_data.get("_tablestyle", {})
         config_doctemplate = config_data.get("_doctemplate", {})
-    elif report_config_path.is_dir():
+    elif report_config_path is not None and report_config_path.is_dir():
         config_styles, config_tablestyles, config_doctemplate = load_config_directory(report_config_path)
+    else:
+        config_styles = {}
+        config_tablestyles = {}
+        config_doctemplate = {}
 
     # Third, load content-level config
+    if source_data is None:
+        source_data = {}
     content_styles = {"_style": source_data.get("_style", {})}
     content_tablestyles = {"_tablestyle": source_data.get("_tablestyle", {})}
     content_doctemplate = {"_doc": source_data.get("_doc", {})}

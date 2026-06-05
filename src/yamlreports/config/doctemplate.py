@@ -34,6 +34,7 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
     def page_dims(self):
         if hasattr(rl_pagesizes, self.page_size.upper()):
             page_dims = get_pagesize(self.page_size)
+            return page_dims
             # page_dims = getattr(rl_pagesizes, self.page_size.upper())
         else:
             raise ValueError(f"Page size of {self.page_size.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes) if attr.isupper()]}")
