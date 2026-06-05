@@ -8,7 +8,7 @@ from reportlab.platypus import (
     ListFlowable,
     ListItem,
     HRFlowable,
-    KeepTogether,
+    def KeepTogether,
 )
 
 YAML_Values: Union[str, list, dict, float, int]
@@ -26,3 +26,16 @@ def convert_paragraph(value: YAML_Values, context: dict, text_style: str = "body
     style = context["styles"]["rl"][heading_style]
     para = Paragraph(value, style=style)
     return para
+
+def check_for_subelements(
+    value: YAML_Values, context: dict):
+    if (
+        isinstance(value, list)
+        and any([isinstance(elem, str) for elem in value])
+        and any([isinstance(elem, dict) for elem in value])
+        ):
+        return True
+    else:
+        return False
+        
+  
