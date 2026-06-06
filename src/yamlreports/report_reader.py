@@ -3,7 +3,23 @@ from .yaml_loader import load_yaml
 from .config.config_loaders import load_report_config
 from .config import ReportStyles, TableStyle, DocConfig
 from .context_builder import build_context
-from reportlab.platypus.flowables import Flowable
+from .content_checks import (
+    check_for_paragraph,
+    check_for_ol,
+    check_for_subelements,
+    check_for_tables,
+    check_for_ul
+)
+from .content_converters import (
+    convert_paragraph,
+    convert_table,
+    convert_ul,
+    convert_ol,
+)
+from reportlab.platypus import Spacer
+from reportlab.lib.units import mm
+
+TYP_SPACER = Spacer(1, 4 * mm)
 
 
 def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.Path, report_config_path: str | pathlib.Path) -> None:
@@ -45,27 +61,33 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
         if isinstance(elem, tuple):
             k, v = elem
         else:
+            k = None
             v = elem
 
-        heading_style_name = f"h{level}"
-        heading = convert_paragraphs(k, context, heading_style_name)
-        story.extend(heading)
+        if k is not None:
+            heading_style_name = f"h{level}"
+            heading = convert_paragraph(k, context, heading_style_name)
+            story.extend(heading)
 
         if check_for_subelements(v, context):
             story.extend(build_story(v, context))
             continue
-        elif check_for_paragraphs(v, context):
-            paragraphs = parse_paragraphs(v,context)
-            story.extend(paragraphs)
+        elif check_for_paragraph(v, context):
+            paragraph = convert_paragraph(v,context)
+            story.extend(paragraph)
+            story.append(TYP_SPACER)
         elif check_for_ul(v, context):
-            ul = parse_ul(v,context)
+            ul = convert_ul(v,context)
             story.extend(ul)
-        elif check_for ol(v, context):
-            ol = parse_ol(v,context)
+            story.append(TYP_SPACER)
+        elif check_for_ol(v, context):
+            ol = convert_ol(v,context)
             story.extend(ol)
-        elif check_for_table(v, context):
-            table = parse_table(v,context)
+            story.append(TYP_SPACER)
+        elif check_for_tables(v, context):
+            table = convert_table(v,context)
             story.extend(table)
+            story.append(TYP_SPACER)
         elif check_for_image(v, context):
             image = parse_image(v, context)
             story.extend(image)
