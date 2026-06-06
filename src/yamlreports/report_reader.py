@@ -13,7 +13,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     source_data = load_yaml(source_yaml)
     # This should not return RL objects as each of these can build their own RL objects
     textstyles, tablestyles, doc_data = load_report_config(source_data, report_config_path)
-
+    doctemplate = DocConfig.model_validate(doc_data)
     document_vars = extract_vars(source_data)
 
     context = build_context(
@@ -27,7 +27,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     )
 
     story = build_story(source_data, context)
-    rl_doc = doctemplate.build()
+    rl_doc = doctemplate.build(destination_pdf)
     rl_doc.build(story)
 
 
@@ -48,7 +48,7 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             v = elem
 
         heading_style_name = f"h{level}"
-        heading = parse_paragraphs(k, context, heading_style_name)
+        heading = convert_paragraphs(k, context, heading_style_name)
         story.extend(heading)
 
         if check_for_subelements(v, context):
