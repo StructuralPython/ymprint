@@ -20,13 +20,6 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body") -> li
     return [para]
 
 # Test
-def convert_table(value: list[dict], context: dict) -> list[Table]:
-    """
-    Creates a ReportLab Table flowable from the value
-    """
-    return [Table(data=[])]
-
-# Test
 def convert_ul(value: list[str], context: dict) -> list[Paragraph]:
     sheet = context['style']['rl']
     bullet_style = sheet['bullet']

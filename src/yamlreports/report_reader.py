@@ -65,9 +65,14 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             v = elem
 
         if k is not None:
-            heading_style_name = f"h{level}"
-            heading = convert_paragraph(k, context, heading_style_name)
-            story.extend(heading)
+
+            if k.startswith('_'):
+                if check_for_blocks(k, v, context):
+                    story.extend(convert_blocks(k, v, context))
+                else:
+                    heading_style_name = f"h{level}"
+                    heading = convert_paragraph(k, context, heading_style_name)
+                    story.extend(heading)
 
         if check_for_subelements(v, context):
             story.extend(build_story(v, context))
