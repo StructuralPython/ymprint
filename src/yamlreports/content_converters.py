@@ -8,6 +8,7 @@ from reportlab.platypus import (
     KeepTogether,
 )
 from reportlab.lib.units import mm
+from yamlreports.config.docstyles import ReportStyles
 
 RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 
@@ -22,30 +23,33 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body") -> li
 # Test
 def convert_ul(value: list[str], context: dict) -> list[Paragraph]:
     sheet = context['styles']['rl']['_style']
-    bullet_style = sheet['bullet']
-    bullet_spec = sheet.get_spec("bullet")
-    bul = context['styles']['yaml']['_style']['body']['bullets']['symbol']
+    bullet_style = sheet['body']
+    bul_context = context['styles']['yaml']['_style']['body']['bullets']
+    bul_symbol = bul_context['symbol']
+    ymp_style: ReportStyles = context['styles']['ymprint']
+    bul_color = ymp_style.body.bullets.rl_color
     bullet_color_hex = "#{:02x}{:02x}{:02x}".format(
-        int(bullet_spec.bullet_color[0]),
-        int(bullet_spec.bullet_color[1]),
-        int(bullet_spec.bullet_color[2]),
-    ) if bullet_spec and bullet_spec.bullet_color else "black"
+        int(bul_color.red),
+        int(bul_color.green),
+        int(bul_color.blue),
+    )
     bullet_content = [
-        Paragraph(f'<bullet color="{bullet_color_hex}"><b>{bul}</b></bullet>{elem}', bullet_style)
+        Paragraph(f'<bullet color="{bullet_color_hex}"><b>{bul_symbol}</b></bullet>{elem}', bullet_style)
         for elem in value
     ]
     return bullet_content
 
 # Test
 def convert_ol(value: dict, context: dict) -> list[Paragraph]:
-    sheet = context['style']['rl']
-    bullet_style = sheet['bullet']
-    bullet_spec = sheet.get_spec("bullet")
+    sheet = context['styles']['rl']['_style']
+    bullet_style = sheet['body']
+    ymp_style: ReportStyles = context['styles']['ymprint']
+    bul_color = ymp_style.body.bullets.rl_color
     bullet_color_hex = "#{:02x}{:02x}{:02x}".format(
-        int(bullet_spec.bullet_color[0]),
-        int(bullet_spec.bullet_color[1]),
-        int(bullet_spec.bullet_color[2]),
-    ) if bullet_spec and bullet_spec.bullet_color else "black"
+        int(bul_color.red),
+        int(bul_color.green),
+        int(bul_color.blue),
+    )
     bullet_content = [
         Paragraph(f'<bullet color="{bullet_color_hex}"><b>{idx}.</b></bullet>{elem}', bullet_style)
         for idx, elem in enumerate(value.values())

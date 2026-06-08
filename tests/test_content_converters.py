@@ -34,15 +34,14 @@ def test_convert_paragraph(report_ex1, default_context):
     assert con.convert_paragraph(data['title']['first topic'], default_context)
     assert con.convert_paragraph(data['title']['fourth topic']['first sub topic'], default_context)
 
-
-def test_convert_subsections(report_ex1):
+def test_convert_ul(report_ex1, default_context):
     data = report_ex1
+    assert con.convert_ul(data['title']['second topic'], default_context)
 
-def test_convert_ul(report_ex1):
+def test_convert_ol(report_ex1, default_context):
     data = report_ex1
-
-def test_convert_ol(report_ex1):
-    data = report_ex1
+    print(data['title']['third topic'][2])
+    assert con.convert_ol(data['title']['third topic'][2]['subheading'], default_context)
 
 def test_convert_img(report_ex1):
     data = report_ex1

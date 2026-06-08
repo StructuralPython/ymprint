@@ -12,26 +12,31 @@ def build_context(
         source_path: str | pathlib.Path, 
         destination_path: str | pathlib.Path
     ) -> dict:
-    stylesheet = ReportStyles.model_validate(text_styles_yaml['_style']).build()
+    report_styles = ReportStyles.model_validate(text_styles_yaml['_style'])
+    stylesheet = report_styles.build()
     doctemplate = DocConfig.model_validate(doctemplate_yaml['_doc'])
     rl_basedoctemplate = doctemplate.build(destination_path)
-    tablestyles = TableStyle.model_validate(tablestyles_yaml['_tablestyle']).build()
+    report_tablestyles = TableStyle.model_validate(tablestyles_yaml['_tablestyle'])
+    tablestyles = report_tablestyles.build()
     context = {
         "content": content_yaml,
         "styles": {
             "yaml": text_styles_yaml,
+            "ymprint": report_styles,
             "rl": {
                 "_style": stylesheet
             },
         },
         "doctemplate": {
             "yaml": doctemplate_yaml,
+            "ymprint": doctemplate,
             "rl": {
                 "_doc": rl_basedoctemplate,
             },
         },
         "tablestyles": {
             'yaml': tablestyles_yaml,
+            "ymprint": report_tablestyles,
             "rl": {
                 "_tablestyle": tablestyles
             },

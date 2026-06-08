@@ -18,5 +18,4 @@ def test_context_builder_executes(default_config):
         pathlib.Path.cwd(), 
         pathlib.Path.cwd()
     )
-    print(context['styles']['rl'])
     assert context['styles']['rl']['_style']['body']

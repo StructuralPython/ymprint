@@ -1,12 +1,15 @@
 from typing import Union, Optional, TypeAlias
 
-YAML_Values: TypeAlias =Union[str, list, dict, float, int]
+YAML_Values: TypeAlias =Union[str, list, dict, float, int, None]
 
 
 def check_for_paragraph(value: YAML_Values, context: dict) -> bool:
 
     """Returns True if the value should be interpreted as a Paragrpah"""
     return isinstance(value, str)
+
+def check_for_none(value: YAML_Values, context: dict) -> bool:
+    return value is None
 
 
 def check_for_subelements(

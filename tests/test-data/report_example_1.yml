@@ -13,10 +13,10 @@ title:
     - First sub paragraph leading into subheading
     - Second sub paragraph leading into subheading
     - subheading:
-      1: first numbered item
-      2: second numbered item
-      4: third numbered item
-      3: fourth numbered item
+        1: first numbered item
+        2: second numbered item
+        4: third numbered item
+        3: fourth numbered item
   fourth topic:
     first sub topic: >
       Here is another paragraph.

@@ -54,7 +54,6 @@ class ReportStyles(BaseModel):
             bulletFontSize=self.body.bullets.size,
             textColor=self.body.rl_color,
         )
-
         # The so-called "Major Thirds"
         # This 'ratio-name' may be selectable in the future
         heading_ratios = {
