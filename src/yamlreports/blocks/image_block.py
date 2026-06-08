@@ -30,7 +30,7 @@ def convert_image_block(key: str, value: dict, context: dict) -> list[Table]:
         scaled_height = img_height
     image_flowable = Image(str(image_path), width=scaled_width, height=scaled_height)
     caption_para = Paragraph(caption, style=styles.get('caption', styles.get('body')))
-    table_data = [[caption_para], [image_flowable]]
+    table_data = [[image_flowable], [caption_para]]
     col_width = available_width
     # col_width_spec = [col_width * page_scale]
     # tbl = Table(table_data, colWidths=col_width_spec, repeatRows=1)

@@ -10,10 +10,13 @@ title:
     - second bullet point
     - third bullet point
   third topic:
-    1: first numbered item
-    2: second numbered item
-    4: third numbered item
-    3: fourth numbered item
+    - First sub paragraph leading into subheading
+    - Second sub paragraph leading into subheading
+    - subheading:
+      1: first numbered item
+      2: second numbered item
+      4: third numbered item
+      3: fourth numbered item
   fourth topic:
     first sub topic: >
       Here is another paragraph.
@@ -27,8 +30,3 @@ title:
     _img_1: 
       path: test_image.png
       caption: Here is my first image
-
-  fifth topic:
-    _img_2:
-      path: second_image.png
-      caption: Here is the second image 
