@@ -40,11 +40,8 @@ def test_convert_ul(report_ex1, default_context):
 
 def test_convert_ol(report_ex1, default_context):
     data = report_ex1
-    print(data['title']['third topic'][2])
     assert con.convert_ol(data['title']['third topic'][2]['subheading'], default_context)
 
-def test_convert_img(report_ex1):
+def test_convert_table(report_ex1, default_context):
     data = report_ex1
-
-def test_convert_table(report_ex1):
-    data = report_ex1
+    assert con.convert_table(data['title']['fifth topic'], default_context)

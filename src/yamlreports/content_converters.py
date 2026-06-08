@@ -61,5 +61,5 @@ def convert_table(value: list[dict], context: dict) -> list[Table]:
     table_style = context['tablestyles']['rl']['_tablestyle']
     column_headers = list(value[0].keys())
     table_data = [column_headers]
-    table_data.extend([[cell for cell in row] for row in value])
+    table_data.extend([[cell for cell in row.values()] for row in value])
     return [Table(table_data, style=table_style)]

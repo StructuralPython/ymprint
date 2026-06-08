@@ -30,3 +30,14 @@ title:
     _img_1: 
       path: test_image.png
       caption: Here is my first image
+  fifth topic:
+    - Item: 3.01
+      Description: First problem encountered
+      Location: GL A/1-
+    - Item: 3.02
+      Description: Second problem encountered
+      Location: GL A/2+
+    - Item: 3.03
+      Description: Third problem encountered
+      Location: GL A/3-
+      
