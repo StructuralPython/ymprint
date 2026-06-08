@@ -15,16 +15,16 @@ RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 def convert_paragraph(value: str, context: dict, text_style: str = "body") -> list[Paragraph]:
     """Returns a Paragraph obj"""
     style = "body"
-    style = context["styles"]["rl"][text_style]
+    style = context["styles"]["rl"]['_style'][text_style]
     para = Paragraph(value, style=style)
     return [para]
 
 # Test
 def convert_ul(value: list[str], context: dict) -> list[Paragraph]:
-    sheet = context['style']['rl']
+    sheet = context['styles']['rl']['_style']
     bullet_style = sheet['bullet']
     bullet_spec = sheet.get_spec("bullet")
-    bul = context['style']['yaml']['_style']['body']['bullets']['symbol']
+    bul = context['styles']['yaml']['_style']['body']['bullets']['symbol']
     bullet_color_hex = "#{:02x}{:02x}{:02x}".format(
         int(bullet_spec.bullet_color[0]),
         int(bullet_spec.bullet_color[1]),
