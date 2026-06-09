@@ -1,0 +1,20 @@
+format codes:
+  purpose: not meant to replace or override style information. these are parameters that can be input atbthe time the flowable is instantiated or are parameters that are not captured within the style commands.
+  tables:
+    - row height
+    - table width
+    - column widths
+    - column text aligns
+  admonitions:
+    - block width
+  images:
+    - width
+    - height
+  paragraph:
+    - body style
+  heading:
+    - heading style
+  bullets:
+    - body style
+    
+  challenge: where do the format codes go without clobbering the heuristics for content type? does a _format key get dynamically ignored or "removed" during the parsing loop? 
