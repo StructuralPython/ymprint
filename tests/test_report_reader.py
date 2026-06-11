@@ -1,5 +1,5 @@
 from yamlreports import yaml_loader
-from yamlreports.report_reader import build_story
+from yamlreports.report_reader import build_story, load_report
 from yamlreports.context_builder import build_context
 from yamlreports.config.config_loaders import load_report_config
 import pathlib
@@ -29,10 +29,5 @@ def default_context(default_config):
     )
     return context
 
-
-def test_build_story(report_ex1, default_context):
-    data = report_ex1
-    # assert build_story(
-    #     data, default_context
-    # )
-    assert True
+def test_load_yaml(report_ex1):
+    assert load_report(TEST_DATA / "report_example_1.yml", TEST_DATA / "example_output.pdf", TEST_DATA)

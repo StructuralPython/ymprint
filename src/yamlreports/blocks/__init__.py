@@ -1,7 +1,21 @@
-from .admonition_block import check_admoninition_block, convert_admonition_block
-from .image_block import check_image_block, convert_image_block
-from .quote_block import check_quote_block, convert_quote_block
-from typing import Callable, Optional
+import re
+
+from typing import Callable, Optional, Union, TypeAlias
+
+from reportlab.platypus import (
+    Paragraph,
+    Spacer,
+    Table,
+    Image,
+    HRFlowable,
+    KeepTogether,
+)
+from reportlab.lib.units import mm
+from yamlreports.config.docstyles import ReportStyles
+
+RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
+
+YAML_Values: TypeAlias =Union[str, list, dict, float, int, None]
 
 # TODO: Create a block registration function and a singleton block registry
 
@@ -52,3 +66,14 @@ def create_block_registry() -> tuple[Callable, Callable, Callable]:
     return list_blocks, get_block_callable, register_block
 
 list_blocks, get_block_callable, register_block = create_block_registry()
+
+def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> list[RLFlowables]:
+    block_code_pattern = re.compile(r"^_[a-zA-Z0-9]+")
+    matches = block_code_pattern.match(block_key)
+    if matches is not None:
+        block_code = matches.groups()[0]
+    else:
+        raise ValueError(f"Block code not found within block key: {block_key=}")
+    block_converter = get_block_callable(block_code)
+    flowables = block_converter({block_key: block_value}, context)
+    return flowables

@@ -24,6 +24,9 @@ def check_for_subelements(
             isinstance(value, list)
             and len(set([len(elem) for elem in value])) == 1
         )
+        or (
+            isinstance(value, dict)
+        )
     ):
         return True
     else:

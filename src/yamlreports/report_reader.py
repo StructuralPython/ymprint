@@ -1,5 +1,6 @@
 import pathlib
 from .yaml_loader import load_yaml
+from .blocks import get_block_callable, list_blocks, convert_blocks
 from .config.config_loaders import load_report_config
 from .config import ReportStyles, TableStyle, DocConfig
 from .context_builder import build_context
@@ -27,9 +28,11 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     Converts the report at yaml_path into a PDF.
     """
     source_data = load_yaml(source_yaml)
+    # source_config = extract_source_config(source_data)
+    source_config = {}
     # This should not return RL objects as each of these can build their own RL objects
-    textstyles, tablestyles, doc_data = load_report_config(source_data, report_config_path)
-    doctemplate = DocConfig.model_validate(doc_data)
+    textstyles, tablestyles, doc_data = load_report_config(source_config, report_config_path)
+    doctemplate = DocConfig.model_validate(doc_data['_doc'])
     document_vars = extract_vars(source_data)
 
     context = build_context(
@@ -56,8 +59,10 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
         source_iter = source_data.items()
     elif isinstance(source_data, list):
         source_iter = iter(source_data)
+    registered_blocks = list_blocks()
 
     for elem in source_iter:
+        print(f"{elem=}")
         if isinstance(elem, tuple):
             k, v = elem
         else:
@@ -66,18 +71,15 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
 
         if k is not None:
 
-            if k.startswith('_'):
-                if check_for_blocks(k, v, context):
-                    story.extend(convert_blocks(k, v, context))
-                else:
-                    heading_style_name = f"h{level}"
-                    heading = convert_paragraph(k, context, heading_style_name)
-                    story.extend(heading)
+            if str(k).startswith(tuple(registered_blocks)):
+                story.extend(convert_blocks(k, v, context))
+                continue
+            else:
+                heading_style_name = f"h{level}"
+                heading = convert_paragraph(k, context, heading_style_name)
+                story.extend(heading)
 
-        if check_for_subelements(v, context):
-            story.extend(build_story(v, context))
-            continue
-        elif check_for_paragraph(v, context):
+        if check_for_paragraph(v, context):
             paragraph = convert_paragraph(v,context)
             story.extend(paragraph)
             story.append(TYP_SPACER)
@@ -93,15 +95,15 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             table = convert_table(v,context)
             story.extend(table)
             story.append(TYP_SPACER)
-        elif check_for_image(v, context):
-            image = parse_image(v, context)
-            story.extend(image)
+        elif check_for_subelements(v, context):
+            story.extend(build_story(v, context))
+            story.append(TYP_SPACER)
+            continue
         else:
             continue
 
     return story
 
-    return [Paragraph("stub")]
 
 
 def extract_vars(source_data: dict) -> dict:
