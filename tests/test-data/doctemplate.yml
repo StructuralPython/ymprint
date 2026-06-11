@@ -2,14 +2,14 @@ _doc:
   page-size: letter
   landscape: false
   margins:
-    top: 1
-    left: 1
-    right: 1
-    bottom: 1
+    top: 84
+    left: 84
+    right: 84
+    bottom: 84
   background: /home/engineering/report_template.pdf
   first-page:
     margins:
-      top: 1
-      left: 1
-      right: 1
-      bottom: 1
+      top: 84
+      left: 84
+      right: 84
+      bottom: 84

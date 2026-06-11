@@ -44,7 +44,8 @@ class ReportStyles(BaseModel):
         """
         Returns a reportlab.lib.style.ParagraphStyle
         """
-        leading = self.body.spacing * self.body.size
+        # leading = self.body.spacing * self.body.size
+        leading = self.body.size * 1.2
         pstyle = ParagraphStyle(
             "body",
             fontName=self.body.font,
@@ -68,7 +69,8 @@ class ReportStyles(BaseModel):
         stylesheet.add(pstyle)
         for tag, ratio in heading_ratios.items():
             heading_size = self.body.size * ratio
-            heading_leading = self.body.spacing * heading_size
+            # heading_leading = self.body.spacing * heading_size
+            heading_leading = 1.2 * heading_size
             heading_style = ParagraphStyle(
                 tag,
                 fontName=self.headings.font,

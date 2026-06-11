@@ -1,17 +1,17 @@
 _tablestyle:
   cell-padding:
-    top: 0.5
-    left: 0.5
-    right: 0.5
-    bottom: 0.5
+    top: 5
+    left: 5
+    right: 5
+    bottom: 5
     
   headers:
     text: 
       font: Helvetica
       size: 24
-      color: "000000"
+      color: "#000000"
     row:
-      color: "ffffff"
+      color: "#ffffff"
       lines:
         - above
         - below
@@ -23,8 +23,8 @@ _tablestyle:
       color: "black"
     rows:
       color:
-        even: "ffffff"
-        odd: "eeeeee"
+        even: "#ffffff"
+        odd: "#eeeeee"
       lines:
         - above
         - below
