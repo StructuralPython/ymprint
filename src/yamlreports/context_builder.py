@@ -49,10 +49,10 @@ def build_context(
                 "width": doctemplate.available_width('first'),
                 "height": doctemplate.available_height('first'),
             },
-            "other_pages": {
-                "anchor": doctemplate.page_anchor('others'),
-                "width": doctemplate.available_width('others'),
-                "height": doctemplate.available_height('others'),
+            "all_pages": {
+                "anchor": doctemplate.page_anchor('all'),
+                "width": doctemplate.available_width('all'),
+                "height": doctemplate.available_height('all'),
             }
         },
         "source_path": source_path,

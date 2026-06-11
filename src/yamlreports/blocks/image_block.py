@@ -19,7 +19,7 @@ def convert_image_block(key: str, value: dict, context: dict) -> list[Table]:
     caption = value['caption']
     img_width, img_height = get_photo_size(image_path)
     aspect = img_height / img_width
-    available_width = context['frames']['other_pages']['width']
+    available_width = context['frames']['all_pages']['width']
     dpi = get_photo_dpi(image_path)
     dppts = dpi / 72 # Dots per point
 
@@ -35,7 +35,7 @@ def convert_image_block(key: str, value: dict, context: dict) -> list[Table]:
     col_width = available_width
     # col_width_spec = [col_width * page_scale]
     # tbl = Table(table_data, colWidths=col_width_spec, repeatRows=1)
-    table = Table(table_data)
+    table = Table(table_data, colWidths=[col_width])
     # tbl.setStyle(TableStyle(table_commands))
     # flowables.append(tbl)
     # flowables.append(Spacer(width=1, height=30))

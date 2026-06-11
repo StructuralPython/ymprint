@@ -39,8 +39,8 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
         else:
             raise ValueError(f"Page size of {self.page_size.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes) if attr.isupper()]}")
 
-    def available_width(self, first_or_others: str):
-        if first_or_others == "first":
+    def available_width(self, first_or_all: str):
+        if first_or_all == "first":
             if getattr(self, 'first_page', None) is not None:
                 return self.page_dims[0] - self.first_page.margins.left - self.first_page.margins.right
             else:
@@ -48,8 +48,8 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
         else:
             return self.page_dims[0] - self.margins.left - self.margins.right
         
-    def available_height(self, first_or_others: str):
-        if first_or_others == "first":
+    def available_height(self, first_or_all: str):
+        if first_or_all == "first":
             if getattr(self, 'first_page', None) is not None:
                 return self.page_dims[1] - self.first_page.margins.top - self.first_page.margins.bottom
             else:
@@ -57,8 +57,8 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
         else:
             return self.page_dims[1] - self.margins.top - self.margins.bottom
         
-    def page_anchor(self, first_or_others: str):
-        if first_or_others == 'first':
+    def page_anchor(self, first_or_all: str):
+        if first_or_all == 'first':
             if getattr(self, 'first_page', None) is not None:
                 return [self.first_page.margins.left, self.first_page.margins.bottom]
             else:
