@@ -49,7 +49,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     )
 
     story = build_story(source_data, context)
-    print(story)
+    # print(story)
     rl_doc = doctemplate.build(destination_pdf)
     rl_doc.build(story)
 
@@ -99,7 +99,7 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             story.extend(table)
             # story.append(TYP_SPACER)
         elif check_for_subelements(v, context):
-            story.extend(build_story(v, context))
+            story.extend(build_story(v, context, level = level + 1))
             # story.append(TYP_SPACER)
             continue
         else:
