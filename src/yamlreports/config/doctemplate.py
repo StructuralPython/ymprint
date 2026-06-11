@@ -94,9 +94,16 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
             topPadding=0,
             bottomPadding=0
         )
-        frames = [main_frame]
+        main_frames = [main_frame]
+        main_page_template = PageTemplate(
+            id='report',
+            pagesize=(page_width, page_height),
+            frames=main_frames,
+        )
+        first_page_template = None
+        first_page_frame = None
         if self.first_page is not None:
-            first_frame = Frame(
+            first_page_frame = Frame(
                 x1=self.first_page.margins.left,
                 y1=self.first_page.margins.bottom,
                 width=page_width - self.first_page.margins.left - self.first_page.margins.right,
@@ -107,14 +114,16 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
                 topPadding=0,
                 bottomPadding=0,
             )
-            frames = [first_frame, main_frame]
-        
-        page_template = PageTemplate(
-            id='report',
-            pagesize=(page_width, page_height),
-            frames=frames,
-        )
-        doc.addPageTemplates([page_template])
+            first_frames = [first_page_frame]
+            first_page_template = PageTemplate(
+                id='report_first_page',
+                pagesize=(page_width, page_height),
+                frames=first_frames,
+            )
+            doc.addPageTemplates([first_page_template, main_page_template])
+        else:
+            doc.addPageTemplates([main_page_template])
+
         return doc
 
 
