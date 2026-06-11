@@ -58,12 +58,12 @@ class ReportStyles(BaseModel):
         # The so-called "Major Thirds"
         # This 'ratio-name' may be selectable in the future
         heading_ratios = {
-            "h1": 3.815,
-            "h2": 3.052,
-            "h3": 2.441,
-            "h4": 1.953,
-            "h5": 1.563,
-            "h6": 1.25,
+            "h1": 2.986,
+            "h2": 2.488,
+            "h3": 2.074,
+            "h4": 1.728,
+            "h5": 1.440,
+            "h6": 1.2,
         }
         stylesheet = StyleSheet1()
         stylesheet.add(pstyle)
@@ -78,8 +78,8 @@ class ReportStyles(BaseModel):
                 fontSize=heading_size,
                 leading=heading_leading,
                 textColor=self.headings.rl_color,
-                spaceBefore=heading_size / 2,
-                spaceAfter=heading_size/2
+                spaceBefore=heading_size / 1.5,
+                spaceAfter=heading_size/4
             )
             stylesheet.add(heading_style)
        
