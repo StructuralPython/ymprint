@@ -53,9 +53,8 @@ def create_block_registry() -> tuple[Callable, Callable, Callable]:
                 block may be just one flowable (like a custom-populated table) or it can
                 be a list of many flowable. 
         """
-        if block_code in _BLOCK_REGISTRY:
-            raise BlockExistsError(f"The block with code name {block_code} is already in the registry")
         _BLOCK_REGISTRY.update({block_code: block_convert})
+        print(f"{_BLOCK_REGISTRY=}")
 
     def list_blocks():
         return list(_BLOCK_REGISTRY.keys())
@@ -68,7 +67,7 @@ def create_block_registry() -> tuple[Callable, Callable, Callable]:
 list_blocks, get_block_callable, register_block = create_block_registry()
 
 def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> list[RLFlowables]:
-    block_code_pattern = re.compile(r"^_[a-zA-Z0-9]+")
+    block_code_pattern = re.compile(r"(^_[a-zA-Z0-9]+)")
     matches = block_code_pattern.match(block_key)
     if matches is not None:
         block_code = matches.groups()[0]

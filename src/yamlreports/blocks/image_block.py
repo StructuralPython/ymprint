@@ -5,11 +5,16 @@ from . import register_block
 
 
 def check_image_block(key: str, value: dict, context: dict) -> bool:
+    print("Img checker running")
     return key.startswith("_img")
 
 
-def convert_image_block(key: str, value: dict, context: dict) -> list[Table]:
-    image_path = pathlib.Path(value['path']).resolve()
+def convert_image_block(obj: dict, context: dict) -> list[Table]:
+    print("Image block conversion running")
+    key = next(iter(obj.keys()))
+    value = obj[key]
+    source_path = pathlib.Path(context['source_path']).parent
+    image_path = source_path / pathlib.Path(value['path'])
     if not image_path.exists():
         raise FileNotFoundError(
             f"The image file for block '{key}' was not found: {str(image_path)}"
@@ -20,11 +25,12 @@ def convert_image_block(key: str, value: dict, context: dict) -> list[Table]:
     img_width, img_height = get_photo_size(image_path)
     aspect = img_height / img_width
     available_width = context['frames']['all_pages']['width']
-    dpi = get_photo_dpi(image_path)
-    dppts = dpi / 72 # Dots per point
+    # dpi_wxh = get_photo_dpi(image_path) or ((150**0.5, 150**0.5))
+    # dpi = dpi_wxh[0] * dpi_wxh[1]
+    # dppts = dpi / 72 # Dots per point
 
-    if img_width / dppts > available_width:
-        scaled_width = available_width * dppts
+    if img_width > available_width:
+        scaled_width = available_width * 0.5
         scaled_height = scaled_width * aspect
     else:
         scaled_width = img_width
@@ -50,12 +56,12 @@ def get_photo_size(file_path: str | pathlib.Path) -> tuple[float, float]:
     return img.size
 
 
-def get_photo_dpi(file_path: str | pathlib.Path) -> float:
+def get_photo_dpi(file_path: str | pathlib.Path) -> tuple:
     """
     Returns the dpi of an image.
     """
     img = PillowImg.open(file_path)
-    return img.info.get('dpi', 150.)
+    return img.info.get('dpi', (150.**0.5, 150.**0.5))
 
 
 register_block('_img', convert_image_block)

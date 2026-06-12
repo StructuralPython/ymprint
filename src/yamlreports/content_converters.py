@@ -17,8 +17,13 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body") -> li
     """Returns a Paragraph obj"""
     style = "body"
     style = context["styles"]["rl"]['_style'][text_style]
-    para = Paragraph(value, style=style)
-    return [para]
+    paragraphs = value.split("\n")
+    paras = []
+    for para in paragraphs:
+        rl_para = Paragraph(para, style=style)
+        paras.append(rl_para)
+        paras.append(Spacer(1, 10))
+    return paras
 
 # Test
 def convert_ul(value: list[str], context: dict) -> list[Paragraph]:

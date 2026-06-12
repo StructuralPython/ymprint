@@ -1,5 +1,8 @@
 import pathlib
 from .yaml_loader import load_yaml
+from .blocks import image_block
+from .blocks import admonition_block
+from .blocks import quote_block
 from .blocks import get_block_callable, list_blocks, convert_blocks
 from .config.config_loaders import load_report_config
 from .config import ReportStyles, TableStyle, DocConfig
@@ -73,7 +76,8 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             v = elem
 
         if k is not None:
-
+            print(f"{k=}")
+            print(tuple(registered_blocks))
             if str(k).startswith(tuple(registered_blocks)):
                 story.extend(convert_blocks(k, v, context))
                 continue
