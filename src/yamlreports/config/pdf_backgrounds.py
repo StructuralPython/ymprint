@@ -33,7 +33,6 @@ def overlay_pdf_background(
     for i in range(document.page_count):
         document_page = document.load_page(i)
         out_page = output.new_page(width=document_page.rect[0], height=document_page.rect[1])
-
         if background.page_count == 1:
             background_page = background.load_page(0)
         else:
@@ -42,6 +41,7 @@ def overlay_pdf_background(
             except IndexError:
                 background_page = None
         if background_page is not None:
-            background_page.show_pdf_page(document.rect, )
+            out_page.show_pdf_page(background_page.rect, background_page, pno=i)
+            out_page.show_pdf_page(document_page.rect, document_page, pno=i)
         
 
