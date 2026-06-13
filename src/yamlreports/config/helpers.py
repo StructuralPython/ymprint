@@ -29,4 +29,4 @@ def parse_width(value: float) -> str:
     if value <= 1.0:
         return f"{value * 100}%"
     else:
-        return f"{value}pt"
+        return value
