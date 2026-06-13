@@ -69,9 +69,7 @@ class ReportStyles(BaseModel):
         stylesheet.add(pstyle)
         for tag, ratio in heading_ratios.items():
             heading_size = self.body.size * ratio
-            # print(f"{self.body.spacing=}")
             heading_leading = self.body.spacing * heading_size
-            # heading_leading = 1.2 * heading_size
             heading_style = ParagraphStyle(
                 tag,
                 fontName=self.headings.font,

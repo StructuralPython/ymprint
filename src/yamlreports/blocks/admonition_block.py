@@ -9,7 +9,7 @@ def convert_info_block(obj: dict, context: dict) -> list[Table]:
     available_width = context['frames']['all_pages']['width']
     width_ratio = 0.8
     block_width = width_ratio * available_width
-    style = context['styles']['rl']['_style']
+    style = context["styles"]["rl"]['_style']['body']
     notice = Paragraph(text="<b>Info</b>", style=style)
     key = next(iter(obj.keys()))
     value = obj[key]

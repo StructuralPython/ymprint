@@ -5,12 +5,10 @@ from . import register_block
 
 
 def check_image_block(key: str, value: dict, context: dict) -> bool:
-    print("Img checker running")
     return key.startswith("_img")
 
 
 def convert_image_block(obj: dict, context: dict) -> list[Table]:
-    print("Image block conversion running")
     key = next(iter(obj.keys()))
     value = obj[key]
     source_path = pathlib.Path(context['source_path']).parent
@@ -38,10 +36,11 @@ def convert_image_block(obj: dict, context: dict) -> list[Table]:
     image_flowable = Image(str(image_path), width=scaled_width, height=scaled_height)
     caption_para = Paragraph(caption, style=styles.get('caption', styles.get('body')))
     table_data = [[image_flowable], [caption_para]]
-    col_width = available_width
+    col_width = scaled_width
     # col_width_spec = [col_width * page_scale]
     # tbl = Table(table_data, colWidths=col_width_spec, repeatRows=1)
     table = Table(table_data, colWidths=[col_width])
+    # table.hAlign = 'CENTER'
     # tbl.setStyle(TableStyle(table_commands))
     # flowables.append(tbl)
     # flowables.append(Spacer(width=1, height=30))

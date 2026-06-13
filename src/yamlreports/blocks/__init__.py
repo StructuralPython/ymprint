@@ -54,7 +54,6 @@ def create_block_registry() -> tuple[Callable, Callable, Callable]:
                 be a list of many flowable. 
         """
         _BLOCK_REGISTRY.update({block_code: block_convert})
-        print(f"{_BLOCK_REGISTRY=}")
 
     def list_blocks():
         return list(_BLOCK_REGISTRY.keys())
