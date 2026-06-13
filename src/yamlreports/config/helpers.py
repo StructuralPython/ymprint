@@ -20,3 +20,13 @@ def get_pagesize(page_spec: str) -> tuple[float, float]:
         return page_dims
     else:
         raise ValueError(f"Page size of {page_spec.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes)]}")
+    
+
+def parse_width(value: float) -> str:
+    """
+    Interprets 'value' as either a ratio or a size in points
+    """
+    if value <= 1.0:
+        return f"{value * 100}%"
+    else:
+        return f"{value}pt"
