@@ -6,11 +6,16 @@ title:
       wrapped.
 
       Here is the second paragraph of the first topic.
-    - _pagebreak: null
+    - _spacer: 20
+    - >
+      Here is the start of a second paragraph.
+
+      There is a line break here too.
     - second topic:
       - first bullet point
       - second bullet point
       - third bullet point
+    - _pagebreak: null
     - third topic:
       - First sub paragraph leading into subheading
       - Second sub paragraph leading into subheading

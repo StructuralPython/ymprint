@@ -4,6 +4,7 @@ from .blocks import image_block
 from .blocks import admonition_block
 from .blocks import quote_block
 from .blocks import page_break_block
+from .blocks import spacer_block
 from .blocks import get_block_callable, list_blocks, convert_blocks
 from .config.config_loaders import load_report_config
 from .config import ReportStyles, TableStyle, DocConfig
