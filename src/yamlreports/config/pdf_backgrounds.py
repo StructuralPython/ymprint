@@ -29,10 +29,18 @@ def overlay_pdf_background(
     document = mu.open(document_path)
     background = mu.open(pdf_background_path)
     output = mu.open()
+    first_background = None
+    if first_page_background_path is not None:
+        first_background = mu.open(first_page_background_path)
+        first_background_page = first_background.load_page(0)
 
     for i in range(document.page_count):
         document_page = document.load_page(i)
         out_page = output.new_page(width=document_page.rect[0], height=document_page.rect[1])
+        if i == 0 and first_background is not None:
+            out_page.show_pdf_page(first_background_page.rect, first_background_page, pno=0)
+            out_page.show_pdf_page(document_page.rect, document_page, pno=i)
+            continue
         if background.page_count == 1:
             background_page = background.load_page(0)
         else:
@@ -42,6 +50,8 @@ def overlay_pdf_background(
                 background_page = None
         if background_page is not None:
             out_page.show_pdf_page(background_page.rect, background_page, pno=i)
-            out_page.show_pdf_page(document_page.rect, document_page, pno=i)
+        out_page.show_pdf_page(document_page.rect, document_page, pno=i)
+    output.save(destination_path)
+
         
 
