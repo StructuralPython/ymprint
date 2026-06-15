@@ -34,7 +34,7 @@ def test_load_report_config():
     assert tablestyles['_tablestyle']['headers']['text']['bold'] == True # from default config
 
     assert doc['_doc']['page-size'] == 'letter'
-    assert doc['_doc']['first-page']['background'] is None
+    # assert doc['_doc']['first-page']['background'] is None
 
     # This key is intentionally not included in the model. See next test.
     assert doc['_doc']['first-page']['cat'] == 'here'

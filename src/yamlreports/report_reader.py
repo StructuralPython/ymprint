@@ -1,3 +1,4 @@
+from io import BytesIO
 import pathlib
 from .yaml_loader import load_yaml
 from .blocks import image_block
@@ -23,6 +24,7 @@ from .content_converters import (
     convert_ul,
     convert_ol,
 )
+from .config.pdf_backgrounds import overlay_pdf_background
 from reportlab.platypus import Spacer
 from reportlab.lib.units import mm
 
@@ -36,7 +38,10 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     """
     Converts the report at yaml_path into a PDF.
     """
-    source_data = load_yaml(source_yaml)
+    source_path = pathlib.Path(source_yaml).resolve()
+    if not source_path.exists():
+        raise FileNotFoundError(f"The source YAML file at {str(source_path)} does not exist")
+    source_data = load_yaml(source_path)
     # source_config = extract_source_config(source_data)
     source_config = {}
     # This should not return RL objects as each of these can build their own RL objects
@@ -56,7 +61,19 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
 
     story = build_story(source_data, context)
     rl_doc = doctemplate.build(destination_pdf)
-    rl_doc.build(story)
+    rl_report_buffer = BytesIO()
+    rl_doc.build(story, filename=rl_report_buffer)
+    rl_report_buffer.seek(0)
+    source_parent = source_path.parent
+    first_page_background = context['doctemplate']['yaml']['_doc']['first-page'].get('background', None)
+    if first_page_background is not None:
+        first_page_background = source_parent / first_page_background
+    overlay_pdf_background(
+        rl_report_buffer, 
+        source_parent / context['doctemplate']['yaml']['_doc']['background'], 
+        pathlib.Path(destination_pdf),
+        first_page_background,
+    )
 
 
 def build_story(source_data: dict | list, context: dict, level: int = 1) -> list:

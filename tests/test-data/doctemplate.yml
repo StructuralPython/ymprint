@@ -6,10 +6,11 @@ _doc:
     left: 84
     right: 84
     bottom: 84
-  background: /home/engineering/report_template.pdf
+  background: background_other_pages.pdf
   first-page:
     margins:
-      top: 84
+      top: 240
       left: 84
       right: 84
       bottom: 84
+    background: background_first_page.pdf

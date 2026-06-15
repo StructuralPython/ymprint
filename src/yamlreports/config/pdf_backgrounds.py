@@ -1,12 +1,13 @@
+import io
 import pathlib
 from typing import Optional
 
 import pymupdf as mu
 
 def overlay_pdf_background(
-    document_path: pathlib.Path,
+    document_path: pathlib.Path | io.BytesIO,
     pdf_background_path: pathlib.Path,
-    destination_path: pathlib.Path,
+    destination_path: pathlib.Path | io.BytesIO,
     first_page_background_path: Optional[pathlib.Path],
 ):
     """
@@ -26,7 +27,7 @@ def overlay_pdf_background(
     unused in the final document.
     """
 
-    document = mu.open(document_path)
+    document = mu.open(stream=document_path)
     background = mu.open(pdf_background_path)
     output = mu.open()
     first_background = None
@@ -38,19 +39,23 @@ def overlay_pdf_background(
         document_page = document.load_page(i)
         out_page = output.new_page(width=document_page.rect[0], height=document_page.rect[1])
         if i == 0 and first_background is not None:
-            out_page.show_pdf_page(first_background_page.rect, first_background_page, pno=0)
-            out_page.show_pdf_page(document_page.rect, document_page, pno=i)
+            out_page.show_pdf_page(first_background_page.rect, first_background, pno=0)
+            out_page.show_pdf_page(document_page.rect, document, pno=i)
             continue
+        print(f"{background.page_count=}")
         if background.page_count == 1:
             background_page = background.load_page(0)
+            background_page_num = 0
+            print(f"HERE")
         else:
             try:
                 background_page = background.load_page(i)
+                background_page_num = i
             except IndexError:
                 background_page = None
         if background_page is not None:
-            out_page.show_pdf_page(background_page.rect, background_page, pno=i)
-        out_page.show_pdf_page(document_page.rect, document_page, pno=i)
+            out_page.show_pdf_page(background_page.rect, background, pno=background_page_num)
+        out_page.show_pdf_page(document_page.rect, document, pno=i)
     output.save(destination_path)
 
         
