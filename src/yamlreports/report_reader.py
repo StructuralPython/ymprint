@@ -60,7 +60,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     )
 
     story = build_story(source_data, context)
-    if context['doctemplate']['yaml']['_doc']['first-page'].get('background') is not None:
+    if context['doctemplate']['yaml']['_doc'].get('first-page') is not None:
         story = [NextPageTemplate(1)] + story
     rl_doc = doctemplate.build(destination_pdf)
     rl_report_buffer = BytesIO()
