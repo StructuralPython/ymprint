@@ -25,7 +25,7 @@ from .content_converters import (
     convert_ol,
 )
 from .config.pdf_backgrounds import overlay_pdf_background
-from reportlab.platypus import Spacer
+from reportlab.platypus import Spacer, NextPageTemplate
 from reportlab.lib.units import mm
 
 from rich import print
@@ -60,6 +60,8 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     )
 
     story = build_story(source_data, context)
+    if context['doctemplate']['yaml']['_doc']['first-page'].get('background') is not None:
+        story = [NextPageTemplate(1)] + story
     rl_doc = doctemplate.build(destination_pdf)
     rl_report_buffer = BytesIO()
     rl_doc.build(story, filename=rl_report_buffer)
