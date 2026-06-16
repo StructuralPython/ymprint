@@ -4,8 +4,6 @@ from typing import Optional
 
 import pymupdf as mu
 
-from .pdf_fill_forms import fill_forms_and_bake
-
 def overlay_pdf_background(
     document_path: pathlib.Path | io.BytesIO,
     pdf_background_streams: dict[str, io.BytesIO | None],
@@ -27,8 +25,8 @@ def overlay_pdf_background(
     the remaining un-overlayed pages from 'pdf_background_path' will remain
     unused in the final document.
     """
-    first_bg = mu.open(pdf_background_streams['first'])
-    remaining_bg = mu.open(pdf_background_streams['remaining'])
+    first_bg = mu.open(stream=pdf_background_streams['first'])
+    remaining_bg = mu.open(stream=pdf_background_streams['remaining'])
     document = mu.open(document_path)
     output = mu.open()
     for i in range(document.page_count):
@@ -56,6 +54,7 @@ def overlay_pdf_background(
         
 
 def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO]:
+    print("RUNNING")
     first_data = pdf_backgrounds['first']
     remaining_data = pdf_backgrounds['remaining']
 
@@ -65,11 +64,14 @@ def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None
     if remaining_bg is not None:
         remaining_bg = mu.open(stream=remaining_data)
 
-    if first_bg and remaining_bg is None:
+    print(f"{first_data=}")
+    if first_bg is None and remaining_bg is None:
         return pdf_backgrounds
     docs = [first_bg, remaining_bg]
+    print(f"{docs=}")
     out_docs = {}
     for idx, doc in enumerate(docs):
+        print("HERE")
         if doc is None:
             indexes = ['first', 'remaining']
             out_docs[indexes[idx]] = None
@@ -79,11 +81,16 @@ def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None
             widget = page.first_widget
             while widget is not None:
                 name = widget.field_name
+                print(f"{name=}")
+
                 widget_value = vars.get(name, None)
+                print(f"{widget_value=}")
+                # THIS IS TRICKY
                 if widget_value is not None:
                     widget.field_value = widget_value
                     widget.update()
-                widget = widget.next()
+                widget = widget.next
+                print(f"{widget=}")
 
         doc.bake()
         doc_data = io.BytesIO()
@@ -103,12 +110,12 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
     first_page_pdf = remaining_pdf = None
     first_page_data = remaining_page_data = None
     if first_page is not None:
-        first_page_pdf = mu.open(first_page)
+        first_page_pdf = mu.open(source_parent / first_page)
         first_page_data = io.BytesIO()
         first_page_pdf.save(first_page_data)
         first_page_data.seek(0)
     if remaining is not None:
-        remaining_pdf = mu.open(remaining)
+        remaining_pdf = mu.open(source_parent / remaining)
         remaining_page_data = io.BytesIO()
         remaining_pdf.save(remaining_page_data)
         remaining_page_data.seek(0)

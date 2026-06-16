@@ -24,7 +24,7 @@ from .content_converters import (
     convert_ul,
     convert_ol,
 )
-from .config.pdf_backgrounds import overlay_pdf_background
+from .config.pdf_postprocessing import load_pdf_backgrounds, overlay_pdf_background
 from reportlab.platypus import Spacer, NextPageTemplate
 from reportlab.lib.units import mm
 
@@ -70,12 +70,11 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     first_page_background = context['doctemplate']['yaml']['_doc']['first-page'].get('background', None)
     if first_page_background is not None:
         first_page_background = source_parent / first_page_background
+    pdf_backgrounds = load_pdf_backgrounds(context)
     overlay_pdf_background(
-        rl_report_buffer, 
-        source_parent / context['doctemplate']['yaml']['_doc']['background'], 
         pathlib.Path(destination_pdf),
-        context
-        first_page_background,
+        pdf_backgrounds,
+        pathlib.Path(destination_pdf),
     )
 
 
