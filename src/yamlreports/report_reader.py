@@ -74,6 +74,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         rl_report_buffer, 
         source_parent / context['doctemplate']['yaml']['_doc']['background'], 
         pathlib.Path(destination_pdf),
+        context
         first_page_background,
     )
 

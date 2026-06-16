@@ -7,10 +7,10 @@ _doc:
     right: 84
     bottom: 84
   background: background_other_pages.pdf
-  # first-page:
-  #   margins:
-  #     top: 240
-  #     left: 84
-  #     right: 84
-  #     bottom: 84
-    # background: background_first_page.pdf
+  first-page:
+    margins:
+      top: 240
+      left: 84
+      right: 84
+      bottom: 84
+    background: background_first_page.pdf

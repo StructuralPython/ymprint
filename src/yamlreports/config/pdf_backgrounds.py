@@ -4,11 +4,12 @@ from typing import Optional
 
 import pymupdf as mu
 
+from .pdf_fill_forms import fill_forms_and_bake
+
 def overlay_pdf_background(
     document_path: pathlib.Path | io.BytesIO,
-    pdf_background_path: pathlib.Path,
+    pdf_background_streams: dict[str, io.BytesIO | None],
     destination_path: pathlib.Path | io.BytesIO,
-    first_page_background_path: Optional[pathlib.Path],
 ):
     """
     Overlays the pages from document_path onto the pages from 
@@ -26,37 +27,94 @@ def overlay_pdf_background(
     the remaining un-overlayed pages from 'pdf_background_path' will remain
     unused in the final document.
     """
-
-    document = mu.open(stream=document_path)
-    background = mu.open(pdf_background_path)
+    first_bg = mu.open(pdf_background_streams['first'])
+    remaining_bg = mu.open(pdf_background_streams['remaining'])
+    document = mu.open(document_path)
     output = mu.open()
-    first_background = None
-    if first_page_background_path is not None:
-        first_background = mu.open(first_page_background_path)
-        first_background_page = first_background.load_page(0)
-
     for i in range(document.page_count):
         document_page = document.load_page(i)
         out_page = output.new_page(width=document_page.rect[0], height=document_page.rect[1])
-        if i == 0 and first_background is not None:
-            out_page.show_pdf_page(first_background_page.rect, first_background, pno=0)
+        if i == 0 and first_bg is not None:
+            first_bg_page = first_bg.load_page(0)
+            out_page.show_pdf_page(first_bg_page.rect, first_bg, pno=0)
             out_page.show_pdf_page(document_page.rect, document, pno=i)
             continue
-        print(f"{background.page_count=}")
-        if background.page_count == 1:
-            background_page = background.load_page(0)
+        if remaining_bg.page_count == 1:
+            background_page = remaining_bg.load_page(0)
             background_page_num = 0
-            print(f"HERE")
         else:
             try:
-                background_page = background.load_page(i)
+                background_page = remaining_bg.load_page(i)
                 background_page_num = i
             except IndexError:
                 background_page = None
         if background_page is not None:
-            out_page.show_pdf_page(background_page.rect, background, pno=background_page_num)
+            out_page.show_pdf_page(background_page.rect, remaining_bg, pno=background_page_num)
         out_page.show_pdf_page(document_page.rect, document, pno=i)
     output.save(destination_path)
 
         
 
+def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO]:
+    first_data = pdf_backgrounds['first']
+    remaining_data = pdf_backgrounds['remaining']
+
+    first_bg = remaining_bg = None
+    if first_data is not None:
+        first_bg = mu.open(stream=first_data)
+    if remaining_bg is not None:
+        remaining_bg = mu.open(stream=remaining_data)
+
+    if first_bg and remaining_bg is None:
+        return pdf_backgrounds
+    docs = [first_bg, remaining_bg]
+    out_docs = {}
+    for idx, doc in enumerate(docs):
+        if doc is None:
+            indexes = ['first', 'remaining']
+            out_docs[indexes[idx]] = None
+            continue
+
+        for page in doc:
+            widget = page.first_widget
+            while widget is not None:
+                name = widget.field_name
+                widget_value = vars.get(name, None)
+                if widget_value is not None:
+                    widget.field_value = widget_value
+                    widget.update()
+                widget = widget.next()
+
+        doc.bake()
+        doc_data = io.BytesIO()
+        doc.save(filename=doc_data)
+        doc_data.seek(0)
+        out_docs[indexes[idx]] = doc_data
+    return out_docs
+
+
+def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
+    source_path = pathlib.Path(context['source_path'])
+    source_parent = source_path.parent
+
+    first_page = context['doctemplate']['yaml']['_doc'].get('first-page', {}).get('background', None)
+    remaining = context['doctemplate']['yaml']['_doc'].get('background')
+
+    first_page_pdf = remaining_pdf = None
+    first_page_data = remaining_page_data = None
+    if first_page is not None:
+        first_page_pdf = mu.open(first_page)
+        first_page_data = io.BytesIO()
+        first_page_pdf.save(first_page_data)
+        first_page_data.seek(0)
+    if remaining is not None:
+        remaining_pdf = mu.open(remaining)
+        remaining_page_data = io.BytesIO()
+        remaining_pdf.save(remaining_page_data)
+        remaining_page_data.seek(0)
+
+    backgrounds = {
+        "first": first_page_data,
+        "remaining": remaining_page_data
+    }
+    return backgrounds

@@ -15,7 +15,6 @@ RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 
 def convert_paragraph(value: str, context: dict, text_style: str = "body") -> list[Paragraph]:
     """Returns a Paragraph obj"""
-    style = "body"
     style = context["styles"]["rl"]['_style'][text_style]
     paragraphs = value.split("\n")
     paras = []
