@@ -88,7 +88,8 @@ def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None
             widget = page.first_widget
             while widget is not None:
                 name = widget.field_name
-
+                if name == "report_number":
+                    widget.text_fontsize = 32
                 widget_value = vars.get(name, None)
                 # THIS IS TRICKY
                 if widget_value is not None:

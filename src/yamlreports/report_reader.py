@@ -109,22 +109,17 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
         if check_for_paragraph(v, context):
             paragraph = convert_paragraph(v,context)
             story.extend(paragraph)
-            # story.append(TYP_SPACER)
         elif check_for_ul(v, context):
             ul = convert_ul(v,context)
             story.extend(ul)
-            # story.append(TYP_SPACER)
         elif check_for_ol(v, context):
             ol = convert_ol(v,context)
             story.extend(ol)
-            # story.append(TYP_SPACER)
         elif check_for_tables(v, context):
             table = convert_table(v,context)
             story.extend(table)
-            # story.append(TYP_SPACER)
         elif check_for_subelements(v, context):
             story.extend(build_story(v, context, level = level + 1))
-            # story.append(TYP_SPACER)
             continue
         else:
             continue

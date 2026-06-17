@@ -76,8 +76,8 @@ class ReportStyles(BaseModel):
                 fontSize=heading_size,
                 leading=heading_leading,
                 textColor=self.headings.rl_color,
-                spaceBefore=heading_size / 1.5,
-                spaceAfter=heading_size/4
+                spaceBefore=heading_size /5,
+                spaceAfter=heading_size/5
             )
             stylesheet.add(heading_style)
        
