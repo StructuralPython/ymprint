@@ -1,3 +1,11 @@
+_vars:
+  report_number: "123"
+  project_number: 1234
+  project_name: Current Project
+  engineer: Structural Python
+  date: 2026-06-15
+  time: 13:00
+  region: Level 1 slab
 title: 
   first topic:
     - >

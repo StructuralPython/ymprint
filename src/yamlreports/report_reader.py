@@ -24,7 +24,7 @@ from .content_converters import (
     convert_ul,
     convert_ol,
 )
-from .config.pdf_postprocessing import load_pdf_backgrounds, overlay_pdf_background
+from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake, overlay_pdf_background
 from reportlab.platypus import Spacer, NextPageTemplate
 from reportlab.lib.units import mm
 
@@ -48,6 +48,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     textstyles, tablestyles, doc_data = load_report_config(source_config, report_config_path)
     doctemplate = DocConfig.model_validate(doc_data['_doc'])
     document_vars = extract_vars(source_data)
+    print(f"{document_vars=}")
 
     context = build_context(
         source_data, 
@@ -58,7 +59,6 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         source_yaml, 
         destination_pdf
     )
-
     story = build_story(source_data, context)
     if context['doctemplate']['yaml']['_doc'].get('first-page') is not None:
         story = [NextPageTemplate(1)] + story
@@ -71,9 +71,10 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     if first_page_background is not None:
         first_page_background = source_parent / first_page_background
     pdf_backgrounds = load_pdf_backgrounds(context)
+    populated_backgrounds = fill_forms_and_bake(context['vars'], pdf_backgrounds)
     overlay_pdf_background(
-        pathlib.Path(destination_pdf),
-        pdf_backgrounds,
+        rl_report_buffer,
+        populated_backgrounds,
         pathlib.Path(destination_pdf),
     )
 
@@ -132,4 +133,6 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
 
 
 def extract_vars(source_data: dict) -> dict:
+    if "_vars" in source_data:
+        return source_data.pop("_vars")
     return {}
