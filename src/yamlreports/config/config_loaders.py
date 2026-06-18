@@ -52,9 +52,9 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
     # Third, load content-level config
     if source_data is None:
         source_data = {}
-    content_styles = {"_style": source_data.get("_style", {})}
-    content_tablestyles = {"_tablestyle": source_data.get("_tablestyle", {})}
-    content_doctemplate = {"_doc": source_data.get("_doc", {})}
+    content_styles = {"_style": source_data.pop("_style", {})}
+    content_tablestyles = {"_tablestyle": source_data.pop("_tablestyle", {})}
+    content_doctemplate = {"_doc": source_data.pop("_doc", {})}
 
     # Use chainmaps and recursively iterate over all keys within the config tree
     # (using the default trees as the source of all current keys) to build a dict
