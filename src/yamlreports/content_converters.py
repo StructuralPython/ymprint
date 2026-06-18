@@ -21,7 +21,7 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body") -> li
     for para in paragraphs:
         rl_para = Paragraph(para, style=style)
         paras.append(rl_para)
-        paras.append(Spacer(1, 10))
+        paras.append(Spacer(1, 5))
     return paras
 
 # Test

@@ -25,9 +25,18 @@ def overlay_pdf_background(
     the remaining un-overlayed pages from 'pdf_background_path' will remain
     unused in the final document.
     """
-    first_bg = mu.open(stream=pdf_background_streams['first'])
-    remaining_bg = mu.open(stream=pdf_background_streams['remaining'])
-    document = mu.open(document_path)
+    first_data = pdf_background_streams['first']
+    remaining_data = pdf_background_streams['remaining']
+    print(f"{first_data=}")
+    print(f"{remaining_data=}")
+    first_bg = None
+    if first_data is not None:
+        first_bg = mu.open(stream=pdf_background_streams['first'])
+        first_bg.save("first_bg2.pdf")
+    remaining_bg = None
+    if remaining_data is not None:
+        remaining_bg = mu.open(stream=pdf_background_streams['remaining'])
+    document = mu.open(stream=document_path)
     output = mu.open()
     for i in range(document.page_count):
         document_page = document.load_page(i)
@@ -37,43 +46,41 @@ def overlay_pdf_background(
             out_page.show_pdf_page(first_bg_page.rect, first_bg, pno=0)
             out_page.show_pdf_page(document_page.rect, document, pno=i)
             continue
-        if remaining_bg.page_count == 1:
-            background_page = remaining_bg.load_page(0)
-            background_page_num = 0
-        else:
-            try:
-                background_page = remaining_bg.load_page(i)
-                background_page_num = i
-            except IndexError:
-                background_page = None
-        if background_page is not None:
+        if remaining_bg is not None:
+            if remaining_bg.page_count == 1:
+                background_page = remaining_bg.load_page(0)
+                background_page_num = 0
+            else:
+                try:
+                    background_page = remaining_bg.load_page(i)
+                    background_page_num = i
+                except IndexError:
+                    background_page = None
             out_page.show_pdf_page(background_page.rect, remaining_bg, pno=background_page_num)
-        out_page.show_pdf_page(document_page.rect, document, pno=i)
+        else:
+            out_page.show_pdf_page(document_page.rect, document, pno=i)
     output.save(destination_path)
 
         
 
 def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO]:
-    print("RUNNING")
     first_data = pdf_backgrounds['first']
     remaining_data = pdf_backgrounds['remaining']
-
     first_bg = remaining_bg = None
     if first_data is not None:
         first_bg = mu.open(stream=first_data)
     if remaining_bg is not None:
         remaining_bg = mu.open(stream=remaining_data)
 
-    print(f"{first_data=}")
     if first_bg is None and remaining_bg is None:
         return pdf_backgrounds
     docs = [first_bg, remaining_bg]
-    print(f"{docs=}")
     out_docs = {}
+
+    indexes = ['first', 'remaining']
     for idx, doc in enumerate(docs):
-        print("HERE")
         if doc is None:
-            indexes = ['first', 'remaining']
+
             out_docs[indexes[idx]] = None
             continue
 
@@ -81,16 +88,15 @@ def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None
             widget = page.first_widget
             while widget is not None:
                 name = widget.field_name
-                print(f"{name=}")
-
+                if name == "report_number":
+                    widget.text_fontsize = 32
                 widget_value = vars.get(name, None)
-                print(f"{widget_value=}")
                 # THIS IS TRICKY
                 if widget_value is not None:
-                    widget.field_value = widget_value
+                    widget.field_value = str(widget_value)
                     widget.update()
                 widget = widget.next
-                print(f"{widget=}")
+
 
         doc.bake()
         doc_data = io.BytesIO()
