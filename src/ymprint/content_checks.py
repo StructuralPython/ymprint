@@ -2,6 +2,14 @@ from typing import Union, Optional, TypeAlias
 
 YAML_Values: TypeAlias =Union[str, list, dict, float, int, None]
 
+def check_for_variable(value: YAML_Values, context: dict) -> bool:
+    """Returns True if `value` represents a variable to be evaluated from the context vars"""
+    return (
+        isinstance(value, str)
+        and value.startswith("$")
+        and value.lstrip("$").isidentifier()
+    )
+
 
 def check_for_paragraph(value: YAML_Values, context: dict) -> bool:
 

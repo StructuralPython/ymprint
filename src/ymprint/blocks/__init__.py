@@ -1,6 +1,6 @@
 import re
 
-from typing import Callable, Optional, Union, TypeAlias
+from typing import Callable, Optional, Union, TypeAlias, Any
 
 from reportlab.platypus import (
     Paragraph,
@@ -12,6 +12,7 @@ from reportlab.platypus import (
 )
 from reportlab.lib.units import mm
 from ymprint.config.docstyles import ReportStyles
+from ..content_checks import check_for_variable
 
 RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 
@@ -75,3 +76,31 @@ def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> l
     block_converter = get_block_callable(block_code)
     flowables = block_converter({block_key: block_value}, context)
     return flowables
+
+
+def retrieve_block_variables(block_value: YAML_Values, context: dict) -> YAML_Values:
+    """
+    Returns 'block_value' but with list values or dictionary values that have
+    the "$VAR" syntax substituted with the object values
+    """
+    if isinstance(block_value, str) and check_for_variable(block_value, context):
+        var_name = get_variable_name(block_value)
+        return context['vars'].get(var_name, block_value)
+    elif isinstance(block_value, list):
+        acc = []
+        for elem in block_value:
+            new_elem = retrieve_block_variables(elem, context)
+            acc.append(new_elem)
+        return acc
+    elif isinstance(block_value, dict):
+        acc = {}
+        for k, v in block_value.items():
+            new_v = retrieve_block_variables(v, context)
+            acc.update({k: new_v})
+        return acc
+    else:
+        return block_value
+
+
+def get_variable_name(var_string: str) -> str:
+    return var_string.lstrip('$')

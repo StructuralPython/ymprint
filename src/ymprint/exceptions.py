@@ -1,0 +1,2 @@
+class YMPrintSyntaxException(Exception):
+    pass

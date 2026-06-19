@@ -16,7 +16,8 @@ from .content_checks import (
     check_for_ol,
     check_for_subelements,
     check_for_tables,
-    check_for_ul
+    check_for_ul,
+    check_for_variable,
 )
 from .content_converters import (
     convert_paragraph,
@@ -24,6 +25,7 @@ from .content_converters import (
     convert_ul,
     convert_ol,
 )
+from .exceptions import YMPrintSyntaxException
 from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake, overlay_pdf_background
 from reportlab.platypus import Spacer, NextPageTemplate
 from reportlab.lib.units import mm
@@ -59,7 +61,6 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         source_yaml, 
         destination_pdf
     )
-    print(f"{context['doctemplate']=}")
     story = build_story(source_data, context)
     if context['doctemplate']['yaml']['_doc'].get('first-page') is not None:
         story = [NextPageTemplate(1)] + story
@@ -103,6 +104,11 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
                 heading = convert_paragraph(k, context, heading_style_name)
                 story.extend(heading)
 
+        if check_for_variable(v, context):
+            raise YMPrintSyntaxException(
+                f"The variable syntax of $VAR is intended to be used with in custom blocks only. "
+                "To evaluate a string representation of the variable use the {{VAR}} syntax instead."
+            )
         if check_for_paragraph(v, context):
             paragraph = convert_paragraph(v,context)
             story.extend(paragraph)
