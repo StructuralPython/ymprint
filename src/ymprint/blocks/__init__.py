@@ -74,7 +74,7 @@ def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> l
     else:
         raise ValueError(f"Block code not found within block key: {block_key=}")
     block_converter = get_block_callable(block_code)
-    flowables = block_converter({block_key: block_value}, context)
+    flowables = block_converter(block_key, block_value, context)
     return flowables
 
 

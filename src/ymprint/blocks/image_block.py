@@ -4,13 +4,10 @@ from reportlab.platypus import Image, Table, Paragraph
 from . import register_block
 
 
-def check_image_block(key: str, value: dict, context: dict) -> bool:
-    return key.startswith("_img")
 
-
-def convert_image_block(obj: dict, context: dict) -> list[Table]:
-    key = next(iter(obj.keys()))
-    value = obj[key]
+def convert_image_block(block_key: str, block_value: dict, context: dict) -> list[Table]:
+    key = block_key
+    value = block_value
     source_path = pathlib.Path(context['source_path']).parent
     image_path = source_path / pathlib.Path(value['path'])
     if not image_path.exists():

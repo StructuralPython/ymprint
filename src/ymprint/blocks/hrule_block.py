@@ -1,10 +1,11 @@
 from reportlab.platypus import HRFlowable
 from . import register_block
 from ..config.helpers import parse_width
+from typing import Any
 
 
-def convert_hrule(obj: dict, context: dict) -> list[HRFlowable]:
-    params = obj.get("_hrule") or {}
+def convert_hrule(block_keyy: str, block_value: dict, context: dict) -> list[HRFlowable]:
+    params = block_value
     color=params.get("color", "#111111")
     linecap = params.get("cap", 'round')
     width = parse_width(params.get("width", 0.8))
