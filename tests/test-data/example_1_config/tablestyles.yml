@@ -1,0 +1,34 @@
+_tablestyle:
+  cell-padding:
+    top: 5
+    left: 5
+    right: 5
+    bottom: 5
+    
+  headers:
+    text: 
+      font: Helvetica
+      size: 11
+      color: "#000000"
+    row:
+      color: "#ffffff"
+      lines:
+        - above
+        - below
+        - between
+  body:
+    text:
+      font: "Helvetica"
+      size: 11
+      color: "black"
+    rows:
+      color:
+        even: "#ffffff"
+        odd: "#eeeeee"
+      lines:
+        - above
+        - below
+        - between
+        
+      
+      

@@ -1,7 +1,7 @@
-from yamlreports import yaml_loader
-from yamlreports.report_reader import build_story, load_report
-from yamlreports.context_builder import build_context
-from yamlreports.config.config_loaders import load_report_config
+from ymprint import yaml_loader
+from ymprint.report_reader import build_story, load_report
+from ymprint.context_builder import build_context
+from ymprint.config.config_loaders import load_report_config
 import pathlib
 import pytest
 
@@ -34,6 +34,6 @@ def default_context(default_config):
     return context
 
 def test_load_yaml(report_ex1, report_ex2):
-    load_report(TEST_DATA / "report_example_2.yml", TEST_DATA / "example_output2.pdf", TEST_DATA)
-    assert load_report(TEST_DATA / "report_example_1.yml", TEST_DATA / "example_output1.pdf", TEST_DATA)
-
+    load_report(TEST_DATA / "report_example_1.yml", TEST_DATA / "example_output1.pdf", TEST_DATA / "example_1_config")
+    load_report(TEST_DATA / "report_example_2.yml", TEST_DATA / "example_output2.pdf", TEST_DATA / "example_2_config")
+    assert False

@@ -14,7 +14,7 @@ title:
       wrapped.
 
       Here is the second paragraph of the first topic.
-    - _spacer: 20
+    - _spacer: 50
     - >
       Here is the start of a second paragraph.
 
@@ -43,12 +43,13 @@ title:
       abritrary, like a
       poem.
     _hrule:
+      width: 0.5
     _img_1: 
       path: test_image.png
       caption: Here is my first image
   fifth topic:
     - >
-      Here is some text that will go inside of a paragraph.
+      Here is some a that will go inside of a paragraph.
 
       It has a line break in it.
     - _info:

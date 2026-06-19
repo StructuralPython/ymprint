@@ -1,8 +1,8 @@
 import pathlib
 
-import yamlreports.config as config
-from yamlreports.yaml_loader import load_yaml
-from yamlreports.config.config_loaders import load_report_config
+import ymprint.config as config
+from ymprint.yaml_loader import load_yaml
+from ymprint.config.config_loaders import load_report_config
 
 TEST_DATA = pathlib.Path(__file__).parent / "test-data"
 EX_DOC_CONFIG_PATH = TEST_DATA / "doctemplate.yml"

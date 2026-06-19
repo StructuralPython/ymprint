@@ -1,5 +1,5 @@
-from yamlreports import context_builder
-from yamlreports.config.config_loaders import load_report_config
+from ymprint import context_builder
+from ymprint.config.config_loaders import load_report_config
 import pytest
 import pathlib
 

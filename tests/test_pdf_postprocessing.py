@@ -1,4 +1,4 @@
-from yamlreports.config.pdf_postprocessing import fill_forms_and_bake
+from ymprint.config.pdf_postprocessing import fill_forms_and_bake
 import pytest
 import pymupdf
 import pathlib

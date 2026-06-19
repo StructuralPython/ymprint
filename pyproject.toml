@@ -1,10 +1,10 @@
 [project]
-name = "yamlreports"
+name = "ymprint"
 version = "0.1.0"
-description = "Add your description here"
+description = "Desktop publishing in YAML with Python"
 readme = "README.md"
 authors = [
-    { name = "Connor Ferster", email = "connorferster@gmail.com" }
+    { name = "Connor Ferster", email = "connor@structuralpython.com" }
 ]
 requires-python = ">=3.14"
 dependencies = [

@@ -48,7 +48,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     textstyles, tablestyles, doc_data = load_report_config(source_config, report_config_path)
     doctemplate = DocConfig.model_validate(doc_data['_doc'])
     document_vars = extract_vars(source_data)
-    print(f"{document_vars=}")
+    
 
     context = build_context(
         source_data, 
@@ -59,6 +59,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         source_yaml, 
         destination_pdf
     )
+    print(f"{context['doctemplate']=}")
     story = build_story(source_data, context)
     if context['doctemplate']['yaml']['_doc'].get('first-page') is not None:
         story = [NextPageTemplate(1)] + story
@@ -66,10 +67,6 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     rl_report_buffer = BytesIO()
     rl_doc.build(story, filename=rl_report_buffer)
     rl_report_buffer.seek(0)
-    source_parent = source_path.parent
-    first_page_background = context['doctemplate']['yaml']['_doc']['first-page'].get('background', None)
-    if first_page_background is not None:
-        first_page_background = source_parent / first_page_background
     pdf_backgrounds = load_pdf_backgrounds(context)
     populated_backgrounds = fill_forms_and_bake(context['vars'], pdf_backgrounds)
     overlay_pdf_background(

@@ -11,7 +11,7 @@ from reportlab.platypus import (
     KeepTogether,
 )
 from reportlab.lib.units import mm
-from yamlreports.config.docstyles import ReportStyles
+from ymprint.config.docstyles import ReportStyles
 
 RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 

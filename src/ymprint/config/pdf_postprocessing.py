@@ -27,12 +27,9 @@ def overlay_pdf_background(
     """
     first_data = pdf_background_streams['first']
     remaining_data = pdf_background_streams['remaining']
-    print(f"{first_data=}")
-    print(f"{remaining_data=}")
     first_bg = None
     if first_data is not None:
         first_bg = mu.open(stream=pdf_background_streams['first'])
-        first_bg.save("first_bg2.pdf")
     remaining_bg = None
     if remaining_data is not None:
         remaining_bg = mu.open(stream=pdf_background_streams['remaining'])
@@ -109,14 +106,20 @@ def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None
 def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
     source_path = pathlib.Path(context['source_path'])
     source_parent = source_path.parent
+    first_page = context['doctemplate']['yaml']['_doc'].get('first-page')
+    if isinstance(first_page, dict):
+        first_page_background = first_page.get("background")
+        if first_page_background is not None:
+            first_page_background = source_parent / first_page_background
+    else:
+        first_page_background = None
 
-    first_page = context['doctemplate']['yaml']['_doc'].get('first-page', {}).get('background', None)
     remaining = context['doctemplate']['yaml']['_doc'].get('background')
 
     first_page_pdf = remaining_pdf = None
     first_page_data = remaining_page_data = None
-    if first_page is not None:
-        first_page_pdf = mu.open(source_parent / first_page)
+    if first_page_background is not None:
+        first_page_pdf = mu.open(source_parent / first_page_background)
         first_page_data = io.BytesIO()
         first_page_pdf.save(first_page_data)
         first_page_data.seek(0)

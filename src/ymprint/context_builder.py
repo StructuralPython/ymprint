@@ -12,9 +12,13 @@ def build_context(
         source_path: str | pathlib.Path, 
         destination_path: str | pathlib.Path
     ) -> dict:
+    # inline_styles = {} if "_style" not in content_yaml else content_yaml.pop("_style")
     report_styles = ReportStyles.model_validate(text_styles_yaml['_style'])
     stylesheet = report_styles.build()
-    doctemplate = DocConfig.model_validate(doctemplate_yaml['_doc'])
+    # inline_doctemplate = {} if "_doc" not in content_yaml else content_yaml.pop("_doc")
+    # This is not an appropriate merge. Need the nested chain map.
+    combined_doctemplate = doctemplate_yaml['_doc']# | inline_doctemplate
+    doctemplate = DocConfig.model_validate(combined_doctemplate)
     rl_basedoctemplate = doctemplate.build(destination_path)
     report_tablestyles = TableStyle.model_validate(tablestyles_yaml['_tablestyle'])
     tablestyles = report_tablestyles.build()
@@ -28,7 +32,7 @@ def build_context(
             },
         },
         "doctemplate": {
-            "yaml": doctemplate_yaml,
+            "yaml": {"_doc": combined_doctemplate},
             "ymprint": doctemplate,
             "rl": {
                 "_doc": rl_basedoctemplate,

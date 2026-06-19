@@ -1,7 +1,7 @@
-from yamlreports import yaml_loader
-from yamlreports import content_converters as con
-from yamlreports.context_builder import build_context
-from yamlreports.config.config_loaders import load_report_config
+from ymprint import yaml_loader
+from ymprint import content_converters as con
+from ymprint.context_builder import build_context
+from ymprint.config.config_loaders import load_report_config
 import pathlib
 import pytest
 

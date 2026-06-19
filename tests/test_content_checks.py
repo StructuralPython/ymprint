@@ -1,4 +1,4 @@
-from yamlreports import content_checks as con
+from ymprint import content_checks as con
 
 
 def test_check_for_subelements():
