@@ -7,8 +7,7 @@ _vars:
   time: 13:00
   region: Level 1 slab
 title: 
-  first topic:
-    - >
+  first topic: >
       Here is the start of a new paragraph of {{region}}. Any text can be written Here
       and have linebreaks at arbtirary locations. The resulting text will be
       wrapped.
