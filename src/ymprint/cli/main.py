@@ -57,7 +57,6 @@ def convert(source: str, destination: str | None, config_dir: str | None):
         destination = source.parent / f"{source.stem}.pdf"
     # Identify config files and content files to watch here
     # ensure_demo_file()
-    config_dir = source.parent
     if config_dir is None:
         config_dir = locate_config_dir(Path.cwd())
 

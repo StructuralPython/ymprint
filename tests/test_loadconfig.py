@@ -37,7 +37,7 @@ def test_load_report_config():
     # assert doc['_doc']['first-page']['background'] is None
 
     # This key is intentionally not included in the model. See next test.
-    assert doc['_doc']['first-page']['cat'] == 'here'
+    # assert doc['_doc']['first-page']['cat'] == 'here'
 
 
 def test_load_doc_config():
@@ -61,7 +61,7 @@ def test_load_doc_config():
     # Keys that do not exist in the model are silently passed over (e.g. ['_doc']['first-page']['cat'])
     document = config.DocConfig.model_validate(doc_data['_doc'])
 
-    assert not hasattr(document.first_page, 'cat')
+    # assert not hasattr(document.first_page, 'cat')
 
     # assert document.first_page.cat
 

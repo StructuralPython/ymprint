@@ -8,7 +8,6 @@ _doc:
     bottom: 72.0
   background: null
   first-page:
-    cat: here
     margins:
       top: 72.0
       left: 72.0
