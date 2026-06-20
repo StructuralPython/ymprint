@@ -1,30 +1,12 @@
-"""
-throbber.py — Live-mode throbber with file-change explosions.
 
-Usage:
-    python throbber.py
-
-Monitors demo_file.txt in the current working directory.
-Edit that file and save to trigger a colour explosion on the throbber.
-Press Ctrl+C to quit.
-"""
-
-import time
 import math
-import os
-import sys
-from pathlib import Path
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
-
-from rich.console import Console
-from rich.live import Live
 from rich.text import Text
 
 
 # ── Configuration ────────────────────────────────────────────────────────────
 
-WATCH_FILE = Path("demo_file.txt")
 WIDTH = 80          # number of cells in the throbber bar
 FPS = 30            # render rate
 WAVE_SPEED = 0.015   # fraction of WIDTH advanced per frame
@@ -97,7 +79,7 @@ class Explosion:
 
 
 class ThrobberState:
-    def __init__(self, width: int):
+    def __init__(self, width: int = WIDTH):
         self.width = width
         self.pos: float = 0.0        # 0.0 … 1.0 (fraction of width), ping-pong
         self.direction: int = 1      # +1 or -1
@@ -192,85 +174,3 @@ class ThrobberState:
             line.append(ch, style=f"rgb({r},{g},{b})")
 
         return line
-
-
-# ── File watcher ─────────────────────────────────────────────────────────────
-
-class FileWatcher:
-    def __init__(self, path: Path):
-        self.path = path
-        self._mtime: Optional[float] = self._read_mtime()
-
-    def _read_mtime(self) -> Optional[float]:
-        try:
-            return self.path.stat().st_mtime
-        except FileNotFoundError:
-            return None
-
-    def changed(self) -> bool:
-        mtime = self._read_mtime()
-        if mtime != self._mtime:
-            self._mtime = mtime
-            return True
-        return False
-
-
-# ── Main ─────────────────────────────────────────────────────────────────────
-
-def ensure_demo_file():
-    if not WATCH_FILE.exists():
-        WATCH_FILE.write_text("Edit and save this file to trigger an explosion!\n")
-        print(f"Created {WATCH_FILE}")
-
-
-def build_display(state: ThrobberState, status: str) -> Text:
-    bar = state.render()
-    label = Text(f"\n {status}", style="dim white")
-    bar.append_text(label)
-    return bar
-
-
-def main():
-    ensure_demo_file()
-    console = Console()
-    state = ThrobberState(WIDTH)
-    watcher = FileWatcher(WATCH_FILE)
-    frame_time = 1.0 / FPS
-
-    console.print(
-        f"\n[bold cyan]Throbber live mode[/bold cyan]  "
-        f"[dim]watching [white]{WATCH_FILE}[/white] — "
-        f"Ctrl+C to quit[/dim]\n"
-    )
-
-    status = f"watching {WATCH_FILE} …"
-
-    with Live(
-        build_display(state, status),
-        console=console,
-        refresh_per_second=FPS,
-        transient=False,
-    ) as live:
-        try:
-            while True:
-                t0 = time.monotonic()
-
-                if watcher.changed():
-                    state.trigger_explosion()
-                    status = f"change detected in {WATCH_FILE}!"
-                elif not state.explosions:
-                    status = f"watching {WATCH_FILE} …"
-
-                state.advance()
-                live.update(build_display(state, status))
-
-                elapsed = time.monotonic() - t0
-                sleep = max(0.0, frame_time - elapsed)
-                time.sleep(sleep)
-
-        except KeyboardInterrupt:
-            console.print("\n[dim]Live mode ended.[/dim]\n")
-
-
-if __name__ == "__main__":
-    main()

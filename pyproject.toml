@@ -13,10 +13,11 @@ dependencies = [
     "pymupdf>=1.27.2.3",
     "reportlab>=4.5.1",
     "ruamel-yaml>=0.19.1",
+    "typer>=0.26.7",
 ]
 
 [project.scripts]
-yamlreports = "yamlreports:main"
+ym = "ymprint.cli.main:app"
 
 [build-system]
 requires = ["uv_build>=0.11.16,<0.12.0"]

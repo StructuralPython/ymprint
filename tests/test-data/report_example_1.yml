@@ -9,6 +9,11 @@ title:
     - first bullet point
     - second bullet point
     - third bullet point
+    - fourth bullet point
+  _spacer: 10
+  _img_1:
+      path: test_image.png
+      caption: Here it is the first time
   third topic:
     - First sub paragraph leading into subheading
     - Third paragraph here.
@@ -16,17 +21,20 @@ title:
         1: first numbered item
         2: second numbered item
         4: third numbered item
-        3: fourth numbered item
   fourth topic:
     first sub topic: >
       Here is another paragraph.
 
       It has a couple of short lines in it.
 
-      The line breaks
+      The line breaks like a poem
       are 
       abritrary, like a
       poem.
+    Preformatted text: |
+      Here are some lines
+      of preformatted text
+      These really are like a poem!
     _img_1: 
       path: test_image.png
       caption: Here is my first image

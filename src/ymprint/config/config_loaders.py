@@ -35,7 +35,7 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
     )
     # Next load supplied config
     if report_config_path is not None and not report_config_path.exists():
-        raise FileNotFoundError(f"The supplied path for the report_config_path does not exist. Here is what you passed:\n\n{str(report_config_path)}")
+        raise FileNotFoundError(f"The supplied path for the report_config_path does not exist. Here is what you passed:\n\n{str(report_config_path.resolve())}")
     
     if report_config_path is not None and report_config_path.is_file():
         config_data = load_yaml(report_config_path)
@@ -104,13 +104,15 @@ def build_current_config(default_config: dict, config_data: DeepChainMap):
     return style_map
 
 
-def load_config_directory(config_dir: str | pathlib.Path) -> tuple[dict, dict, dict]:
+def load_config_directory(config_dir: str | pathlib.Path | None) -> tuple[dict, dict, dict]:
     """
     Returns the config data for the configuration files contained within 'config_dir'.
 
     'config_dir': a directory containing a textstyles.yml, tablestyles.yml, doctemplate.yml
     file.
     """
+    if config_dir is None:
+        return {}, {}, {}
     config_dir = pathlib.Path(config_dir)
     dir_contents = list(config_dir.glob('*'))
     file_list =[file.name for file in dir_contents if file.is_file]
@@ -129,7 +131,7 @@ def load_config_directory(config_dir: str | pathlib.Path) -> tuple[dict, dict, d
     ):
         raise ValueError(
             "Expected to find one or none of each file: textstyles.yml, tablestyles.yml, doctemplate.yml' within "
-            f"{str(config_dir)}. A duplicate filename was found (which causes ambiguity). Review file counts for this directory and correct:\n\n"
+            f"{str(config_dir.resolve())}. A duplicate filename was found (which causes ambiguity). Review file counts for this directory and correct:\n\n"
             f"{file_name_count}"
         )
     return styles, tablestyles, doctemplate
