@@ -19,3 +19,11 @@ title:
       b = math.sin(project_number / 1300)
   second topic: >
     Here is a paragraph of the return value: {{b}}
+
+  _py_2:
+    source: |
+      a = 5
+      c = b * a
+
+  third topic: >
+    Here is the result of the equation: {{c}}
