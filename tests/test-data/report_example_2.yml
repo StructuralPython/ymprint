@@ -6,7 +6,7 @@ _vars:
   date: 2026-06-12
   time: 13:00
   region: Level 1 columns
-_doc:
+_doc: # TODO: this background is not loading
   background: background_other_pages.pdf
 title: 
   first topic:
