@@ -20,6 +20,9 @@ class FileWatcher:
         self.path = path
         self._mtime: Optional[float] = self._read_mtime()
 
+    def __repr__(self):
+        return str(self.path.resolve())
+
     def _read_mtime(self) -> Optional[float]:
         try:
             return self.path.stat().st_mtime
@@ -33,13 +36,6 @@ class FileWatcher:
             return True
         return False
 
-# ── Main ─────────────────────────────────────────────────────────────────────
-
-def ensure_demo_file():
-    if not WATCH_FILE.exists():
-        WATCH_FILE.write_text("Edit and save this file to trigger an explosion!\n")
-        print(f"Created {WATCH_FILE}")
-
 
 def build_display(state: ThrobberState, status: str) -> Text:
     bar = state.render()
@@ -47,12 +43,14 @@ def build_display(state: ThrobberState, status: str) -> Text:
     bar.append_text(label)
     return bar
 
+
 @app.command(
     name='convert',
     no_args_is_help=True
 )
-def convert(source: str, destination: str | None, config_dir: str | None):
-    source = Path(source)
+def convert(src: str, dest: str | None = None, config_dir: str | None = None):
+    source = Path(src)
+    destination = Path(dest) if dest is not None else None
     if destination is None:
         destination = source.parent / f"{source.stem}.pdf"
     # Identify config files and content files to watch here
@@ -61,6 +59,10 @@ def convert(source: str, destination: str | None, config_dir: str | None):
         config_dir = locate_config_dir(Path.cwd())
 
     load_report(source, destination, config_dir)
+    console = Console()
+    console.print(
+        f"✍️ .... 📝 ... PDF created: {destination.resolve()}"
+    )
 
 
 
@@ -82,7 +84,6 @@ def live(
     if config_dir is None:
         config_dir = locate_config_dir(Path.cwd())
     
-    styles, table_styles, doctemplate = load_config_directory(config_dir)
     file_watchers = [FileWatcher(Path(source))]
     if config_dir is not None:
         config_dir = Path(config_dir)
@@ -91,19 +92,20 @@ def live(
                 file_watchers.append(FileWatcher(config_dir / filename))
     else:
         config_dir = source.parent
-    
+    print(file_watchers)
+
     console = Console()
     state = ThrobberState()
     # watcher = FileWatcher(WATCH_FILE)
     frame_time = 1.0 / FPS
 
     console.print(
-        f"\n[bold cyan]Throbber live mode[/bold cyan]  "
+        f"\n[bold cyan]YMPrint live mode[/bold cyan]  "
         f"[dim]watching [white]{str(source)}[/white] — "
         f"Ctrl+C to quit[/dim]\n"
     )
     load_report(source, destination, config_dir)
-    subprocess.Popen(['okular', str(destination)])
+    okular_sub = subprocess.Popen(['okular', str(destination)])
     status = ""
     with Live(
         build_display(state, status),
@@ -119,9 +121,10 @@ def live(
                         state.trigger_explosion()
                         status = f"change detected in {str(watcher.path)}!"
                         load_report(source, destination, config_dir)
+                        break
+
                     elif not state.explosions:
-                        status = f"watching {(str(source))} …"
-                    break
+                        status = f"watching {(str(file_watchers))} …"
 
                 state.advance()
                 live.update(build_display(state, status))

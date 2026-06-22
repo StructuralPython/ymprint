@@ -48,7 +48,6 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     # source_config = extract_source_config(source_data)
     source_config = {}
     # This should not return RL objects as each of these can build their own RL objects
-    print(f"Reader: {report_config_path=}")
     textstyles, tablestyles, doc_data = load_report_config(source_config, report_config_path)
     doctemplate = DocConfig.model_validate(doc_data['_doc'])
     document_vars = extract_vars(source_data)
@@ -63,7 +62,6 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         source_yaml, 
         destination_pdf
     )
-    print(context['doctemplate']['yaml']['_doc'])
     story = build_story(source_data, context)
     if context['doctemplate']['yaml']['_doc'].get('first-page') is not None:
         story = [NextPageTemplate(1)] + story
@@ -71,12 +69,14 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     rl_report_buffer = BytesIO()
     rl_doc.build(story, filename=rl_report_buffer)
     rl_report_buffer.seek(0)
+    # rl_doc.build(story, filename=str(pathlib.Path(destination_pdf).resolve()))
     pdf_backgrounds = load_pdf_backgrounds(context)
     populated_backgrounds = fill_forms_and_bake(context['vars'], pdf_backgrounds)
     overlay_pdf_background(
         rl_report_buffer,
         populated_backgrounds,
         pathlib.Path(destination_pdf),
+        context
     )
 
 

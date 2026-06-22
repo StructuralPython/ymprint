@@ -1,8 +1,8 @@
 _doc:
-  page-size: letter
-  landscape: false
+  page-size: tabloid
+  landscape: true
   margins:
-    top: 50
+    top: 84
     left: 84
     right: 84
     bottom: 84

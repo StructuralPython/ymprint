@@ -21,7 +21,7 @@ class PageSizeMixin:
     page_size: str = Field(alias='page-size')
 
 class LandscapeMixin:
-    landscape: bool = Field(default = True)
+    landscape: bool = Field(default = False)
 
 class FirstPageMixin:
     first_page: Optional[PageConfig] = Field(default = None, alias='first-page')
@@ -34,7 +34,11 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
     def page_dims(self):
         if hasattr(rl_pagesizes, self.page_size.upper()):
             page_dims = get_pagesize(self.page_size)
-            return page_dims
+            if self.landscape:
+                final_page_dims = (page_dims[1], page_dims[0])
+            else:
+                final_page_dims = page_dims
+            return final_page_dims
             # page_dims = getattr(rl_pagesizes, self.page_size.upper())
         else:
             raise ValueError(f"Page size of {self.page_size.upper()} not found. Page sizes available: {[attr for attr in dir(rl_pagesizes) if attr.isupper()]}")
@@ -53,7 +57,7 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
             if getattr(self, 'first_page', None) is not None:
                 return self.page_dims[1] - self.first_page.margins.top - self.first_page.margins.bottom
             else:
-                self.page_dims[1] - self.margins.top - self.margins.bottom
+                return self.page_dims[1] - self.margins.top - self.margins.bottom
         else:
             return self.page_dims[1] - self.margins.top - self.margins.bottom
         
@@ -72,57 +76,56 @@ class DocConfig(PageConfig, PageSizeMixin, LandscapeMixin, FirstPageMixin):
         """
         Returns a rl object
         """
-        doc = BaseDocTemplate(
-            str(destination),
-            pagesize = self.page_dims,
-            leftMargin = self.margins.left,
-            rightMargin = self.margins.right,
-            topMargin = self.margins.top,
-            bottomMargin=self.margins.bottom,
-            title=title,
-            author=author,
-        )
         page_width, page_height = self.page_dims
+        available_width = page_width - self.margins.left - self.margins.right
+        available_height = page_height - self.margins.top - self.margins.bottom
         main_frame = Frame(
             x1=self.margins.left,
             y1=self.margins.bottom,
-            width = page_width - self.margins.left - self.margins.right,
-            height = page_height - self.margins.top - self.margins.bottom,
+            width = available_width,
+            height = available_height,
             id='main',
             leftPadding=0,
             rightPadding=0,
             topPadding=0,
             bottomPadding=0
         )
-        main_frames = [main_frame]
         main_page_template = PageTemplate(
             id='report',
-            pagesize=(page_width, page_height),
-            frames=main_frames,
+            pagesize=self.page_dims,
+            frames=[main_frame],
         )
+        page_templates = [main_page_template]
         first_page_template = None
         first_page_frame = None
         if self.first_page is not None:
+            first_available_width = page_width - self.first_page.margins.left - self.first_page.margins.right
+            first_available_height = page_height - self.first_page.margins.top - self.first_page.margins.bottom
             first_page_frame = Frame(
                 x1=self.first_page.margins.left,
                 y1=self.first_page.margins.bottom,
-                width=page_width - self.first_page.margins.left - self.first_page.margins.right,
-                height=page_height - self.first_page.margins.top - self.first_page.margins.bottom,
+                width=first_available_width,
+                height=first_available_height,
                 id='first',
                 leftPadding=0,
                 rightPadding=0,
                 topPadding=0,
                 bottomPadding=0,
             )
-            first_frames = [first_page_frame]
             first_page_template = PageTemplate(
                 id='report_first_page',
                 pagesize=(page_width, page_height),
-                frames=first_frames,
+                frames=[first_page_frame],
             )
-            doc.addPageTemplates([first_page_template, main_page_template])
-        else:
-            doc.addPageTemplates([main_page_template])
+            page_templates.insert(0, first_page_template)
+        doc = BaseDocTemplate(
+            str(destination),
+            pagesize = self.page_dims,
+            pageTemplates=page_templates,
+            title=title,
+            author=author,
+            allowSplitting=1
+        )
 
         return doc
 

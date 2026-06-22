@@ -53,10 +53,15 @@ def build_context(
                 "width": doctemplate.available_width('first'),
                 "height": doctemplate.available_height('first'),
             },
-            "all_pages": {
+            "remaining_pages": {
                 "anchor": doctemplate.page_anchor('all'),
                 "width": doctemplate.available_width('all'),
                 "height": doctemplate.available_height('all'),
+            },
+            "all_pages": {
+                "anchor": doctemplate.page_anchor('all'),
+                "width": min(doctemplate.available_width('all'), doctemplate.available_width('first')),
+                "height": min(doctemplate.available_height('all'), doctemplate.available_height('first')),
             }
         },
         "source_path": source_path,

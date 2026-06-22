@@ -8,6 +8,7 @@ from . import register_block
 def convert_image_block(block_key: str, block_value: dict, context: dict) -> list[Table]:
     key = block_key
     value = block_value
+    scale_ratio = value.get('scale_ratio', 1)
     source_path = pathlib.Path(context['source_path']).parent
     image_path = source_path / pathlib.Path(value['path'])
     if not image_path.exists():
@@ -20,16 +21,17 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
     img_width, img_height = get_photo_size(image_path)
     aspect = img_height / img_width
     available_width = context['frames']['all_pages']['width']
-    # dpi_wxh = get_photo_dpi(image_path) or ((150**0.5, 150**0.5))
-    # dpi = dpi_wxh[0] * dpi_wxh[1]
-    # dppts = dpi / 72 # Dots per point
+    available_height = context['frames']['all_pages']['height']
 
-    if img_width > available_width:
-        scaled_width = available_width * 0.5
+    if img_width > available_width * scale_ratio:
+        scaled_width = available_width
         scaled_height = scaled_width * aspect
+    elif img_height > available_height * scale_ratio:
+        scaled_height = available_height * 0.9
+        scaled_width = scaled_height / aspect
     else:
-        scaled_width = img_width
-        scaled_height = img_height
+        scaled_width = img_width * scale_ratio
+        scaled_height = img_height * scale_ratio
     image_flowable = Image(str(image_path), width=scaled_width, height=scaled_height)
     caption_para = Paragraph(caption, style=styles.get('caption', styles.get('body')))
     table_data = [[image_flowable], [caption_para]]

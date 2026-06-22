@@ -1,6 +1,6 @@
 _doc:
   page-size: letter
-  landscape: false
+  landscape: true
   margins:
     top: 84
     left: 84

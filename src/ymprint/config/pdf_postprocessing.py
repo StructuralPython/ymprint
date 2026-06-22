@@ -8,6 +8,7 @@ def overlay_pdf_background(
     document_path: pathlib.Path | io.BytesIO,
     pdf_background_streams: dict[str, io.BytesIO | None],
     destination_path: pathlib.Path | io.BytesIO,
+    context: dict,
 ):
     """
     Overlays the pages from document_path onto the pages from 
@@ -27,6 +28,8 @@ def overlay_pdf_background(
     """
     first_data = pdf_background_streams['first']
     remaining_data = pdf_background_streams['remaining']
+    page_dims = context['doctemplate']['ymprint'].page_dims
+    page_width, page_height = page_dims
     first_bg = None
     if first_data is not None:
         first_bg = mu.open(stream=pdf_background_streams['first'])
@@ -37,7 +40,7 @@ def overlay_pdf_background(
     output = mu.open()
     for i in range(document.page_count):
         document_page = document.load_page(i)
-        out_page = output.new_page(width=document_page.rect[0], height=document_page.rect[1])
+        out_page = output.new_page(width=page_width, height=page_height)
         if i == 0 and first_bg is not None:
             first_bg_page = first_bg.load_page(0)
             out_page.show_pdf_page(first_bg_page.rect, first_bg, pno=0)
@@ -115,16 +118,17 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
         first_page_background = None
 
     remaining = context['doctemplate']['yaml']['_doc'].get('background')
+    remaining_page_background = source_parent / remaining
 
     first_page_pdf = remaining_pdf = None
     first_page_data = remaining_page_data = None
     if first_page_background is not None:
-        first_page_pdf = mu.open(source_parent / first_page_background)
+        first_page_pdf = mu.open(first_page_background)
         first_page_data = io.BytesIO()
         first_page_pdf.save(first_page_data)
         first_page_data.seek(0)
     if remaining is not None:
-        remaining_pdf = mu.open(source_parent / remaining)
+        remaining_pdf = mu.open(remaining_page_background)
         remaining_page_data = io.BytesIO()
         remaining_pdf.save(remaining_page_data)
         remaining_page_data.seek(0)

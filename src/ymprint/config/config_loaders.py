@@ -27,7 +27,6 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
     Returns a ChainMap of all the config data found in either the source_data or the 'report_config_path',
     which can either be a directory of config files or a specific file that contains all config data.
     """
-    print(f"{report_config_path=}")
     if report_config_path is not None:
         report_config_path = pathlib.Path(report_config_path)
     # First load defaults
