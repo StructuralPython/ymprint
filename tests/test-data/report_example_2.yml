@@ -1,11 +1,13 @@
 _vars:
-  report_number: "123"
-  project_number: 1234
+  report_number: "124"
+  project_number: 1593
   project_name: Current Project
   engineer: Structural Python
-  date: 2026-06-15
+  date: 2026-06-12
   time: 13:00
-  region: Level 1 slab
+  region: Level 1 columns
+_doc:
+  background: background_other_pages.pdf
 title: 
   first topic:
     - >
@@ -14,7 +16,7 @@ title:
       wrapped.
 
       Here is the second paragraph of the first topic.
-    - _spacer: 50
+    - _spacer: 5
     - >
       Here is the start of a second paragraph.
 

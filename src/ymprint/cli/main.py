@@ -72,13 +72,15 @@ def convert(src: str, dest: str | None = None, config_dir: str | None = None):
     no_args_is_help=True
 )
 def live(
-    source: Annotated[str, "YAML file path to render to PDF"],
-    destination: Annotated[Optional[str], "File path of output PDF file. If not provided file name and path of source file will be used (wtih .pdf extension)."] = None,
+    src: Annotated[str, "YAML file path to render to PDF"],
+    dest: Annotated[Optional[str], "File path of output PDF file. If not provided file name and path of source file will be used (wtih .pdf extension)."] = None,
     config_dir: Annotated[Optional[str], "Directory of optional config files (doctemplate.yml, textstyles.yml, tablestyles.yml)"] = None,
 ):
-    source = Path(source)
-    if destination is None:
+    source = Path(src)
+    if dest is None:
         destination = source.parent / f"{source.stem}.pdf"
+    else:
+        destination = Path(dest)
     # Identify config files and content files to watch here
     # ensure_demo_file()
     if config_dir is None:
