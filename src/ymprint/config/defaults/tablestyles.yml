@@ -1,18 +1,18 @@
 _tablestyle:
   cell-padding:
-    top: 1
-    left: 1
-    right: 1
-    bottom: 1
+    top: 7.5
+    left: 15
+    right: 15
+    bottom: 7.5
     
   headers:
     text: 
       font: Helvetica
-      size: 13
-      color: "#000000"
+      size: 12
+      color: "#ffffff"
       bold: True
     row:
-      color: "#ffffff"
+      color: "#000000"
       lines:
         - above
         - below

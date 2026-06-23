@@ -2,7 +2,7 @@ import pathlib
 from PIL import Image as PillowImg
 from reportlab.platypus import Image, Table, Paragraph
 from . import register_block
-
+from . import blockstyles
 
 
 def convert_image_block(block_key: str, block_value: dict, context: dict) -> list[Table]:
@@ -16,7 +16,7 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
             f"The image file for block '{key}' was not found: {str(image_path)}"
         )
     styles = context['styles']['rl']['_style']
-
+    caption_textstyle = blockstyles.get_text_styles().get(f'image_caption')
     caption = value['caption']
     img_width, img_height = get_photo_size(image_path)
     aspect = img_height / img_width
@@ -33,16 +33,10 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
         scaled_width = img_width * scale_ratio
         scaled_height = img_height * scale_ratio
     image_flowable = Image(str(image_path), width=scaled_width, height=scaled_height)
-    caption_para = Paragraph(caption, style=styles.get('caption', styles.get('body')))
+    caption_para = Paragraph(caption, style=caption_textstyle)
     table_data = [[image_flowable], [caption_para]]
     col_width = scaled_width
-    # col_width_spec = [col_width * page_scale]
-    # tbl = Table(table_data, colWidths=col_width_spec, repeatRows=1)
     table = Table(table_data, colWidths=[col_width])
-    # table.hAlign = 'CENTER'
-    # tbl.setStyle(TableStyle(table_commands))
-    # flowables.append(tbl)
-    # flowables.append(Spacer(width=1, height=30))
     return [table]
 
 

@@ -4,7 +4,7 @@ _style:
     color: "#111111"
     size: 24 # Optional
   body:
-    font: Times
+    # font: Times
     color: black
     size: 10 # pts
     bullets:

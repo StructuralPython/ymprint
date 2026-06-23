@@ -4,7 +4,7 @@ _style:
     color: "#222222"
     size: 24 # Optional
   body:
-    font: Times
+    font: Helvetica
     color: black
     size: 10 # pts
     spacing: 1.5 # pts

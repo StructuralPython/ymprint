@@ -76,8 +76,10 @@ def convert_table(value: list[dict], context: dict) -> list[Table]:
     for row in value:
         inner = []
         for cell in row.values():
+            print(f"{cell=}")
             template = jinja_env.from_string(str(cell))
             rendered = template.render(context['vars'])
             inner.append(rendered)
-        table_data.extend(inner)
+        table_data.append(inner)
+    print(f"{table_data=}")
     return [Table(table_data, style=table_style)]
