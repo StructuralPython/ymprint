@@ -28,10 +28,12 @@ def check_for_subelements(
             any([isinstance(elem, str) for elem in value])
             and any([isinstance(elem, dict) for elem in value])
         )
-        or ( # Not a table because dicts of different lengths
+        or not ( # Not a table because dicts of different lengths
             isinstance(value, list)
+            and all([isinstance(elem, dict) for elem in value])
             and len(set([len(elem) for elem in value])) == 1
         )
+        or not check_for_nested_lists(value, context)
         or (
             isinstance(value, dict)
         )
@@ -40,6 +42,11 @@ def check_for_subelements(
     else:
         return False
     
+def check_for_nested_lists(value: YAML_Values, context: dict):
+    """
+    Implement recursive check for nested lits
+    """
+    return True
 
 def check_for_tables(
     value: YAML_Values, context: dict

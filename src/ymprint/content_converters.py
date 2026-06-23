@@ -1,3 +1,4 @@
+from itertools import cycle
 from typing import TypeAlias, Union
 from reportlab.platypus import (
     Paragraph,
@@ -5,6 +6,7 @@ from reportlab.platypus import (
     Table,
     Image,
     HRFlowable,
+    ListFlowable,
     KeepTogether,
 )
 from reportlab.lib.units import mm
@@ -28,11 +30,13 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body") -> li
     return paras
 
 # Test
-def convert_ul(value: list[str], context: dict) -> list[Paragraph]:
+def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlowable]:
     sheet = context['styles']['rl']['_style']
     bullet_style = sheet['body']
     bul_context = context['styles']['yaml']['_style']['body']['bullets']
-    bul_symbol = bul_context['symbol']
+    bul_symbols = bul_context['symbols']
+    level_index = level % len(bul_symbols)
+    bul_symbol = bul_symbols[level_index]
     ymp_style: ReportStyles = context['styles']['ymprint']
     bul_color = ymp_style.body.bullets.rl_color
     bullet_color_hex = "#{:02x}{:02x}{:02x}".format(
@@ -42,12 +46,16 @@ def convert_ul(value: list[str], context: dict) -> list[Paragraph]:
     )
     bullet_contents = []
     for elem in value:
-        template = jinja_env.from_string(elem)
-        rendered = template.render(context['vars'])
-        bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}"><b>{bul_symbol}</b></bullet>{rendered}', bullet_style)
-        bullet_contents.append(bullet_content)
+        if isinstance(elem, list):
+            sub_bullets = convert_ul(elem, context, level=level + 1)
+            bullet_contents.append(sub_bullets)
+        else:
+            template = jinja_env.from_string(elem)
+            rendered = template.render(context['vars'])
+            bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}"><b>{bul_symbol}</b></bullet>{rendered}', bullet_style)
+            bullet_contents.append(bullet_content)
             
-    return bullet_contents
+    return [ListFlowable(bullet_contents, start=0, bulletType='bullet')]
 
 # Test
 def convert_ol(value: dict, context: dict) -> list[Paragraph]:

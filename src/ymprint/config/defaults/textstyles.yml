@@ -12,5 +12,5 @@ _style:
       font: Helvetica
       size: 12
       color: black
-      symbol: "-"
+      symbols: "-"
       spacing: 10

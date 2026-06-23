@@ -11,7 +11,11 @@ title:
     - first bullet point
     - second bullet point
     - third bullet point
+    -
+      - subbullet 1
+      - subbullet 2
     - fourth bullet point
+
   _spacer: 10
   third topic:
     - First sub paragraph leading into subheading

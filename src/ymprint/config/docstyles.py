@@ -23,7 +23,7 @@ class SpacingMixin:
 
 
 class SymbolMixin:
-    symbol: str = Field(default="-")
+    symbols: str = Field(default="-", alias='symbol')
 
 class BulletStyle(SpacingMixin, TextStyle):
     pass
