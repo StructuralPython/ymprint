@@ -88,7 +88,7 @@ class Palette:
 # Paragraph styles
 # ---------------------------------------------------------------------------
 
-def get_styles() -> dict:
+def get_text_styles():
     """
     Return a dict of ParagraphStyle objects keyed by name.
 
@@ -196,11 +196,13 @@ def _admonition_table_style(bg: colors.Color,
 
         # Vertical alignment
         ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+        ("ROUNDEDCORNERS", [4, 4, 4, 4])
+        # ROUNDEDCORNERS, [tl, tr, bl, br]
     ])
 
 
 # Pre-built table styles for each admonition kind
-_ADMONITION_TABLE_STYLES: dict[str, TableStyle] = {
+ADMONITION_TABLE_STYLES: dict[str, TableStyle] = {
     "info":    _admonition_table_style(Palette.INFO_BG,    Palette.INFO_BORDER),
     "warning": _admonition_table_style(Palette.WARNING_BG, Palette.WARNING_BORDER),
     "danger":  _admonition_table_style(Palette.DANGER_BG,  Palette.DANGER_BORDER),
@@ -244,11 +246,11 @@ def get_table_style(block_type: str) -> TableStyle:
     if block_type == "image":
         return IMAGE_TABLE_STYLE
     try:
-        return _ADMONITION_TABLE_STYLES[block_type]
+        return ADMONITION_TABLE_STYLES[block_type]
     except KeyError:
         raise ValueError(
             f"Unknown block type '{block_type}'. "
-            f"Choose from: {list(_ADMONITION_TABLE_STYLES) + ['image']}"
+            f"Choose from: {list(ADMONITION_TABLE_STYLES) + ['image']}"
         )
 
 
@@ -265,7 +267,9 @@ ADMONITION_META: dict[str, dict] = {
 }
 
 
-def admonition_title_text(kind: str) -> str:
+def admonition_title_text(kind: str, label: str | None = None) -> str:
     """Return  '⚠  WARNING'  style label string for the title row."""
     meta = ADMONITION_META[kind]
+    if label is not None:
+        return f"{meta['icon']}  {label.upper()}"
     return f"{meta['icon']}  {meta['label'].upper()}"
