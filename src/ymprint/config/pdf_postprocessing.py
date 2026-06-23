@@ -40,19 +40,23 @@ def overlay_pdf_background(
     output = mu.open()
     for i in range(document.page_count):
         document_page = document.load_page(i)
+        document_page.wrap_contents()
         out_page = output.new_page(width=page_width, height=page_height)
         if i == 0 and first_bg is not None:
             first_bg_page = first_bg.load_page(0)
+            first_bg_page.wrap_contents()
             out_page.show_pdf_page(first_bg_page.rect, first_bg, pno=0)
             out_page.show_pdf_page(document_page.rect, document, pno=i)
             continue
         if remaining_bg is not None:
             if remaining_bg.page_count == 1:
                 background_page = remaining_bg.load_page(0)
+                background_page.wrap_contents()
                 background_page_num = 0
             else:
                 try:
                     background_page = remaining_bg.load_page(i)
+                    background_page.wrap_contents()
                     background_page_num = i
                 except IndexError:
                     background_page = None
@@ -118,8 +122,6 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
         first_page_background = None
 
     remaining = context['doctemplate']['yaml']['_doc'].get('background')
-    remaining_page_background = source_parent / remaining
-
     first_page_pdf = remaining_pdf = None
     first_page_data = remaining_page_data = None
     if first_page_background is not None:
@@ -128,6 +130,7 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
         first_page_pdf.save(first_page_data)
         first_page_data.seek(0)
     if remaining is not None:
+        remaining_page_background = source_parent / remaining
         remaining_pdf = mu.open(remaining_page_background)
         remaining_page_data = io.BytesIO()
         remaining_pdf.save(remaining_page_data)
