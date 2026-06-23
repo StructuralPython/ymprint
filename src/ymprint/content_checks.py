@@ -46,7 +46,15 @@ def check_for_nested_lists(value: YAML_Values, context: dict):
     """
     Implement recursive check for nested lits
     """
-    return True
+    acc = []
+    for elem in value:
+        if isinstance(elem, list):
+            acc.extend([check_for_nested_lists(elem, context)])
+        elif isinstance(elem, str):
+            acc.extend([True])
+        else:
+            acc.extend([False])
+    return all(acc)  
 
 def check_for_tables(
     value: YAML_Values, context: dict
