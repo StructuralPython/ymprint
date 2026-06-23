@@ -1,4 +1,4 @@
-from reportlab.platypus import Table, Paragraph
+from reportlab.platypus import Table, Paragraph, Spacer
 from . import register_block
 from typing import Callable, Any
 from . import blockstyles
@@ -9,13 +9,13 @@ def generate_admonition_block(kind: str) -> Callable:
     """
     
 
-    def convert_admonition_block(block_key: str, block_value: Any, context: dict) -> list[Table]:
+    def convert_admonition_block(block_key: str, block_value: Any, context: dict) -> list[Table| Spacer]:
         # Need an admonition block style or style modification
         available_width = context['frames']['all_pages']['width']
         width_ratio = 0.8
         block_width = width_ratio * available_width
         value = block_value
-        tablestyle = blockstyles.get_table_style('info')
+        tablestyle = blockstyles.get_table_style(kind)
         body_textstyle = blockstyles.get_text_styles().get(f'admonition_{kind}_body')
         title_textstyle = blockstyles.get_text_styles().get(f'admonition_{kind}_title')
         notice = Paragraph(text=blockstyles.admonition_title_text(kind), style=title_textstyle)
@@ -25,7 +25,7 @@ def generate_admonition_block(kind: str) -> Callable:
             colWidths=[block_width],
             style=tablestyle
         )    
-        return [table]
+        return [table, Spacer(1, 10)]
     
     return convert_admonition_block
 

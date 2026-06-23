@@ -54,6 +54,7 @@ title:
       Here is some a that will go inside of a paragraph.
 
       It has a line break in it.
-    - _info:
-        Here is an info admonition
+    - _info: Here is an info admonition
+    - _warning: Here is a _warning
+    - _tip: Here is a good tip
       

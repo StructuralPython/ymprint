@@ -62,7 +62,6 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         source_yaml, 
         destination_pdf
     )
-    print(f"{context['doctemplate']['yaml']=}")
     story = build_story(source_data, context)
     if context['doctemplate']['yaml']['_doc'].get('first-page') is not None:
         story = [NextPageTemplate(1)] + story

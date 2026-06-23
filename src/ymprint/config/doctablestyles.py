@@ -77,7 +77,6 @@ class TableStyle(BaseModel):
             fontname = f"{self.headers.text.font.title()}-Bold"
         else:
             fontname = self.headers.text.font.title()
-        print(f"{self.headers.row.color=}")
         table_commands = [
             # HEADER STYLES
             ("BACKGROUND", (0, 0), (-1, 0), self.headers.row.color),
@@ -85,6 +84,7 @@ class TableStyle(BaseModel):
             ("FONTNAME", (0, 0), (-1, 0), fontname),
             ("FONTSIZE", (0, 0), (-1, 0), self.headers.text.size),
             ("LEADING", (0, 0), (-1, 0), self.headers.text.size * 1.4),
+
             # BODY STYLES
             ("FONTNAME", (0, 1), (-1, -1), self.body.text.font),
             ("FONTSIZE", (0, 1), (-1, -1), self.body.text.size),
