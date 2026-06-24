@@ -28,16 +28,11 @@ def check_for_subelements(
             any([isinstance(elem, str) for elem in value])
             and any([isinstance(elem, dict) for elem in value])
         )
-        or not ( # Not a table because dicts of different lengths
-            isinstance(value, list)
-            and all([isinstance(elem, dict) for elem in value])
-            and len(set([len(elem) for elem in value])) == 1
-        )
-        or not check_for_nested_lists(value, context)
-        or (
-            isinstance(value, dict)
-        )
     ):
+        return True
+    elif check_for_tables(value, context):
+        return False
+    elif isinstance(value, dict):
         return True
     else:
         return False
@@ -47,6 +42,8 @@ def check_for_nested_lists(value: YAML_Values, context: dict):
     Implement recursive check for nested lits
     """
     acc = []
+    if value is None or isinstance(value, (float, int)):
+        return False
     for elem in value:
         if isinstance(elem, list):
             acc.extend([check_for_nested_lists(elem, context)])
@@ -56,13 +53,44 @@ def check_for_nested_lists(value: YAML_Values, context: dict):
             acc.extend([False])
     return all(acc)  
 
+
+def check_for_ordered_nested_lists(value: YAML_Values, context: dict):
+    """
+    Implement recursive check for nested lits
+    """
+    acc = []
+    if value is None or isinstance(value, (float, int)):
+        return False
+    if not isinstance(value, dict):
+        return False
+    acc = []
+    for k, v in value.items():
+        if (
+            isinstance(k, int)
+            and
+            isinstance(v, dict)
+        ):
+            acc.extend([check_for_ordered_nested_lists(v, context)])
+        elif isinstance(v, str):
+            acc.extend([True])
+        else:
+            acc.extend([False])
+    return all(acc)  
+
+
 def check_for_tables(
     value: YAML_Values, context: dict
     ):
+    if not isinstance(value, list):
+        return False
+    if not all([isinstance(elem, dict) for elem in value]):
+        return False
+    table_keys = [tuple([k for k in elem]) for elem in value]
     if (
         isinstance(value, list)
         and all([isinstance(elem, dict) for elem in value])
         and len(set([len(elem) for elem in value])) == 1
+        and len(set(table_keys)) == 1
     ):
         return True
     else:
