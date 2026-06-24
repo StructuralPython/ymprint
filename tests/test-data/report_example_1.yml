@@ -14,6 +14,10 @@ title:
     -
       - subbullet 1
       - subbullet 2
+      -
+        - subbullet 3
+        - 
+         - subbuullet 4
     - fourth bullet point
 
   _spacer: 10
@@ -24,6 +28,9 @@ title:
         1: first numbered item
         2: second numbered item
         4: third numbered item
+        5: 
+          1: Sub item
+          2: sub item
   fourth topic:
     first sub topic: >
       Here is another paragraph.

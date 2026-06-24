@@ -9,10 +9,10 @@ _tablestyle:
     text: 
       font: Helvetica
       size: 12
-      color: "#ffffff"
+      color: "#000000"
       bold: True
     row:
-      color: "#000000"
+      color: "#ffffff"
       lines:
         - above
         - below
@@ -24,7 +24,7 @@ _tablestyle:
     rows:
       color:
         even: "#ffffff"
-        odd: "#eeeeee"
+        odd: "#ffffff"
       lines:
         - above
-        - below
+

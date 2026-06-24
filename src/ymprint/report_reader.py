@@ -14,10 +14,10 @@ from .config import ReportStyles, TableStyle, DocConfig
 from .context_builder import build_context
 from .content_checks import (
     check_for_paragraph,
-    check_for_ol,
+    check_for_ordered_nested_lists,
     check_for_subelements,
     check_for_tables,
-    check_for_ul,
+    check_for_nested_lists,
     check_for_variable,
 )
 from .content_converters import (
@@ -115,10 +115,10 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
         if check_for_paragraph(v, context):
             paragraph = convert_paragraph(v,context)
             story.extend(paragraph)
-        elif check_for_ul(v, context):
+        elif check_for_nested_lists(v, context):
             ul = convert_ul(v,context)
             story.extend(ul)
-        elif check_for_ol(v, context):
+        elif check_for_ordered_nested_lists(v, context):
             ol = convert_ol(v,context)
             story.extend(ol)
         elif check_for_tables(v, context):

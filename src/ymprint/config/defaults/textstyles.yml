@@ -10,7 +10,7 @@ _style:
     spacing: 1.5 # pts
     bullets:
       font: Helvetica
-      size: 12
+      size: 10
       color: black
-      symbols: "-"
+      symbols: "•‣⁃∘"
       spacing: 10

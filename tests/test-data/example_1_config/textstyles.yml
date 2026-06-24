@@ -8,7 +8,6 @@ _style:
     size: 10 # pts
     bullets:
       font: Helvetica
-      size: 12
+      size: 10
       color: black
-      symbol: "-"
       spacing: 1.1

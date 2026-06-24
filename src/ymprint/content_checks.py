@@ -44,6 +44,8 @@ def check_for_nested_lists(value: YAML_Values, context: dict):
     acc = []
     if value is None or isinstance(value, (float, int)):
         return False
+    if not isinstance(value, list):
+        return False
     for elem in value:
         if isinstance(elem, list):
             acc.extend([check_for_nested_lists(elem, context)])
@@ -65,6 +67,8 @@ def check_for_ordered_nested_lists(value: YAML_Values, context: dict):
         return False
     acc = []
     for k, v in value.items():
+        if not isinstance(k, int):
+            acc.extend([False])
         if (
             isinstance(k, int)
             and

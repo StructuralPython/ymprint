@@ -85,6 +85,7 @@ class TableStyle(BaseModel):
             ("FONTSIZE", (0, 0), (-1, 0), self.headers.text.size),
             ("LEADING", (0, 0), (-1, 0), self.headers.text.size * 1.4),
 
+
             # BODY STYLES
             ("FONTNAME", (0, 1), (-1, -1), self.body.text.font),
             ("FONTSIZE", (0, 1), (-1, -1), self.body.text.size),
@@ -95,4 +96,20 @@ class TableStyle(BaseModel):
             ("LEFTPADDING", (0, 0), (-1, -1), self.cell_padding.left),
             ("RIGHTPADDING", (0, 0), (-1, -1), self.cell_padding.right),
         ]
+        header_lines = []
+        for line_spec in self.headers.row.lines:
+            style_spec = (f"LINE{line_spec.upper()}", (0, 0), (-1, 0), 1, 'black')
+            header_lines.append(style_spec)
+        body_lines = []
+        for line_spec in self.body.rows.lines:
+            if line_spec == "between":
+                style_spec_1 = (f"LINEBEFORE", (0, 1), (-1, -1), 1, 'black')
+                style_spec_2 = (f"LINEAFTER", (0, 1), (-1, -1), 1, 'black')
+                table_commands.append(style_spec_1)
+                table_commands.append(style_spec_2)
+
+            style_spec = (f"LINE{line_spec.upper()}", (0, 1), (-1, -1), 1, 'black')
+            body_lines.append(style_spec)
+        table_commands.extend(header_lines)
+        table_commands.extend(body_lines)
         return RLTableStyle(table_commands)

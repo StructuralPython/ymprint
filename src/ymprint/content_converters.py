@@ -58,7 +58,7 @@ def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlow
     return [ListFlowable(bullet_contents, start=0, bulletType='bullet')]
 
 # Test
-def convert_ol(value: dict, context: dict) -> list[Paragraph]:
+def convert_ol(value: dict, context: dict, level: int = 0) -> list[ListFlowable]:
     sheet = context['styles']['rl']['_style']
     bullet_style = sheet['body']
     ymp_style: ReportStyles = context['styles']['ymprint']
@@ -70,11 +70,15 @@ def convert_ol(value: dict, context: dict) -> list[Paragraph]:
     )
     bullet_contents = []
     for idx, elem in enumerate(value.values(), start=1):
-        template = jinja_env.from_string(elem)
-        rendered = template.render(context['vars'])
-        bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}"><b>{idx}.</b></bullet>{rendered}', bullet_style)
+        if isinstance(elem, dict):
+            sub_bullets = convert_ol(elem, context, level=level + 1)
+            bullet_contents.append(sub_bullets)
+        else:
+            template = jinja_env.from_string(elem)
+            rendered = template.render(context['vars'])
+        bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}">{idx}. </bullet>{rendered}', bullet_style)
         bullet_contents.append(bullet_content)
-    return bullet_contents
+    return [ListFlowable(bullet_contents, start=0, bulletType='bullet')]
 
 # Test
 def convert_table(value: list[dict], context: dict) -> list[Table]:
