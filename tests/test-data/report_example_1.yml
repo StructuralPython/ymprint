@@ -20,11 +20,19 @@ title:
       a = 5
       b = 4
       c = math.sin(a / b)
-  _spacer_1: 20
-  _specific_observations: |
-    a = {{a}}
-    b = {{b}}
-    c = {{c}}
+  _spacer_1: $d
+  _py_1:
+    source: |
+      from matplotlib.figure import Figure
+      fig = Figure()
+      ax = fig.gca()
+      xs = [i for i in range(1, 50)]
+      ys = [x**3 - 2 * x**2 + x for x in xs]
+      ax.plot(xs, ys)
+  _matplotfig:
+    fig: $fig
+    width_ratio: 0.5
+    caption: Here is my figure
   second topic:
     - first bullet point. Result = {{c}}
     - Here is a new bullet a = {{a}}

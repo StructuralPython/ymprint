@@ -27,6 +27,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "matplotlib>=3.11.0",
     "pytest>=9.0.3",
     "rich>=15.0.0",
 ]
