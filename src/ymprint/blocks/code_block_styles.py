@@ -119,14 +119,14 @@ def register_fonts() -> None:
 # Design tokens
 # ---------------------------------------------------------------------------
 
-CODE_FONT_SIZE   = 9
-CODE_LEADING     = CODE_FONT_SIZE * 1.55
+# CODE_FONT_SIZE   = 9
+# CODE_LEADING     = CODE_FONT_SIZE * 1.55
 LINE_NUM_WIDTH   = 28          # pt — column reserved for line numbers
 GUTTER_WIDTH     = 8           # pt — gap between line numbers and code
 CELL_PAD_H       = 12          # pt — left/right padding of the outer block
 CELL_PAD_V       = 10          # pt — top/bottom padding of the outer block
-CAPTION_FONT     = "Helvetica"
-CAPTION_FONT_SIZE = 8
+# CAPTION_FONT     = "Helvetica"
+# CAPTION_FONT_SIZE = 8
 
 
 class _PaperLight:
@@ -260,12 +260,13 @@ def _tokenise_to_lines(code: str) -> list[str]:
 # Paragraph styles
 # ---------------------------------------------------------------------------
 
-def _code_line_style() -> ParagraphStyle:
+def _code_line_style(context: dict) -> ParagraphStyle:
+    body_size = context['styles']['yaml']['_style']['body']['size']
     return ParagraphStyle(
         name="code_line",
         fontName=FONT_MONO,
-        fontSize=CODE_FONT_SIZE,
-        leading=CODE_LEADING,
+        fontSize=body_size * 0.9,
+        leading=body_size * 0.9 * 1.55,
         textColor=_PaperLight.DEFAULT,
         backColor=_PaperLight.BG,
         spaceBefore=0,
@@ -277,12 +278,13 @@ def _code_line_style() -> ParagraphStyle:
     )
 
 
-def _line_number_style() -> ParagraphStyle:
+def _line_number_style(context: dict) -> ParagraphStyle:
+    body_size = context['styles']['yaml']['_style']['body']['size']
     return ParagraphStyle(
         name="code_line_number",
         fontName=FONT_MONO,
-        fontSize=CODE_FONT_SIZE,
-        leading=CODE_LEADING,
+        fontSize=body_size * 0.9,
+        leading=body_size * 0.9 * 1.55,
         textColor=_PaperLight.LINE_NUM,
         backColor=_PaperLight.GUTTER_BG,
         alignment=2,   # right-align numbers
@@ -291,12 +293,14 @@ def _line_number_style() -> ParagraphStyle:
     )
 
 
-def _caption_style() -> ParagraphStyle:
+def _caption_style(context: dict) -> ParagraphStyle:
+    body_size = context['styles']['yaml']['_style']['body']['size']
+    body_font = context['styles']['yaml']['_style']['body']['font']
     return ParagraphStyle(
         name="code_caption",
-        fontName=CAPTION_FONT,
-        fontSize=CAPTION_FONT_SIZE,
-        leading=CAPTION_FONT_SIZE * 1.4,
+        fontName=body_font,
+        fontSize=body_size * 0.8,
+        leading=body_size * 0.8 * 1.4,
         textColor=_PaperLight.CAPTION_TEXT,
         backColor=_PaperLight.CAPTION_BG,
         alignment=0,
@@ -385,6 +389,7 @@ def _outer_table_style(has_caption: bool) -> TableStyle:
 def python_code_block(
     code: str,
     col_width: float,
+    context: dict,
     *,
     caption: Optional[str] = None,
     show_line_numbers: bool = True,
@@ -424,8 +429,8 @@ def python_code_block(
     markup_lines = _tokenise_to_lines(code)
     n_lines      = len(markup_lines)
 
-    line_style   = _code_line_style()
-    lnum_style   = _line_number_style()
+    line_style   = _code_line_style(context)
+    lnum_style   = _line_number_style(context)
 
     # --- Build inner grid rows ---
     if show_line_numbers:
@@ -454,7 +459,7 @@ def python_code_block(
 
     # --- Wrap in outer table (adds padding, border, optional caption) ---
     if caption:
-        caption_para = Paragraph(f"  {_escape(caption)}", _caption_style())
+        caption_para = Paragraph(f"  {_escape(caption)}", _caption_style(context))
         outer_rows   = [[caption_para], [inner_table]]
     else:
         outer_rows = [[inner_table]]

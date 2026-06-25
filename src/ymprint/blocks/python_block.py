@@ -14,7 +14,7 @@ def convert_python_block(block_key: str, block_value: dict, context: dict) -> li
     available_width = context['frames']['all_pages']['width']
     exec(source, locals=context['vars'])
     if block_value.get("echo", True):
-        code_block = python_code_block(source, available_width * width_ratio, caption=caption, show_line_numbers=line_numbers)
+        code_block = python_code_block(source, available_width * width_ratio, context, caption=caption, show_line_numbers=line_numbers)
         return [code_block]
     return []
 

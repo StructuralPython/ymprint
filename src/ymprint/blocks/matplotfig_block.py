@@ -14,21 +14,17 @@ if TYPE_CHECKING:
 
 
 def convert_matplotfig_block(block_key: str, block_value: dict, context: dict) -> list[Table]:
-    fig: Figure = block_value['fig']
     width_ratio = block_value.get('scale_ratio', 0.8)
     scale_ratio = width_ratio
-    dpi = block_value.get("dpi", 150)
-    fig_buffer = BytesIO()
-    fig.savefig(fig_buffer, transparent=True, format='png')
-    fig_buffer.seek(0)
 
     caption_textstyle = blockstyles.get_text_styles().get(f'image_caption')
     caption = block_value.get('caption', "")
-    img_width, img_height = get_photo_size(fig_buffer)
-    aspect = img_height / img_width
     available_width = context['frames']['all_pages']['width']
     available_height = context['frames']['all_pages']['height']
-
+    fig: Figure = block_value['fig']
+    img_width_inch, img_height_inch = fig.get_size_inches()
+    img_width, img_height = img_width_inch * 72, img_height_inch * 72
+    aspect = img_height / img_width
     if img_width > available_width * scale_ratio:
         scaled_width = available_width * scale_ratio
         scaled_height = scaled_width * aspect
@@ -38,6 +34,14 @@ def convert_matplotfig_block(block_key: str, block_value: dict, context: dict) -
     else:
         scaled_width = img_width * scale_ratio
         scaled_height = img_height * scale_ratio
+    ## Don't change the size of the fig with fig.set_size_inches 
+    # because it can lead to unexpected
+    # results that would be hard to modify within the yaml.
+    # Instead, adjust the size of the resulting image by setting the
+    # table column width.
+    fig_buffer = BytesIO()
+    fig.savefig(fig_buffer, transparent=True, format='png')
+    fig_buffer.seek(0)
     image_flowable = Image(fig_buffer, width=scaled_width, height=scaled_height)
     caption_para = Paragraph(caption, style=caption_textstyle)
     table_data = [[image_flowable], [caption_para]]
