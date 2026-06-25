@@ -31,7 +31,7 @@ title:
       ax.plot(xs, ys)
   _matplotfig:
     fig: $fig
-    width_ratio: 0.5
+    scale_ratio: 0.5
     caption: Here is my figure
   second topic:
     - first bullet point. Result = {{c}}

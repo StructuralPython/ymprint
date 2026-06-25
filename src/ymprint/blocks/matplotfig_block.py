@@ -15,9 +15,8 @@ if TYPE_CHECKING:
 
 def convert_matplotfig_block(block_key: str, block_value: dict, context: dict) -> list[Table]:
     fig: Figure = block_value['fig']
-    width_ratio = block_value.get('width_ratio', 0.8)
+    width_ratio = block_value.get('scale_ratio', 0.8)
     scale_ratio = width_ratio
-    print(f"{scale_ratio=}")
     dpi = block_value.get("dpi", 150)
     fig_buffer = BytesIO()
     fig.savefig(fig_buffer, transparent=True, format='png')
@@ -34,7 +33,7 @@ def convert_matplotfig_block(block_key: str, block_value: dict, context: dict) -
         scaled_width = available_width * scale_ratio
         scaled_height = scaled_width * aspect
     elif img_height > available_height * scale_ratio:
-        scaled_height = available_height * 0.9
+        scaled_height = available_height * scale_ratio
         scaled_width = scaled_height / aspect
     else:
         scaled_width = img_width * scale_ratio
@@ -43,7 +42,6 @@ def convert_matplotfig_block(block_key: str, block_value: dict, context: dict) -
     caption_para = Paragraph(caption, style=caption_textstyle)
     table_data = [[image_flowable], [caption_para]]
     col_width = scaled_width
-    print(f"{col_width=}")
     table = Table(table_data, colWidths=[col_width])
     return [table]
 
