@@ -107,7 +107,7 @@ def live(
         f"Ctrl+C to quit[/dim]\n"
     )
     load_report(source, destination, config_dir)
-    okular_sub = subprocess.Popen(['okular', str(destination)])
+    okular_sub = subprocess.Popen(['okular', str(destination)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     status = ""
     with Live(
         build_display(state, status),
