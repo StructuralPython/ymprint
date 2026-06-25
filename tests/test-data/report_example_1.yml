@@ -14,7 +14,7 @@ title:
     echo: true
     caption: Calculate a ratio
     line_numbers: false
-    width_ratio: 0.8
+    # width_ratio: 1.0
     source: |
       import math
       a = 5
@@ -22,9 +22,9 @@ title:
       c = math.sin(a / b)
   _spacer_1: 20
   _specific_observations: |
-    a = 5
-    b = 4
-    c = 
+    a = {{a}}
+    b = {{b}}
+    c = {{c}}
   second topic:
     - first bullet point. Result = {{c}}
     - Here is a new bullet a = {{a}}
