@@ -1,6 +1,6 @@
 _doc:
-  page-size: tabloid
-  landscape: true
+  page-size: a4
+  landscape: false
   margins:
     top: 84
     left: 84

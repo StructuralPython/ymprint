@@ -1,3 +1,6 @@
+_vars:
+  d: 5
+  f: hello
 title: 
   first topic: >
     Here is the start of a new paragraph of text. Any text can be written Here
@@ -6,11 +9,26 @@ title:
 
     Here is the second paragraph of the first topic.
 
-    Here is more on another paragrah
+    Her ei sa var {{f}} Here is more on another paragrah. Here is the result
+  _py:
+    echo: true
+    caption: Calculate a ratio
+    line_numbers: false
+    width_ratio: 0.8
+    source: |
+      import math
+      a = 5
+      b = 4
+      c = math.sin(a / b)
+  _spacer_1: 20
+  _specific_observations: |
+    a = 5
+    b = 4
+    c = 
   second topic:
-    - first bullet point
-    - second bullet point
-    - third bullet point
+    - first bullet point. Result = {{c}}
+    - Here is a new bullet a = {{a}}
+    - third bullet point From the vars = {{d}}
     -
       - subbullet 1
       - subbullet 2
@@ -20,7 +38,7 @@ title:
          - subbuullet 4
     - fourth bullet point
 
-  _spacer: 10
+
   third topic:
     - First sub paragraph leading into subheading
     - Third paragraph here.
@@ -31,7 +49,7 @@ title:
         5: 
           1: Sub item
           2: sub item
-  fourth topic:
+  An actual topic:
     first sub topic: >
       Here is another paragraph.
 
@@ -39,7 +57,7 @@ title:
 
       The line breaks like a poem
       are 
-      abritrary, like a
+      <i>artistic</i>, like a
       poem.
     Preformatted text: |
       Here are some lines
@@ -54,5 +72,11 @@ title:
       Location: GL A/2+
     - Item: 3.03
       Description: Third problem encountered
+      Location: GL A/3-
+    - Item: 3.04
+      Description: Fourth problem encountered
+      Location: GL A/3-
+    - Item: 3.04
+      Description: Fourth problem encountered
       Location: GL A/3-
       

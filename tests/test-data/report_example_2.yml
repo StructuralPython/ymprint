@@ -1,6 +1,6 @@
 _vars:
-  report_number: "124"
-  project_number: 1593
+  report_number: 145
+  project_number: 1753
   project_name: Current Project
   engineer: Structural Python
   date: 2026-06-12
@@ -45,7 +45,7 @@ title:
       abritrary, like a
       poem.
     _hrule:
-      width: 0.5
+      width: 1.0
     _img_1: 
       path: test_image.png
       caption: Here is my first image
