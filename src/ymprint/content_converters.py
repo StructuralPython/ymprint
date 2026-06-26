@@ -19,6 +19,7 @@ jinja_env = Environment(undefined=DebugUndefined)
 def convert_paragraph(value: str, context: dict, text_style: str = "body") -> list[Paragraph]:
     """Returns a Paragraph obj"""
     style = context["styles"]["rl"]['_style'][text_style]
+    print(f"{value=}")
     paragraphs = value.split("\n")
     paras = []
     for para in paragraphs:

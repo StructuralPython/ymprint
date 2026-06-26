@@ -21,21 +21,37 @@ def check_for_none(value: YAML_Values, context: dict) -> bool:
 
 
 def check_for_subelements(
-    value: YAML_Values, context: dict):
-    if (
-        isinstance(value, list)
-        and ( # A combination of str and dicts
-            any([isinstance(elem, str) for elem in value])
-            and any([isinstance(elem, dict) for elem in value])
-        )
+    value: YAML_Values, context: dict
+):
+    if not any(
+        [
+            check_for_nested_lists(value, context),
+            check_for_paragraph(value, context),
+            check_for_none(value, context),
+            check_for_variable(value, context),
+            check_for_tables(value, context)
+        ]
     ):
-        return True
-    elif check_for_tables(value, context):
-        return False
-    elif isinstance(value, dict):
         return True
     else:
         return False
+    # if (
+    #     isinstance(value, list)
+    #     and ( # A combination of str and dicts
+    #         any([isinstance(elem, str) for elem in value])
+    #         and (
+    #             any([isinstance(elem, dict) for elem in value])
+    #             or any([elem is None for elem in value])
+    #         )
+    #     )
+    # ):
+    #     return True
+    # elif check_for_tables(value, context):
+    #     return False
+    # elif isinstance(value, dict):
+    #     return True
+    # else:
+    #     return False
     
 def check_for_nested_lists(value: YAML_Values, context: dict):
     """

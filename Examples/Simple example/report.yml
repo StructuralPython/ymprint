@@ -1,0 +1,42 @@
+Report title: 
+  - > 
+    Here is the first paragraph. You will notice that I have used the `-` character to create
+    a YAML list. Under the first list item, I have also used the `>` character which tells
+    the parser that you plan on entering a multi-line string that is to be word-wrapped. 
+
+    You can insert linebreaks wherever you want within the YAML
+    source but new paragraphs won't be created unless you put use two new line characters.
+
+  - Sub-heading: >
+     In order to create a report structure of Heading -> Paragraph -> Subheading, we have to 
+     use lists. This is because a YAML key can only have one value. A Paragraph and a Subheading
+     coming under the top level heading is effectively two values for the YAML Heading key.
+
+     However, if you want to have a structure of Heading -> Paragraph, Heading -> Paragraph, then
+     you can use a simple, key: value structure.
+
+  - Standard content types:
+    - Bullets:
+      - Bullet 1
+      - Bullet 2
+      - Bullet 3
+      - - Bullet 4
+        - Bullet 5
+        - Bullet 6
+    - Ordered list:
+      1: First Item
+      2: Second item
+      3: 
+         1: Fourth item 
+         6: Fifth item
+         10: Sixth Item
+    - Tables:
+      - Item Number: 12.01
+        Description: There is a problem here. This report documents it.
+        Location: Under the stairs
+      - Item Number: 12.02
+        Description: There are five ladybugs on the table cloth
+        Location: Kitchen
+      - Item Number: 45
+        Description: The item numbers are arbitray values you structure.
+        Location: This table

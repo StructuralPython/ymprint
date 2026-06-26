@@ -46,9 +46,14 @@ def build_display(state: ThrobberState, status: str) -> Text:
 
 @app.command(
     name='convert',
+    short_help="Convert will render a single YAML file to a PDF file.",
     no_args_is_help=True
 )
-def convert(src: str, dest: str | None = None, config_dir: str | None = None):
+def convert(
+    src: str, 
+    dest: str | None = None, 
+    config_dir: str | None = None
+    ):
     source = Path(src)
     destination = Path(dest) if dest is not None else None
     if destination is None:

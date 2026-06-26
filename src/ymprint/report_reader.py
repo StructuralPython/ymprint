@@ -8,6 +8,7 @@ from .blocks import page_break_block
 from .blocks import spacer_block
 from .blocks import hrule_block
 from .blocks import python_block
+from .blocks import json_block
 from .blocks import matplotfig_block
 from .blocks import get_block_callable, list_blocks, convert_blocks
 from .config.config_loaders import load_report_config
@@ -105,8 +106,9 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
                 continue
             else:
                 heading_style_name = f"h{level}"
-                heading = convert_paragraph(k, context, heading_style_name)
-                story.extend(heading)
+                if check_for_paragraph(k, context):
+                    heading = convert_paragraph(k, context, heading_style_name)
+                    story.extend(heading)
 
         if check_for_variable(v, context):
             raise YMPrintSyntaxException(
@@ -117,6 +119,7 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             paragraph = convert_paragraph(v,context)
             story.extend(paragraph)
         elif check_for_nested_lists(v, context):
+            print(f"{v=}")
             ul = convert_ul(v,context)
             story.extend(ul)
         elif check_for_ordered_nested_lists(v, context):
@@ -126,6 +129,8 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             table = convert_table(v,context)
             story.extend(table)
         elif check_for_subelements(v, context):
+            # print(f"{check_for_subelements(v, context)=}")
+            print(f"{v=}")
             story.extend(build_story(v, context, level = level + 1))
             continue
         else:
