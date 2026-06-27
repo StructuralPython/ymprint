@@ -355,6 +355,7 @@ def _outer_table_style(has_caption: bool) -> TableStyle:
         ("TOPPADDING",    (0, 0), (-1, -1), 0),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
         ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+        ("ROUNDEDCORNERS", [4, 4, 4, 4])
     ]
 
     if has_caption:

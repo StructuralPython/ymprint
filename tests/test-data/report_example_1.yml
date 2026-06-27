@@ -11,9 +11,9 @@ title:
 
     Her ei sa var {{f}} Here is more on another paragrah. Here is the result
   _py:
-    # echo: false
-    caption: Calculate a ratio
-    line_numbers: false
+    echo: true
+    # caption: Calculate a ratio
+    line_numbers: true
     # width_ratio: 1.0
     source: |
       import math

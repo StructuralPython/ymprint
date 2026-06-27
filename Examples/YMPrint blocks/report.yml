@@ -4,24 +4,37 @@ Using Blocks:
     content types you might expect to see in markdown, e.g. images or code blocks, or extensions to common
     markdown such as admonitions.
 
-  - Images:
+  - Images (_img):
     _img:
       src: catpuccin.png # Either relative or absolute path. Relative paths are relative to the .yml report file.
       caption: "Figure 1: The catpuccin cat"
       scale_ratio: 0.5
   - Admonitions:
+    - "The following admonitions blocks are available:"
+    -
+      - _info
+      - _warning
+      - _danger
+      - _tip
+      - _note
+    - They are rendered below
+
     _info: Here is an "info" admonition
     _warning: Here is a "warning" admonition
     _danger: Here is a danger admonition
     _tip: Here is a helpful tip
     _note: This is useful when you want to give a note
-  - Block quotes:
+  - Block quotes (_blockquote):
     _blockquote: 
         quote: “What you do makes a difference, and you have to decide what kind of difference you want to make.”
         attribution: Jane Goodall
-  - Horizontal rules:
+  - Page breaks (_pagebreak):
     - >
-      Unlike a standard horizontal which does not have properties you can adjust,
+      You can insert an arbitrary page break using _pagebreak, such as the one below. _pagebreak accepts null as a value.
+    - _pagebreak: null
+  - Horizontal rules (_hrule):
+    - >
+      Unlike a horizontal rule in Markdown (which does not have properties you can adjust)
       the `_hrule` block in YMPrint has optional parameters like width_ratio,
       thickness, cap, and color that you can manipulate.
     - _hrule_default: null
@@ -43,10 +56,10 @@ Using Blocks:
         thickness: 6
         color: "#dddd22"
         cap: round
-  - Vertical spacers:
+  - Vertical spacers (_spacer):
     - >
       You can create arbitrary amounts of vertical white space so you can manually
-      the location of your content.
+      adjust the positioning of your content.
 
       The `_spacer` object accepts a distance in points for the amount of vertical
       space to insert.
@@ -60,29 +73,43 @@ Using Blocks:
     - There is a 20 pt spacer above
     - _spacer: 40
     - There is a 40 pt spacer above
-  - Executable code Blocks:
+  - Executable code Blocks (_py):
     - >
-      YMPrint is a Python application and library that can execute arbitrary
-      Python code within a code block using the `_py` block.
+      In a `_py` code block, Python code will be executed using `exec()` with the "vars"
+      dictionary from the document context passed in as its global scope and an optional namespace
+      dictionary as its local scope. If no namespace is passed, the "vars" dictionary will be the local
+      scope.
+      
+      Any "_vars" you set in your document
+      front matter will be available to your Python code and any variables you create in your
+      Python code will be available to your document vars.
 
-      In a `_py` block, the code is <i>always</i> executed but can be
-      <i>optionally</i> displayed by using the `echo: true` parameter.
-
-      When `_py` blocks are executed, all variables created are added to the
-      `vars` key within the document context. This allows you to dynamically
-      compute values to be displayed within your report and to create Python objects
-      that you may pass to other blocks as parameters.
-
-      The `_py` block has additional display parameters such as `caption` and `line_numbers`
-      that apply when `echo: true` is set.
+      The Python environment used to execute is the same environment that YMPrint is running insert.
+      At this time, external Python subprocesses have not been implemented.
 
     - _py:
         echo: true
-        caption: This code block is set to be visible and is always executed.
+        caption: >
+          Once this code executes, the variables will be accessible from the "vars" key in the document context under
+          a namespace called py1.
         line_numbers: true
+        namespace: py1
         source: |
           import math
           a = 3
           b = 4
           c = math.sin(a/b)
-    - 
+    - "Now, the values of the variables a, b, and c can be included in the document:"
+    -
+      - a = {{py1.a}} (using py1.a)
+      - b = {{py1.b}} (using py1.b)
+      - c = {{py1.c}} (using py1.c)
+  - Dynamic JSON variables (_loadjson):
+    - >
+      You can dynamically build your vars context by including a _loadjson block in your
+      document. 
+
+      Similar to the _py block, you can pass an optional namespace parameter to load the 
+      variables into a namespace under the vars dictionary. If no namespace is passed,
+      then the variables will be available under the vars dictionary.
+    - _loadjson:

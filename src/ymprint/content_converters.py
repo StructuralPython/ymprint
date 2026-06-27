@@ -9,6 +9,7 @@ from reportlab.platypus import (
     ListFlowable,
     KeepTogether,
 )
+from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from jinja2 import Template, Environment, DebugUndefined
 from ymprint.config.docstyles import ReportStyles
@@ -31,8 +32,13 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body") -> li
 
 # Test
 def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlowable]:
+    text_spacing = context['styles']['ymprint'].body.spacing
+    text_size = context['styles']['ymprint'].body.size
+    space_around = text_spacing * text_size / 2
     sheet = context['styles']['rl']['_style']
-    bullet_style = sheet['body']
+    bullet_style: ParagraphStyle = sheet['body']
+    # bullet_style.spaceAfter = space_around
+    # bullet_style.spaceBefore = space_around
     bul_context = context['styles']['yaml']['_style']['body']['bullets']
     bul_symbols = bul_context['symbols']
     level_index = level % len(bul_symbols)
@@ -55,7 +61,7 @@ def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlow
             bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}"><b>{bul_symbol}</b></bullet>{rendered}', bullet_style)
             bullet_contents.append(bullet_content)
             
-    return [ListFlowable(bullet_contents, start=0, bulletType='bullet')]
+    return [ListFlowable(bullet_contents, start=0, bulletType='bullet', spaceAfter=space_around)]
 
 # Test
 def convert_ol(value: dict, context: dict, level: int = 0) -> list[ListFlowable]:

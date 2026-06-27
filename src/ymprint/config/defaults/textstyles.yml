@@ -7,7 +7,7 @@ _style:
     font: Helvetica
     color: black
     size: 10 # pts
-    spacing: 1.5 # pts
+    spacing: 1.7 # pts
     bullets:
       font: Helvetica
       size: 10
