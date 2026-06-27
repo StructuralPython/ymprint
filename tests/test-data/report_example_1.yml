@@ -11,7 +11,7 @@ title:
 
     Her ei sa var {{f}} Here is more on another paragrah. Here is the result
   _py:
-    echo: true
+    # echo: false
     caption: Calculate a ratio
     line_numbers: false
     # width_ratio: 1.0
@@ -20,6 +20,8 @@ title:
       a = 5
       b = 4
       c = math.sin(a / b)
+  Example: 
+    Here is the text with the results | a = {{a}} b = {{b}}
   _spacer_1: $d
   _py_1:
     source: |
@@ -31,8 +33,8 @@ title:
       ax.plot(xs, ys)
   _matplotfig:
     fig: $fig
-    scale_ratio: 0.85
-    caption: Here is my figure
+    scale_ratio: 0.5
+    caption: Figure 1:Here is my figure
   second topic:
     - first bullet point. Result = {{c}}
     - Here is a new bullet a = {{a}}

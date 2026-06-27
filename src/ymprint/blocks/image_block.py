@@ -10,7 +10,7 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
     value = block_value
     scale_ratio = value.get('scale_ratio', 1)
     source_path = pathlib.Path(context['source_path']).parent
-    image_path = source_path / pathlib.Path(value['path'])
+    image_path = source_path / pathlib.Path(value['src'])
     if not image_path.exists():
         raise FileNotFoundError(
             f"The image file for block '{key}' was not found: {str(image_path)}"

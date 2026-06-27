@@ -47,7 +47,7 @@ title:
     _hrule:
       width: 1.0
     _img_1: 
-      path: test_image.png
+      src: test_image.png
       caption: Here is my first image
   fifth topic:
     - >

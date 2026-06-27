@@ -83,6 +83,11 @@ class Palette:
     NOTE_TEXT   = colors.HexColor("#3B0764")
     NOTE_ICON   = "✎"
 
+ # Blockquote  (neutral slate)
+    BLOCKQUOTE_BG          = colors.HexColor("#F8F9FA")
+    BLOCKQUOTE_BORDER      = colors.HexColor("#444444")   # slate-400
+    BLOCKQUOTE_TEXT        = colors.HexColor("#374151")   # slate-700
+    BLOCKQUOTE_ATTRIBUTION = colors.HexColor("#6B7280")   # slate-500
 
 # ---------------------------------------------------------------------------
 # Paragraph styles
@@ -140,6 +145,30 @@ def get_text_styles():
             textColor=body_color,
             **_admonition_body_defaults,
         )
+
+    # Blockquote — quote body (italic, indented feel via left padding on the table)
+    styles["blockquote_body"] = ParagraphStyle(
+        name="blockquote_body",
+        fontName=FONT_ITALIC,
+        fontSize=BODY_FONT_SIZE + 1,        # slightly larger feels more editorial
+        leading=(BODY_FONT_SIZE + 1) * 1.5, # generous leading for readability
+        textColor=Palette.BLOCKQUOTE_TEXT,
+        spaceAfter=0,
+        spaceBefore=0,
+    )
+
+    # Blockquote — optional attribution line  ("— Author Name")
+    styles["blockquote_attribution"] = ParagraphStyle(
+        name="blockquote_attribution",
+        fontName=FONT_NORMAL,
+        fontSize=BODY_FONT_SIZE - 1,
+        leading=(BODY_FONT_SIZE - 1) * 1.4,
+        textColor=Palette.BLOCKQUOTE_ATTRIBUTION,
+        spaceAfter=0,
+        spaceBefore=6,
+        alignment=2,   # right-align attribution
+    )
+
 
     # Image caption
     styles["image_caption"] = ParagraphStyle(
@@ -201,6 +230,40 @@ def _admonition_table_style(bg: colors.Color,
     ])
 
 
+# Blockquote table style
+# Layout: 1 column, 1–2 rows
+#   row 0 — quote body text (required)
+#   row 1 — attribution     (optional; omit the row if no attribution)
+BLOCKQUOTE_ACCENT_WIDTH = 5   # slightly thicker than admonition bars
+ 
+BLOCKQUOTE_TABLE_STYLE = TableStyle([
+    # Subtle background tint
+    ("BACKGROUND",    (0, 0), (-1, -1), Palette.BLOCKQUOTE_BG),
+ 
+    # Thick left accent bar — the defining visual of a blockquote
+    ("LINEBEFORE",    (0, 0), (0, -1), BLOCKQUOTE_ACCENT_WIDTH, Palette.BLOCKQUOTE_BORDER),
+ 
+    # No outer box, no grid — keep it clean and "open"
+    ("BOX",           (0, 0), (-1, -1), 0, colors.transparent),
+    ("INNERGRID",     (0, 0), (-1, -1), 0, colors.transparent),
+ 
+    # Generous horizontal padding to offset the accent bar visually
+    ("LEFTPADDING",   (0, 0), (-1, -1), 14),
+    ("RIGHTPADDING",  (0, 0), (-1, -1), 12),
+ 
+    # Vertical padding: roomy on the quote body
+    ("TOPPADDING",    (0, 0), (0,  0),  10),
+    ("BOTTOMPADDING", (0, 0), (0,  0),  6),
+ 
+    # Attribution row (row 1) sits tight to the quote
+    ("TOPPADDING",    (0, 1), (0, -1),  0),
+    ("BOTTOMPADDING", (0, 1), (0, -1),  10),
+    ("ROUNDEDCORNERS", [4, 4, 4, 4]),
+
+    ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+])
+
+
 # Pre-built table styles for each admonition kind
 ADMONITION_TABLE_STYLES: dict[str, TableStyle] = {
     "info":    _admonition_table_style(Palette.INFO_BG,    Palette.INFO_BORDER),
@@ -233,24 +296,26 @@ IMAGE_TABLE_STYLE = TableStyle([
 def get_table_style(block_type: str) -> TableStyle:
     """
     Return the TableStyle for a given block type.
-
+ 
     Parameters
     ----------
     block_type : str
         One of: "info", "warning", "danger", "tip", "note", "image"
-
+ 
     Returns
     -------
     TableStyle
     """
     if block_type == "image":
         return IMAGE_TABLE_STYLE
+    if block_type == "blockquote":
+        return BLOCKQUOTE_TABLE_STYLE
     try:
         return ADMONITION_TABLE_STYLES[block_type]
     except KeyError:
+        valid = list(ADMONITION_TABLE_STYLES) + ["blockquote", "image"]
         raise ValueError(
-            f"Unknown block type '{block_type}'. "
-            f"Choose from: {list(ADMONITION_TABLE_STYLES) + ['image']}"
+            f"Unknown block type '{block_type}'. Choose from: {valid}"
         )
 
 

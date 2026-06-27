@@ -30,3 +30,7 @@ def parse_width(value: float) -> str:
         return f"{value * 100}%"
     else:
         return value
+    
+
+class YMPrintValueError(ValueError):
+    pass

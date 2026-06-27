@@ -1,0 +1,26 @@
+Using Blocks: 
+  - >
+    YMPrint uses a special "block syntax" for defining custom content types. Some of these are similar to 
+    content types you might expect to see in markdown, e.g. images or code blocks, or extensions to common
+    markdown such as admonitions.
+
+  - Images:
+    _img:
+      src: catpuccin.png # Either relative or absolute path. Relative paths are relative to the .yml report file.
+      caption: "Figure 1: The catpuccin cat"
+      scale_ratio: 0.5
+  - Admonitions:
+    _info: Here is an "info" admonition
+    _warning: Here is a "warning" admonition
+    _danger: Here is a danger admonition
+    _tip: Here is a helpful tip
+    _note: This is useful when you want to give a note
+  - Block quotes:
+    _blockquote: 
+        quote: “What you do makes a difference, and you have to decide what kind of difference you want to make.”
+        attribution: Jane Goodall
+  - Horizontal rules:
+    _hrule:
+      width: 0.6
+      thickness: 2
+      color: "#bb3322"

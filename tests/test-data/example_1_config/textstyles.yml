@@ -2,7 +2,7 @@ _style:
   headings:
     font: Helvetica
     color: "#111111"
-    size: 24 # Optional
+    ratio: major second
   body:
     color: black
     size: 10 # pts
