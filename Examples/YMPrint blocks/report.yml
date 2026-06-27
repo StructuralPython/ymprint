@@ -20,7 +20,69 @@ Using Blocks:
         quote: “What you do makes a difference, and you have to decide what kind of difference you want to make.”
         attribution: Jane Goodall
   - Horizontal rules:
-    _hrule:
-      width: 0.6
-      thickness: 2
-      color: "#bb3322"
+    - >
+      Unlike a standard horizontal which does not have properties you can adjust,
+      the `_hrule` block in YMPrint has optional parameters like width_ratio,
+      thickness, cap, and color that you can manipulate.
+    - _hrule_default: null
+    - _hrule_red:
+        width_ratio: 0.8
+        thickness: 2
+        color: "#bb3322"
+    - _hrule_blue:
+        width_ratio: 0.6
+        thickness: 3
+        color: "#4422dd"
+        cap: round
+    - _hrule_green:
+        width_ratio: 0.4
+        thickness: 4
+        color: "#22dd44"
+    - _hrule_yellow:
+        width_ratio: 0.2
+        thickness: 6
+        color: "#dddd22"
+        cap: round
+  - Vertical spacers:
+    - >
+      You can create arbitrary amounts of vertical white space so you can manually
+      the location of your content.
+
+      The `_spacer` object accepts a distance in points for the amount of vertical
+      space to insert.
+
+      Below, a spacer is inserted in between each line of text
+    - _spacer: 5
+    - There is a 5 pt spacer above
+    - _spacer: 10
+    - There is a 10 pt spacer above
+    - _spacer: 20
+    - There is a 20 pt spacer above
+    - _spacer: 40
+    - There is a 40 pt spacer above
+  - Executable code Blocks:
+    - >
+      YMPrint is a Python application and library that can execute arbitrary
+      Python code within a code block using the `_py` block.
+
+      In a `_py` block, the code is <i>always</i> executed but can be
+      <i>optionally</i> displayed by using the `echo: true` parameter.
+
+      When `_py` blocks are executed, all variables created are added to the
+      `vars` key within the document context. This allows you to dynamically
+      compute values to be displayed within your report and to create Python objects
+      that you may pass to other blocks as parameters.
+
+      The `_py` block has additional display parameters such as `caption` and `line_numbers`
+      that apply when `echo: true` is set.
+
+    - _py:
+        echo: true
+        caption: This code block is set to be visible and is always executed.
+        line_numbers: true
+        source: |
+          import math
+          a = 3
+          b = 4
+          c = math.sin(a/b)
+    - 

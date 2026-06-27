@@ -119,7 +119,6 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             paragraph = convert_paragraph(v,context)
             story.extend(paragraph)
         elif check_for_nested_lists(v, context):
-            print(f"{v=}")
             ul = convert_ul(v,context)
             story.extend(ul)
         elif check_for_ordered_nested_lists(v, context):
@@ -129,8 +128,6 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             table = convert_table(v,context)
             story.extend(table)
         elif check_for_subelements(v, context):
-            # print(f"{check_for_subelements(v, context)=}")
-            print(f"{v=}")
             story.extend(build_story(v, context, level = level + 1))
             continue
         else:
