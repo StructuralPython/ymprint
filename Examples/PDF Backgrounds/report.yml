@@ -1,0 +1,7 @@
+Custom styling with PDF backgrounds:
+  - >
+    You can design your own custom templates on an external PDF document and use it as a background for your YMPrint document.
+
+  - Auto-populated PDF form fields from variables: >
+      One of the original design intents of inline document variables is to use them to dynamically populate PDF 
+      form fields 
