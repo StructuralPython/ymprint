@@ -113,3 +113,9 @@ Using Blocks:
       variables into a namespace under the vars dictionary. If no namespace is passed,
       then the variables will be available under the vars dictionary.
     - _loadjson:
+        path: extra_vars.json
+        namespace: extra_vars
+    - "Here are the values of the vars contained within the 'extravars' namespace:"
+    -
+      - bn = {{extra_vars.bn}}
+      - dx = {{extra_vars.dx}}

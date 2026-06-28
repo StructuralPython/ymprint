@@ -1,0 +1,46 @@
+_vars:
+  a: "hello"
+  b: true
+  c: 23
+  d: -0.013
+  e: {'key': 'value'}
+Document Variables (_vars): 
+  - >
+    When creating a report yaml document, you have the option to include document-level variables by using the 
+    '_vars' key in the root of the document.
+
+    These variables can be rendered as part of your strings (using jinja) within the report content using the double-braces 
+    (e.g. {% raw %}{{variable_name}}{% endraw%}). When rendered using jinja, all values are stringified and only the string 
+    representation is shown (i.e. the result of str(var)).
+    
+    This document has five variables defined, a, b, c, d, e.
+  - _spacer: 0 # The use of a "0-spacer" is a hack to prevent the paragraph above being interpreted as a bullet point.
+
+  - - a = {{a}}
+    - b = {{b}}
+    - c = {{c}}
+    - d = {{d}}
+    - e = {{e}}
+  - Passing Python Objects: >
+      It is also possible to pass variable data as Python objects to blocks (see "YMPrint blocks") using the $var syntax (similar to bash).
+
+      You cannot use the dollar-sign variable name syntax (e.g. $varname) within content that is to be displayed (if attempted, an
+      error will be raised). The intended use-case is for passing data within the document to be used as <i>block parameters</i>.
+
+      For example, you might want to have some consistent spacer used throughout your document. Instead of typing "_spacer: 5" at all
+      locations, you can instead set a variable in the _vars to something like "small_space: 5" and employ the variable at each spacer
+      as such: "_spacer: $small_space".
+
+      The data you set in the _vars key can be any of the native YAML datatypes: str, int, float, null/None, bool, list, and dict.
+  - Computing new Python objects within code: >
+      It is also possible to use a _py code block (see "YMPrint blocks") to create variables of arbitrary classes/datatypes and pass
+      that data to block parameters.
+
+      A ready example of this would be the _matplotfig block which has a "fig" parameter that expects a matplotlib figure. 
+
+      You would first generate the figure in a _py block and assign the generated figure to a variable. You would then use the
+      dollar-sign syntax to pass that computed variable into the "fig" parameter of the _matplotfig code block (see YMPrint blocks
+      for details.)
+    
+
+  
