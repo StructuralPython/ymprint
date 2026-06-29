@@ -61,14 +61,12 @@ def overlay_pdf_background(
                 except IndexError:
                     background_page = None
             out_page.show_pdf_page(background_page.rect, remaining_bg, pno=background_page_num)
-        else:
-            out_page.show_pdf_page(document_page.rect, document, pno=i)
+        out_page.show_pdf_page(document_page.rect, document, pno=i)
     output.save(destination_path)
 
         
 
 def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO]:
-    print("RUNNING")
     first_data = pdf_backgrounds['first']
     remaining_data = pdf_backgrounds['remaining']
     first_bg = remaining_bg = None

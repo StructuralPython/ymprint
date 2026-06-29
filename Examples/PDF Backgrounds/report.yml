@@ -1,10 +1,15 @@
 _doc:
   background: background.pdf
 _vars:
-  field_a: cat
-  field_b: hat
-  field_c: rat
-  field_d: sat
+  field_a: 1645
+  field_b: 99 Sycamore St, Canada
+  field_c: $4434.04
+  field_d: An enormous moose
+_style:
+  body:
+    size: 9
+  headings:
+    ratio: major second
 Custom styling with PDF backgrounds:
   - >
     You can design your own custom templates in an external PDF document and use it as a background for your YMPrint document
@@ -23,4 +28,4 @@ Custom styling with PDF backgrounds:
     If you want to avoid this behaviour:
       - Make sure that none of your variable names match your field names (i.e. using a special naming convention for your form field names to prevent accidental clashes)
       - Do not use form fields
-      - Example: The form fields below have been populated from the document vars
+    Example: The form fields below have been populated from the document vars
