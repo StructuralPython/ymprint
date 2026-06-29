@@ -68,12 +68,13 @@ def overlay_pdf_background(
         
 
 def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO]:
+    print("RUNNING")
     first_data = pdf_backgrounds['first']
     remaining_data = pdf_backgrounds['remaining']
     first_bg = remaining_bg = None
     if first_data is not None:
         first_bg = mu.open(stream=first_data)
-    if remaining_bg is not None:
+    if remaining_data is not None:
         remaining_bg = mu.open(stream=remaining_data)
 
     if first_bg is None and remaining_bg is None:
@@ -84,16 +85,13 @@ def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None
     indexes = ['first', 'remaining']
     for idx, doc in enumerate(docs):
         if doc is None:
-
             out_docs[indexes[idx]] = None
             continue
 
-        for page in doc:
+        for page in doc.pages():
             widget = page.first_widget
             while widget is not None:
                 name = widget.field_name
-                if name == "report_number":
-                    widget.text_fontsize = 32
                 widget_value = vars.get(name, None)
                 # THIS IS TRICKY
                 if widget_value is not None:

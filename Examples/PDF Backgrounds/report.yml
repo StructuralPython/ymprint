@@ -1,7 +1,26 @@
+_doc:
+  background: background.pdf
+_vars:
+  field_a: cat
+  field_b: hat
+  field_c: rat
+  field_d: sat
 Custom styling with PDF backgrounds:
   - >
-    You can design your own custom templates on an external PDF document and use it as a background for your YMPrint document.
+    You can design your own custom templates in an external PDF document and use it as a background for your YMPrint document
+    (as you can see in this document). The fields are populated and the form fields are flattened so that the populated values
+    look like normal PDF content.
+
+    The PDF content from the report is overlayed on top of the existing document content in the background.
 
   - Auto-populated PDF form fields from variables: >
       One of the original design intents of inline document variables is to use them to dynamically populate PDF 
-      form fields 
+      form fields. By doing so, you can create documents with dynamic headers that give the illusion of working with
+      a more sophisticated page layout software.
+
+      Form fields are _automatically_ populated when a document variable name exactly matches the PDF form field name.
+
+    If you want to avoid this behaviour:
+      - Make sure that none of your variable names match your field names (i.e. using a special naming convention for your form field names to prevent accidental clashes)
+      - Do not use form fields
+      - Example: The form fields below have been populated from the document vars
