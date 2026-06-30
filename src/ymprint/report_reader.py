@@ -82,7 +82,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     )
 
 
-def build_story(source_data: dict | list, context: dict, level: int = 1) -> list:
+def build_story(source_data: dict | list, context: dict, level: int = 0) -> list:
     """
     Returns a list of Flowables generated from 'source_data' and 'context'
     """
@@ -94,6 +94,7 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
     registered_blocks = list_blocks()
 
     for elem in source_iter:
+        print(f"{level=} | {elem=}")
         if isinstance(elem, tuple):
             k, v = elem
         else:
@@ -101,11 +102,15 @@ def build_story(source_data: dict | list, context: dict, level: int = 1) -> list
             v = elem
 
         if k is not None:
+            heading_level = level
             if str(k).startswith(tuple(registered_blocks)):
                 story.extend(convert_blocks(k, v, context))
                 continue
             else:
-                heading_style_name = f"h{level}"
+                if heading_level == 0:
+                    heading_level = 1
+                heading_style_name = f"h{heading_level}"
+                print(f"{heading_style_name=}")
                 if check_for_paragraph(k, context):
                     heading = convert_paragraph(k, context, heading_style_name)
                     story.extend(heading)

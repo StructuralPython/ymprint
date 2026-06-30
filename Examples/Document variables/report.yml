@@ -3,7 +3,8 @@ _vars:
   b: true
   c: 23
   d: -0.013
-  e: {'key': 'value'}
+  e: {'key': 'value', 'key2': 'val2'}
+  f: ['val1', 'val2']
 Document Variables (_vars): 
   - >
     When creating a report yaml document, you have the option to include document-level variables by using the 
@@ -20,7 +21,8 @@ Document Variables (_vars):
     - b = {{b}}
     - c = {{c}}
     - d = {{d}}
-    - e = {{e}}
+    - e = {{e.key2}}
+    - f = {{f}}
   - Passing Python Objects: >
       It is also possible to pass variable data as Python objects to blocks (see "YMPrint blocks") using the $var syntax (similar to bash).
 

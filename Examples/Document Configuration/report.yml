@@ -1,0 +1,59 @@
+_style:
+  body:
+    font: helvetica
+    size: 10
+  headings:
+    ratio: major second
+    color: "#dd9922"
+
+Customizing your document configuration and styling: 
+  - >
+    There are three categories of document configuration
+  - 1: The document template
+    2: Text styles
+    3: Table styles
+    
+  - >
+    These three categories are set at three different levels of priority
+  - 1: The internal defaults (lowest priority)
+    2: Project config
+    3: Document config (highest priority)
+      
+  - >
+    Each level of priority in the configuration heirarchy effectively inherits the configuration of the level of the priority above it.
+    
+    Using a combination of the internal defaults, you can customize the style of your documents with a minimum amount of configuration text.
+    
+  - The document template (_doc): 
+    - >
+      The template controls settings such as
+    - - Page size
+      - Margins
+      - PDF background file path
+      - And whether or not you have a separate set of the above settings applying to the first page of your document or not.
+
+    - >
+      Currently, the document template is internally configured to only use a single content frame. This limitation would only affect you if you wanted to do something like a two-column layout (where text flows into the second column on the same oage once the first one is full).
+    
+  - Text styles (_style): 
+    - >
+      With text styles, you can control the body text
+    - Text styling attributes:
+      - Font family
+      - Text color
+      - Size
+      - Line spacing ratio
+      - Bullet style: 
+        - Bullet color
+        - Bullet symbol heirarchy
+        - Bullet indentation
+    
+    - >
+      You can also control the text heading styles separately from the body text by adjusting their
+      
+    - - Font family
+      - Text color
+      - Typographic ratio (in musical intervals)
+  
+      
+    

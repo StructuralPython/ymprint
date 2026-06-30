@@ -8,7 +8,7 @@ Using Blocks:
     _img:
       src: catpuccin.png # Either relative or absolute path. Relative paths are relative to the .yml report file.
       caption: "Figure 1: The catpuccin cat"
-      scale_ratio: 0.5
+      scale_ratio: 0.3
   - Admonitions:
     - "The following admonitions blocks are available:"
     -
@@ -31,7 +31,7 @@ Using Blocks:
   - Page breaks (_pagebreak):
     - >
       You can insert an arbitrary page break using _pagebreak, such as the one below. _pagebreak accepts null as a value.
-    - _pagebreak: null
+    - _pagebreak: 
   - Horizontal rules (_hrule):
     - >
       Unlike a horizontal rule in Markdown (which does not have properties you can adjust)
