@@ -1,0 +1,5 @@
+- Make config files a single file name with all three scopes config.ymprint.yml
+- Add the _format tag for paragraphs, headings, and tables to allow for setting of style names
+- Add alignment to text styles
+- Add inline code format type
+- Add non-executable code blocks/pre-formatted
