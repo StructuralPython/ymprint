@@ -64,7 +64,8 @@ class SymbolMixin:
     symbols: str = Field(default="-", alias='symbol')
 
 class BulletStyle(SpacingMixin, TextStyle):
-    pass
+    indent_bullet: float = Field(alias='indent-bullet')
+    indent_text: float = Field(alias='indent-text')
 
 
 class BodyTextStyle(SpacingMixin, TextStyle):
