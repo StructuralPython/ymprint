@@ -13,6 +13,8 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from jinja2 import Template, Environment, DebugUndefined
 from ymprint.config.docstyles import ReportStyles
+from .markdown.inline import convert_inline_markdown
+
 
 RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 jinja_env = Environment(undefined=DebugUndefined)
@@ -23,10 +25,13 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body") -> li
     paragraphs = value.split("\n")
     paras = []
     for para in paragraphs:
-        template = jinja_env.from_string(para)
+        para_md = convert_inline_markdown(para)
+        template = jinja_env.from_string(para_md)
         rendered = template.render(context['vars'])
+        print(f"{rendered=}")
         rl_para = Paragraph(rendered, style=style)
         paras.append(rl_para)
+
         paras.append(Spacer(1, 5))
     return paras
 
@@ -56,7 +61,8 @@ def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlow
             sub_bullets = convert_ul(elem, context, level=level + 1)
             bullet_contents.append(sub_bullets)
         else:
-            template = jinja_env.from_string(elem)
+            para_md = convert_inline_markdown(elem)
+            template = jinja_env.from_string(para_md)
             rendered = template.render(context['vars'])
             bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}"><b>{bul_symbol}</b></bullet>{rendered}', bullet_style)
             bullet_contents.append(bullet_content)
@@ -80,7 +86,8 @@ def convert_ol(value: dict, context: dict, level: int = 0) -> list[ListFlowable]
             sub_bullets = convert_ol(elem, context, level=level + 1)
             bullet_contents.append(sub_bullets)
         else:
-            template = jinja_env.from_string(elem)
+            para_md = convert_inline_markdown(elem)
+            template = jinja_env.from_string(para_md)
             rendered = template.render(context['vars'])
         bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}">{idx}. </bullet>{rendered}', bullet_style)
         bullet_contents.append(bullet_content)

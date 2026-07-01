@@ -577,6 +577,15 @@ wheels = [
 ]
 
 [[package]]
+name = "wenmode"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/58/971bd624a2a5e73cd1c89713954d2e6994f29bdab58ab11ecbc57d038f53/wenmode-0.8.0.tar.gz", hash = "sha256:b6a86608c9c58983029bee4943da573026192f2f1fc6ae45773158df4a7aa581", size = 291487, upload-time = "2026-06-29T09:33:58.956Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/19/85e5c6e0be0bc51696a6a7815e2ee63db4b06284bf313096e406a1271c6a/wenmode-0.8.0-py3-none-any.whl", hash = "sha256:f495eb209cf6ae115e9f4ecde2f3edb9a72b66e24cbfefd2d7fb1a7e5231f3f0", size = 112537, upload-time = "2026-06-29T09:33:57.67Z" },
+]
+
+[[package]]
 name = "ymprint"
 version = "0.1.0"
 source = { editable = "." }
@@ -589,6 +598,7 @@ dependencies = [
     { name = "reportlab" },
     { name = "ruamel-yaml" },
     { name = "typer" },
+    { name = "wenmode" },
 ]
 
 [package.dev-dependencies]
@@ -608,6 +618,7 @@ requires-dist = [
     { name = "reportlab", specifier = ">=4.5.1" },
     { name = "ruamel-yaml", specifier = ">=0.19.1" },
     { name = "typer", specifier = ">=0.26.7" },
+    { name = "wenmode", specifier = ">=0.8.0" },
 ]
 
 [package.metadata.requires-dev]

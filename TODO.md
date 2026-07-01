@@ -3,3 +3,5 @@
 - Add alignment to text styles
 - Add inline code format type
 - Add non-executable code blocks/pre-formatted
+- Add _matplotfig to YMPrint Blocks Example
+- Add custom blocks example (can use Python execution to load custom blocks code into document)

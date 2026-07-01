@@ -94,7 +94,7 @@ def build_story(source_data: dict | list, context: dict, level: int = 0) -> list
     registered_blocks = list_blocks()
 
     for elem in source_iter:
-        print(f"{level=} | {elem=}")
+        # print(f"{level=} | {elem=}")
         if isinstance(elem, tuple):
             k, v = elem
         else:
@@ -110,7 +110,7 @@ def build_story(source_data: dict | list, context: dict, level: int = 0) -> list
                 if heading_level == 0:
                     heading_level = 1
                 heading_style_name = f"h{heading_level}"
-                print(f"{heading_style_name=}")
+                # print(f"{heading_style_name=}")
                 if check_for_paragraph(k, context):
                     heading = convert_paragraph(k, context, heading_style_name)
                     story.extend(heading)

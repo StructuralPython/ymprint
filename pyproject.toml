@@ -16,6 +16,7 @@ dependencies = [
     "reportlab>=4.5.1",
     "ruamel-yaml>=0.19.1",
     "typer>=0.26.7",
+    "wenmode>=0.8.0",
 ]
 
 [project.scripts]
