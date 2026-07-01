@@ -111,6 +111,7 @@ def load_config_directory(config_dir: str | pathlib.Path | None) -> tuple[dict, 
     'config_dir': a directory containing a textstyles.yml, tablestyles.yml, doctemplate.yml
     file.
     """
+    # TODO: update to load only a single file something.ymprint.yml
     if config_dir is None:
         return {}, {}, {}
     config_dir = pathlib.Path(config_dir)
