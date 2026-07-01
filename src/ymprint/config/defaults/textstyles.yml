@@ -14,3 +14,5 @@ _style:
       color: black
       symbols: "•‣⁃∘"
       spacing: 10
+      indent-bullet: 20
+      indent-text: 40

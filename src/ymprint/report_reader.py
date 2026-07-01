@@ -33,6 +33,8 @@ from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake
 from reportlab.platypus import Spacer, NextPageTemplate
 from reportlab.lib.units import mm
 
+from .config.font_registry import register_fonts
+
 from rich import print
 
 
@@ -47,6 +49,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     if not source_path.exists():
         raise FileNotFoundError(f"The source YAML file at {str(source_path)} does not exist")
     source_data = load_yaml(source_path)
+    register_fonts()
     # source_config = extract_source_config(source_data)
     # source_config = {}
     # This should not return RL objects as each of these can build their own RL objects

@@ -1,9 +1,9 @@
 _style:
   body:
-    font: helvetica
-    size: 10
+    font: NotoSans
   headings:
-    ratio: major second
+    font: AppleGaramond
+    ratio: minor third
     color: "#dd9922"
 
 Customizing your document configuration and styling: 
