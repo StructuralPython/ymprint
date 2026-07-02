@@ -1,9 +1,9 @@
 _style:
   body:
-    font: NotoSans
+    font: DejaVuSans
   headings:
-    font: AppleGaramond
-    ratio: minor third
+    font: DejaVuSans
+    ratio: minor second
     color: "#dd9922"
 
 Customizing your document configuration and styling: 
