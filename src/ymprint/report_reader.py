@@ -54,7 +54,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     # source_config = {}
     # This should not return RL objects as each of these can build their own RL objects
     textstyles, tablestyles, doc_data = load_report_config(source_data, report_config_path)
-    doctemplate = DocConfig.model_validate(doc_data.default)
+    doctemplate = DocConfig.model_validate(doc_data['_doc'])
     document_vars = extract_vars(source_data)
     
 

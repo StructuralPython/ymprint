@@ -2,7 +2,6 @@ from ..yaml_loader import load_yaml
 import collections
 import pathlib
 from typing import Optional
-from .helpers import Bundle
 
 class DeepChainMap(collections.ChainMap):
     """
@@ -22,11 +21,8 @@ class DeepChainMap(collections.ChainMap):
             
         return values[0]
     
-    def __getattr__(self, name):
-        return self.__getitem__(name)
-    
 
-def load_report_config(source_data: Optional[dict] = None, report_config_path: Optional[str | pathlib.Path] = None) -> tuple[Bundle, Bundle, Bundle]:
+def load_report_config(source_data: Optional[dict] = None, report_config_path: Optional[str | pathlib.Path] = None) -> tuple[dict, dict, dict]:
     """
     Returns a ChainMap of all the config data found in either the source_data or the 'report_config_path',
     which can either be a directory of config files or a specific file that contains all config data.
@@ -45,7 +41,7 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
         config_data = load_yaml(report_config_path)
         config_styles = config_data.get("_style", {})
         config_tablestyles = config_data.get("_tablestyle", {})
-        config_doctemplate = config_data.get("_doc", {})
+        config_doctemplate = config_data.get("_doctemplate", {})
     elif report_config_path is not None and report_config_path.is_dir():
         config_styles, config_tablestyles, config_doctemplate = load_config_directory(report_config_path)
     else:
@@ -63,46 +59,34 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
     # Use chainmaps and recursively iterate over all keys within the config tree
     # (using the default trees as the source of all current keys) to build a dict
     # of only the governing keys from all sources.
-    styles = Bundle()
-    style_chain = DeepChainMap(
+    style_config = build_current_config(
+        default_styles,
+        DeepChainMap(
             content_styles,
             config_styles,
             default_styles,
-    )
-    for style_name, style_data in style_chain.items():
-        style_config = build_current_config(
-            default_styles, style_data
         )
-        styles[style_name] = style_config
+    )
 
-    tablestyles = Bundle()
-    tablestyle_chain = DeepChainMap(   
+    tablestyle_config = build_current_config(
+        default_tablestyles,
+        DeepChainMap(   
             content_tablestyles,
             config_tablestyles,
             default_tablestyles
-    )
-    for tablestyle_name, tablestyle_data in tablestyle_chain.items():
-        tablestyle_config = build_current_config(
-            default_tablestyles,
-            tablestyle_data
-
         )
-        tablestyles[tablestyle_name] = tablestyle_config
+    )
 
-    doctemplates = Bundle()
-    doctemplate_chain = DeepChainMap(
+    doctemplate_config = build_current_config(
+        default_doctemplate,    
+        DeepChainMap(
             content_doctemplate,
             config_doctemplate,
             default_doctemplate
         )
-    for doctemplate_name, doctemplate_data in doctemplate_chain.items():
-        doctemplate_config = build_current_config(
-            default_doctemplate, 
-            doctemplate_data
-        )
-        doctemplates[doctemplate_name] = doctemplate_config
+    )
 
-    return styles, tablestyles, doctemplates
+    return style_config, tablestyle_config, doctemplate_config
 
 
 def build_current_config(default_config: dict, config_data: DeepChainMap):
@@ -127,10 +111,28 @@ def load_config_directory(config_dir: str | pathlib.Path | None) -> tuple[dict, 
     'config_dir': a directory containing a textstyles.yml, tablestyles.yml, doctemplate.yml
     file.
     """
+    # TODO: update to load only a single file something.ymprint.yml
     if config_dir is None:
         return {}, {}, {}
     config_dir = pathlib.Path(config_dir)
-    config_present = list(config_dir.glob('*.ymprint.yml'))
-    if len(config_present) == 1:
-        config_data = load_yaml(config_present[0])
-    return config_data.get('_style', {}), config_data.get('_tablestyle', {}), config_data.get("_doc", {})
+    dir_contents = list(config_dir.glob('*'))
+    file_list =[file.name for file in dir_contents if file.is_file]
+    file_name_count = collections.Counter(file_list)
+    styles, tablestyles, doctemplate = {}, {}, {}
+    if file_name_count.get('textstyles.yml', 0) == 1:
+        styles = load_yaml(config_dir / 'textstyles.yml')
+    if file_name_count.get('tablestyles.yml', 0) == 1:
+        tablestyles = load_yaml(config_dir / 'tablestyles.yml')
+    if file_name_count.get('doctemplate.yml', 0) == 1:
+        doctemplate = load_yaml(config_dir / 'doctemplate.yml')
+    if (
+        file_name_count.get('textstyles.yml', 0) > 1
+        or file_name_count.get('tablestyles.yml', 0) > 1
+        or file_name_count.get('doctemplate.yml', 0) > 1
+    ):
+        raise ValueError(
+            "Expected to find one or none of each file: textstyles.yml, tablestyles.yml, doctemplate.yml' within "
+            f"{str(config_dir.resolve())}. A duplicate filename was found (which causes ambiguity). Review file counts for this directory and correct:\n\n"
+            f"{file_name_count}"
+        )
+    return styles, tablestyles, doctemplate

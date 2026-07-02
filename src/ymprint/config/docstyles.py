@@ -71,7 +71,7 @@ class BulletStyle(SpacingMixin, TextStyle):
 class BodyTextStyle(SpacingMixin, TextStyle):
     bullets: BulletStyle
 
-class ReportStyle(BaseModel):
+class ReportStyles(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     body: BodyTextStyle
     headings: HeadingStyle
@@ -81,6 +81,7 @@ class ReportStyle(BaseModel):
         Returns a reportlab.lib.style.ParagraphStyle
         """
         leading = self.body.spacing * self.body.size
+        # leading = self.body.size * 1.2
         pstyle = ParagraphStyle(
             "body",
             fontName=self.body.font,
@@ -88,8 +89,6 @@ class ReportStyle(BaseModel):
             leading=leading,
             bulletFontName=self.body.bullets.font,
             bulletFontSize=self.body.bullets.size,
-            leftIndent=self.body.bullets.indent_bullet,
-            bulletIndent=self.body.bullets.indent_text,
             textColor=self.body.rl_color,
         )
         

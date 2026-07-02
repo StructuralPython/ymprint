@@ -1,5 +1,3 @@
-
-from collections import UserDict
 from reportlab.lib import colors
 from reportlab.lib import pagesizes as rl_pagesizes
 
@@ -36,24 +34,3 @@ def parse_width(value: float) -> str:
 
 class YMPrintValueError(ValueError):
     pass
-
-
-class Bundle(UserDict):
-    def __getattr__(self, key):
-        try:
-            return self.data[key]
-        except KeyError:
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{key}'")
-
-    def __setattr__(self, key, value):
-        # Prevent infinite loops during initialization
-        if key == "data":
-            super().__setattr__(key, value)
-        else:
-            self.data[key] = value
-
-    def __delattr__(self, key):
-        try:
-            del self.data[key]
-        except KeyError:
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{key}'")
