@@ -17,8 +17,8 @@ def build_context(
     stylesheet = report_styles.build()
     # inline_doctemplate = {} if "_doc" not in content_yaml else content_yaml.pop("_doc")
     # This is not an appropriate merge. Need the nested chain map.
-    combined_doctemplate = doctemplate_yaml['_doc']# | inline_doctemplate
-    doctemplate = DocConfig.model_validate(combined_doctemplate)
+    combined_doctemplate = doctemplate_yaml# | inline_doctemplate
+    doctemplate = DocConfig.model_validate(combined_doctemplate['_doc'])
     rl_basedoctemplate = doctemplate.build(destination_path)
     report_tablestyles = TableStyle.model_validate(tablestyles_yaml['_tablestyle'])
     tablestyles = report_tablestyles.build()
@@ -39,7 +39,7 @@ def build_context(
             },
         },
         "tablestyles": {
-            'yaml': tablestyles_yaml,
+            'yaml': {"_tablestyle": tablestyles_yaml},
             "ymprint": report_tablestyles,
             "rl": {
                 "_tablestyle": tablestyles

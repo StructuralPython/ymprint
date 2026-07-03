@@ -41,7 +41,7 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
         config_data = load_yaml(report_config_path)
         config_styles = config_data.get("_style", {})
         config_tablestyles = config_data.get("_tablestyle", {})
-        config_doctemplate = config_data.get("_doctemplate", {})
+        config_doctemplate = config_data.get("_doc", {})
     elif report_config_path is not None and report_config_path.is_dir():
         config_styles, config_tablestyles, config_doctemplate = load_config_directory(report_config_path)
     else:
@@ -55,7 +55,9 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
     content_styles = {"_style": source_data.pop("_style", {})}
     content_tablestyles = {"_tablestyle": source_data.pop("_tablestyle", {})}
     content_doctemplate = {"_doc": source_data.pop("_doc", {})}
-
+    print(f"{content_styles=}")
+    print(f"{config_styles=}")
+    print(f"{default_styles=}")
     # Use chainmaps and recursively iterate over all keys within the config tree
     # (using the default trees as the source of all current keys) to build a dict
     # of only the governing keys from all sources.
@@ -108,31 +110,20 @@ def load_config_directory(config_dir: str | pathlib.Path | None) -> tuple[dict, 
     """
     Returns the config data for the configuration files contained within 'config_dir'.
 
-    'config_dir': a directory containing a textstyles.yml, tablestyles.yml, doctemplate.yml
-    file.
+    'config_dir': a directory containing a *.ymprint.yml file.
     """
-    # TODO: update to load only a single file something.ymprint.yml
     if config_dir is None:
         return {}, {}, {}
     config_dir = pathlib.Path(config_dir)
-    dir_contents = list(config_dir.glob('*'))
-    file_list =[file.name for file in dir_contents if file.is_file]
-    file_name_count = collections.Counter(file_list)
-    styles, tablestyles, doctemplate = {}, {}, {}
-    if file_name_count.get('textstyles.yml', 0) == 1:
-        styles = load_yaml(config_dir / 'textstyles.yml')
-    if file_name_count.get('tablestyles.yml', 0) == 1:
-        tablestyles = load_yaml(config_dir / 'tablestyles.yml')
-    if file_name_count.get('doctemplate.yml', 0) == 1:
-        doctemplate = load_yaml(config_dir / 'doctemplate.yml')
-    if (
-        file_name_count.get('textstyles.yml', 0) > 1
-        or file_name_count.get('tablestyles.yml', 0) > 1
-        or file_name_count.get('doctemplate.yml', 0) > 1
-    ):
-        raise ValueError(
-            "Expected to find one or none of each file: textstyles.yml, tablestyles.yml, doctemplate.yml' within "
-            f"{str(config_dir.resolve())}. A duplicate filename was found (which causes ambiguity). Review file counts for this directory and correct:\n\n"
-            f"{file_name_count}"
-        )
-    return styles, tablestyles, doctemplate
+    dir_contents = list(config_dir.glob('*.ymprint.yml'))
+    print(f"{dir_contents=}")
+    if len(dir_contents) == 1:
+        config_data = load_yaml(dir_contents[0])
+    if config_data is None: # Occurs when the file exists but is empty
+        return {}, {}, {}
+    style = {"_style": config_data.get("_style", {})}
+    tablestyle = {"_tablestyle": config_data.get("_tablestyle", {})}
+    doctemplate = {"_doc": config_data.get("_doc", {})}
+    return (
+        style, tablestyle, doctemplate
+    )

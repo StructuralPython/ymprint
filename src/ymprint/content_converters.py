@@ -44,6 +44,7 @@ def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlow
     bullet_style: ParagraphStyle = sheet['body']
     # bullet_style.spaceAfter = space_around
     # bullet_style.spaceBefore = space_around
+    print(f"{context['styles']['yaml']['_style']=}")
     bul_context = context['styles']['yaml']['_style']['body']['bullets']
     bul_symbols = bul_context['symbols']
     level_index = level % len(bul_symbols)

@@ -54,6 +54,8 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     # source_config = {}
     # This should not return RL objects as each of these can build their own RL objects
     textstyles, tablestyles, doc_data = load_report_config(source_data, report_config_path)
+    print(f"{textstyles=}")
+    print(f"{doc_data=}")
     doctemplate = DocConfig.model_validate(doc_data['_doc'])
     document_vars = extract_vars(source_data)
     
@@ -72,6 +74,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         story = [NextPageTemplate(1)] + story
     rl_doc = doctemplate.build(destination_pdf)
     rl_report_buffer = BytesIO()
+    print(f"{context['styles']['yaml']['_style']=}")
     rl_doc.build(story, filename=rl_report_buffer)
     rl_report_buffer.seek(0)
     # rl_doc.build(story, filename=str(pathlib.Path(destination_pdf).resolve()))
