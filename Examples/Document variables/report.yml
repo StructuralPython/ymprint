@@ -31,7 +31,7 @@ Document Variables (_vars):
 
       For example, you might want to have some consistent spacer used throughout your document. Instead of typing "_spacer: 5" at all
       locations, you can instead set a variable in the _vars to something like "small_space: 5" and employ the variable at each spacer
-      as such: "_spacer: $small_space".
+      as such "_spacer: $small_space".
 
       The data you set in the _vars key can be any of the native YAML datatypes: str, int, float, null/None, bool, list, and dict.
   - Computing new Python objects within code: >
