@@ -6,7 +6,7 @@ _style:
     ratio: minor third
     color: "#dd9922"
 
-Customizing your document configuration and styling: 
+Customizing your `document` configuration and styling: 
   - >
     There are `three` categories of document configuration
   - 1: The document template

@@ -1,10 +1,15 @@
+_doc:
+  body:
+    font: NotoSans
+  headings:
+    font: NotoSans
 Using Blocks: 
   - >
     YMPrint uses a special "block syntax" for defining custom content types. Some of these are similar to 
     content types you might expect to see in markdown, e.g. images or code blocks, or extensions to common
     markdown such as admonitions.
 
-  - Images (_img):
+  - Images (`_img`):
     _img:
       src: catpuccin.png # Either relative or absolute path. Relative paths are relative to the .yml report file.
       caption: "Figure 1: The catpuccin cat"
@@ -24,15 +29,15 @@ Using Blocks:
     _danger: Here is a danger admonition
     _tip: Here is a helpful tip
     _note: This is useful when you want to give a note
-  - Block quotes (_blockquote):
+  - Block quotes (`_blockquote`):
     _blockquote: 
         quote: “What you do makes a difference, and you have to decide what kind of difference you want to make.”
         attribution: Jane Goodall
-  - Page breaks (_pagebreak):
+  - Page breaks (`_pagebreak`):
     - >
       You can insert an arbitrary page break using _pagebreak, such as the one below. _pagebreak accepts null as a value.
     - _pagebreak: 
-  - Horizontal rules (_hrule):
+  - Horizontal rules (`_hrule`):
     - >
       Unlike a horizontal rule in Markdown (which does not have properties you can adjust)
       the `_hrule` block in YMPrint has optional parameters like width_ratio,
@@ -56,7 +61,7 @@ Using Blocks:
         thickness: 6
         color: "#dddd22"
         cap: round
-  - Vertical spacers (_spacer):
+  - Vertical spacers (`_spacer`):
     - >
       You can create arbitrary amounts of vertical white space so you can manually
       adjust the positioning of your content.
@@ -73,7 +78,7 @@ Using Blocks:
     - There is a 20 pt spacer above
     - _spacer: 40
     - There is a 40 pt spacer above
-  - Executable code Blocks (_py):
+  - Executable code Blocks (`_py`):
     - >
       In a `_py` code block, Python code will be executed using `exec()` with the "vars"
       dictionary from the document context passed in as its global scope and an optional namespace
@@ -99,12 +104,23 @@ Using Blocks:
           a = 3
           b = 4
           c = math.sin(a/b)
+          acc = []
+          for k in [a, b, c]:
+              acc.append(k)
     - "Now, the values of the variables a, b, and c can be included in the document:"
     -
       - a = {{py1.a}} (using py1.a)
       - b = {{py1.b}} (using py1.b)
       - c = {{py1.c}} (using py1.c)
-  - Dynamic JSON variables (_loadjson):
+  - _code:
+      source: |
+        yaml_data: is being shown
+        you can put: any yaml data together
+        more examples:
+          - - cell-padding
+            - cell_size
+            - row_size
+  - Dynamic JSON variables (`_loadjson`):
     - >
       You can dynamically build your vars context by including a _loadjson block in your
       document. 

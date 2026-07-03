@@ -55,7 +55,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Paragraph, Table, TableStyle, Spacer
+from reportlab.platypus import Paragraph, Table, TableStyle, Spacer, XPreformatted
 
 # ---------------------------------------------------------------------------
 # Font registration
@@ -75,44 +75,44 @@ _FONT_FILES = {
 }
 
 
-def register_fonts() -> None:
-    """
-    Register the bundled DejaVu Sans Mono TTF faces with ReportLab.
+# def register_fonts() -> None:
+#     """
+#     Register the bundled DejaVu Sans Mono TTF faces with ReportLab.
 
-    Prepends the package-local ``fonts/`` directory to ReportLab's
-    ``TTFSearchPath`` so that ``TTFont('DejaVuSansMono', 'DejaVuSansMono.ttf')``
-    resolves to the bundled copy on any platform, regardless of what system
-    fonts are installed.
+#     Prepends the package-local ``fonts/`` directory to ReportLab's
+#     ``TTFSearchPath`` so that ``TTFont('DejaVuSansMono', 'DejaVuSansMono.ttf')``
+#     resolves to the bundled copy on any platform, regardless of what system
+#     fonts are installed.
 
-    Call once at program start before building any flowables.
+#     Call once at program start before building any flowables.
 
-    Raises
-    ------
-    FileNotFoundError
-        If the bundled ``fonts/`` directory or any expected TTF file is missing.
-        This indicates a broken package installation rather than a missing system
-        font, so we raise rather than silently fall back.
-    """
-    if not _FONTS_DIR.exists():
-        raise FileNotFoundError(
-            f"Bundled fonts directory not found: {_FONTS_DIR}\n"
-            "Ensure the 'fonts/' directory is distributed alongside this module."
-        )
+#     Raises
+#     ------
+#     FileNotFoundError
+#         If the bundled ``fonts/`` directory or any expected TTF file is missing.
+#         This indicates a broken package installation rather than a missing system
+#         font, so we raise rather than silently fall back.
+#     """
+#     if not _FONTS_DIR.exists():
+#         raise FileNotFoundError(
+#             f"Bundled fonts directory not found: {_FONTS_DIR}\n"
+#             "Ensure the 'fonts/' directory is distributed alongside this module."
+#         )
 
-    # Prepend so our bundled copies take priority over any system-installed
-    # versions of the same filename.
-    import reportlab.rl_config as rl_config
-    if _FONTS_DIR not in rl_config.TTFSearchPath:
-        rl_config.TTFSearchPath.insert(0, str(_FONTS_DIR.resolve()))
+#     # Prepend so our bundled copies take priority over any system-installed
+#     # versions of the same filename.
+#     import reportlab.rl_config as rl_config
+#     if _FONTS_DIR not in rl_config.TTFSearchPath:
+#         rl_config.TTFSearchPath.insert(0, str(_FONTS_DIR.resolve()))
 
-    for name, filename in _FONT_FILES.items():
-        font_path = _FONTS_DIR / filename
-        if not font_path.exists():
-            raise FileNotFoundError(
-                f"Bundled font file missing: {font_path.resolve()}\n"
-                "Ensure all DejaVu Sans Mono TTF files are present in fonts/."
-            )
-        pdfmetrics.registerFont(TTFont(name, filename))
+#     for name, filename in _FONT_FILES.items():
+#         font_path = _FONTS_DIR / filename
+#         if not font_path.exists():
+#             raise FileNotFoundError(
+#                 f"Bundled font file missing: {font_path.resolve()}\n"
+#                 "Ensure all DejaVu Sans Mono TTF files are present in fonts/."
+#             )
+#         pdfmetrics.registerFont(TTFont(name, filename))
 
 
 # ---------------------------------------------------------------------------
@@ -424,7 +424,6 @@ def python_code_block(
     DejaVu Sans Mono is available. If the TTF files are not found,
     the function falls back to Courier automatically.
     """
-    register_fonts()
 
     code = code.strip("\n")   # remove leading/trailing blank lines
     markup_lines = _tokenise_to_lines(code)
@@ -444,7 +443,92 @@ def python_code_block(
     inner_rows = []
     for i, markup in enumerate(markup_lines):
         line_num_para = Paragraph(str(first_line + i), lnum_style)
-        code_para     = Paragraph(markup, line_style)
+        code_para     = XPreformatted(markup, line_style)
+        if show_line_numbers:
+            inner_rows.append([line_num_para, code_para])
+        else:
+            inner_rows.append([code_para])
+
+    col_widths = [gutter_w, code_w] if show_line_numbers else [code_w]
+
+    inner_table = Table(
+        inner_rows,
+        colWidths=col_widths,
+        style=_code_table_style(n_lines, show_line_numbers),
+    )
+
+    # --- Wrap in outer table (adds padding, border, optional caption) ---
+    if caption:
+        caption_para = Paragraph(f"  {_escape(caption)}", _caption_style(context))
+        outer_rows   = [[caption_para], [inner_table]]
+    else:
+        outer_rows = [[inner_table]]
+
+    outer_table = Table(
+        outer_rows,
+        colWidths=[col_width],
+        style=_outer_table_style(has_caption=bool(caption)),
+    )
+
+    return outer_table
+
+
+def generic_code_block(
+    code: str,
+    col_width: float,
+    context: dict,
+    *,
+    caption: Optional[str] = None,
+    show_line_numbers: bool = True,
+    first_line: int = 1,
+) -> Table:
+    """
+    Build and return a ReportLab ``Table`` flowable for a Python code block.
+
+    Parameters
+    ----------
+    code : str
+        Raw Python source code (may include leading/trailing newlines).
+    col_width : float
+        Total available width in points (e.g. page width minus margins).
+    caption : str, optional
+        Filename or short description shown in a header bar above the code.
+        Pass ``None`` to omit the caption bar entirely.
+    show_line_numbers : bool
+        Whether to render a gutter column with line numbers. Default: True.
+    first_line : int
+        Number to assign to the first line. Default: 1.
+
+    Returns
+    -------
+    Table
+        A ReportLab Platypus flowable ready to append to a story.
+
+    Notes
+    -----
+    Call ``register_fonts()`` once before using this function so that
+    DejaVu Sans Mono is available. If the TTF files are not found,
+    the function falls back to Courier automatically.
+    """
+    code = code.strip("\n")   # remove leading/trailing blank lines
+    markup_lines = code.split("\n")
+    n_lines      = len(markup_lines)
+
+    line_style   = _code_line_style(context)
+    lnum_style   = _line_number_style(context)
+
+    # --- Build inner grid rows ---
+    if show_line_numbers:
+        gutter_w = LINE_NUM_WIDTH
+        code_w   = col_width - gutter_w - GUTTER_WIDTH - (CELL_PAD_H * 2)
+    else:
+        gutter_w = 0
+        code_w   = col_width - (CELL_PAD_H * 2)
+
+    inner_rows = []
+    for i, markup in enumerate(markup_lines):
+        line_num_para = Paragraph(str(first_line + i), lnum_style)
+        code_para     = XPreformatted(markup, line_style)
         if show_line_numbers:
             inner_rows.append([line_num_para, code_para])
         else:

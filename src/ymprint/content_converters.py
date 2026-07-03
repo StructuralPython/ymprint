@@ -28,7 +28,6 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body") -> li
         para_md = convert_inline_markdown(para)
         template = jinja_env.from_string(para_md)
         rendered = template.render(context['vars'])
-        print(f"{rendered=}")
         rl_para = Paragraph(rendered, style=style)
         paras.append(rl_para)
 
@@ -44,7 +43,6 @@ def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlow
     bullet_style: ParagraphStyle = sheet['body']
     # bullet_style.spaceAfter = space_around
     # bullet_style.spaceBefore = space_around
-    print(f"{context['styles']['yaml']['_style']=}")
     bul_context = context['styles']['yaml']['_style']['body']['bullets']
     bul_symbols = bul_context['symbols']
     level_index = level % len(bul_symbols)

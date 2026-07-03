@@ -20,8 +20,7 @@ def render_strong(renderer: RLInlineRenderer, node: Strong, context: RenderConte
 @RLInlineRenderer.register('inlineCode')
 def render_inlinecode(renderer: RLInlineRenderer, node: InlineCode, context: RenderContext) -> str:
     # return "<font backcolor={{context.style.yaml.code.background}}>" + f"{node.value}</font>"
-    out =  '<font backcolor="#f1f1f1" face="DejaVuSansMono">' + f"{node.value}</font>"
-    print(f"{out=}")
+    out =  '<font backcolor="#eeeeee" face="DejaVuSansMono">' + f"{node.value}</font>"
     return out
 
 

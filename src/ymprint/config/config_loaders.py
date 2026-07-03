@@ -55,9 +55,6 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
     content_styles = {"_style": source_data.pop("_style", {})}
     content_tablestyles = {"_tablestyle": source_data.pop("_tablestyle", {})}
     content_doctemplate = {"_doc": source_data.pop("_doc", {})}
-    print(f"{content_styles=}")
-    print(f"{config_styles=}")
-    print(f"{default_styles=}")
     # Use chainmaps and recursively iterate over all keys within the config tree
     # (using the default trees as the source of all current keys) to build a dict
     # of only the governing keys from all sources.
@@ -116,7 +113,7 @@ def load_config_directory(config_dir: str | pathlib.Path | None) -> tuple[dict, 
         return {}, {}, {}
     config_dir = pathlib.Path(config_dir)
     dir_contents = list(config_dir.glob('*.ymprint.yml'))
-    print(f"{dir_contents=}")
+    config_data = {}
     if len(dir_contents) == 1:
         config_data = load_yaml(dir_contents[0])
     if config_data is None: # Occurs when the file exists but is empty
