@@ -125,12 +125,12 @@ Overlay the document onto a designed PDF template and auto-populate its form fie
 :language: yaml
 ```
 
+::::{container} ym-single-shot
 ```{image} _static/examples/pdf-backgrounds.png
 :alt: PDF backgrounds — content overlaid on a custom template with populated form fields
 :class: ym-page-shot
-:width: 70%
-:align: center
 ```
+::::
 
 ---
 

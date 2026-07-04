@@ -44,6 +44,7 @@ html_theme = "shibuya"
 html_static_path = ["_static"]
 html_title = "YMPrint"
 html_css_files = ["custom.css"]
+html_js_files = ["lightbox.js"]
 
 # Force the light version of the Shibuya theme by lepture.
 html_theme_options = {

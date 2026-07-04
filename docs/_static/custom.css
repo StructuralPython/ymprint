@@ -59,3 +59,84 @@ img.ym-page-shot {
   color: var(--sy-c-text-secondary, #57606a);
   text-align: center;
 }
+
+/* Clickable previews: show they can be enlarged */
+img.ym-zoomable {
+  cursor: zoom-in;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+img.ym-zoomable:hover,
+img.ym-zoomable:focus-visible {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
+  transform: translateY(-2px);
+  outline: 2px solid var(--sy-c-brand, #7c3aed);
+  outline-offset: 3px;
+}
+
+/* Lightbox overlay */
+.ym-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+  background: rgba(0, 0, 0, 0.82);
+  cursor: zoom-out;
+}
+
+.ym-lightbox.is-open {
+  display: flex;
+}
+
+.ym-lightbox__img {
+  max-width: 95vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  cursor: default;
+  border-radius: 4px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.55);
+  background: #fff;
+}
+
+.ym-lightbox__close {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  font-size: 1.9rem;
+  line-height: 1;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.ym-lightbox__close:hover,
+.ym-lightbox__close:focus-visible {
+  background: rgba(255, 255, 255, 0.28);
+  outline: none;
+}
+
+/* Prevent background scroll while the lightbox is open */
+body.ym-lightbox-open {
+  overflow: hidden;
+}
+
+/* A single, centered preview (e.g. the one-page PDF backgrounds example) */
+.ym-single-shot {
+  max-width: 70%;
+  margin: 0 auto;
+}
+
+@media (max-width: 600px) {
+  .ym-single-shot {
+    max-width: 100%;
+  }
+}
