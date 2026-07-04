@@ -17,12 +17,12 @@ Customizing your document configuration and styling:
     These three categories are set at three different levels of priority
   - 1: The internal defaults (lowest priority)
     2: Project config
-    3: Document config (highest priority)
+    3: Document internal config (highest priority)
       
   - >
-    Each level of priority in the configuration heirarchy effectively inherits the configuration of the level of the priority above it.
+    Each level of priority in the configuration heirarchy effectively inherits the configuration of the level of priority above it.
     
-    Using a combination of the internal defaults, you can customize the style of your documents with a minimum amount of configuration text.
+    Using a combination of configuration levels, you can customize the style of your documents with a minimum amount of configuration text.
     
   - The document template (_doc): 
     - >
@@ -33,7 +33,7 @@ Customizing your document configuration and styling:
       - And whether or not you have a separate set of the above settings applying to the first page of your document or not.
 
     - >
-      Currently, the document template is internally configured to only use a single content frame. This limitation would only affect you if you wanted to do something like a two-column layout (where text flows into the second column on the same oage once the first one is full).
+      Currently, the document template is internally configured to only use a single content frame. This limitation would only affect you if you wanted to do something like a two-column layout (where text flows into the second column on the same page once the first one is full).
     
   - Text styles (_style): 
     - >
@@ -53,7 +53,26 @@ Customizing your document configuration and styling:
       
     - - Font family
       - Text color
-      - Typographic ratio (in musical intervals)
+      - Typographic ratio (in musical intervals, e.g. "minor second" or "major third")
+  - Table styles (_tablestyle):
+    - >
+      You can control how your tables are displayed by modifying the table style. With the _tablestyle key, you can control
+    - Table header
+      - background (color)
+      - gridlines (above, below, between)
+      - text
+        - font
+        - size
+        - color
+    - Table rows
+      - even (rows, background color)
+      - odd (rows, background color)
+      - gridlines (above, below, between)
+      - text
+        - font
+        - size
+        - color
+        
   
       
     
