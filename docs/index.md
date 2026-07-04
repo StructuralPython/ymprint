@@ -21,6 +21,8 @@ Python scripting within your document, create variables, render variable values,
 live Python objects between report **blocks** to create a truly expressive authoring
 system&mdash;the likes of which have not been created before.
 
+YMPrint is built upon the incredible ReportLab library.
+
 ```yaml
 Report title:
   - >
