@@ -32,7 +32,7 @@ def build_context(
             },
         },
         "doctemplate": {
-            "yaml": {"_doc": combined_doctemplate},
+            "yaml": combined_doctemplate,
             "ymprint": doctemplate,
             "rl": {
                 "_doc": rl_basedoctemplate,

@@ -1,0 +1,61 @@
+/* YMPrint documentation — small refinements on top of the Shibuya light theme */
+
+:root {
+  --ym-accent: #7c3aed;
+}
+
+/* Give code blocks a touch more breathing room */
+.highlight pre {
+  line-height: 1.5;
+}
+
+/* Landing hero */
+.ym-hero {
+  padding: 1.5rem 0 0.75rem;
+  text-align: center;
+}
+
+.ym-hero .ym-logo {
+  display: block;
+  margin: 0 auto 1rem;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+}
+
+.ym-hero p.ym-tagline {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--sy-c-text, #24292f);
+  margin: 0.25rem 0 0.15rem;
+}
+
+.ym-hero p.ym-subtagline {
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--sy-c-text-secondary, #57606a);
+  margin: 0 0 0.5rem;
+}
+
+/* Inline "block code" chips in prose, e.g. _img, _spacer */
+code.literal {
+  white-space: nowrap;
+}
+
+/* Rendered-PDF page previews in the Examples gallery */
+.ym-page-shot img,
+img.ym-page-shot {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--sy-c-border, #d0d7de);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  background: #fff;
+}
+
+.ym-page-caption {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--sy-c-text-secondary, #57606a);
+  text-align: center;
+}
