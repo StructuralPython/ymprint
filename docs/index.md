@@ -2,7 +2,7 @@
 sd_hide_title: true
 ---
 
-# YMPrint
+# Ymprint
 
 <div class="ym-hero">
 
@@ -14,14 +14,21 @@ sd_hide_title: true
 
 </div>
 
-**YMPrint** is a Python-based PDF authoring application geared towards professionals who need
-to generate lots of PDF documents. You write the content of your report in YAML (as opposed
-to Markdown) and YMPrint renders it to PDF with near-instant speeds. YMPrint lets you use
-Python scripting within your document, create variables, render variable values, and pass
+**YMPrint** is a Python-based PDF authoring application geared towards the needs of working folk who generate a lot of PDF documents. You write the content of your report in YAML (as opposed
+to Markdown) and YMPrint renders it to PDF with near-instant speeds. 
+
+YMPrint lets you use
+Python scripting within your document. This is in contrast to say .IPYNB notebooks which generally separate the content from the code.
+
+With YMPrint, you can create variables, render variable values, execute Python code, and pass
 live Python objects between report **blocks** to create a truly expressive authoring
 system&mdash;the likes of which have not been created before.
 
 YMPrint is built upon the incredible ReportLab library.
+
+(Acceptable pronunciations include “imprint” and “eemprint”; “Why Em Print” would be _quite_ unacceptable)
+
+## An example report
 
 ```yaml
 Report title:
@@ -101,14 +108,16 @@ Define `_vars`, render them with Jinja, and pass Python objects into blocks.
 
 ## Why YMPrint?
 
-- **Readable source.** Your document *is* the outline. YAML nesting is the document
-  hierarchy — no markup soup.
-- **Batteries included.** Bundled fonts, sensible default styles, and a set of blocks
-  for the content markdown can't express.
+- **Structured source.** Your document *is* the outline. YAML nesting is the document
+  hierarchy and your document becomes structured data.
+- **Batteries included.** Bundled fonts, sensible default styles, and a set of blocks for everything that cannot be expressed in vanilla markdown. 
 - **Dynamic content.** Interpolate `_vars` with Jinja, execute `_py` blocks, load JSON,
-  embed matplotlib figures, and auto-fill PDF form fields.
+  embed matplotlib figures, 
 - **Custom templates.** Overlay your document onto a designed PDF background and
   auto-populate its form fields from document variables.
+- **Infinitely extensible.** Quickly create new block types using Python, immediately useable with only an import within your document.
+- **Yours to build upon.** Fork this library and make it the engine behind your own internal report creation apps.
+- 
 
 ```{toctree}
 :hidden:
