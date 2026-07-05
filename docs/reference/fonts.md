@@ -1,6 +1,6 @@
 # Fonts reference
 
-YMPrint **bundles** a set of font families so your documents render identically on any
+YMPrint **bundles** a select set of font families so your documents render identically on any
 machine — no system font installation required. Reference a family by name in
 [`_style`](#cfg-style).
 
@@ -16,7 +16,7 @@ _style:
 
 The name is the family name (case-sensitive). Each bundled family ships with regular, bold,
 italic, and bold-italic variants, so **bold** and *italic* inline formatting render
-correctly.
+correctly. 
 
 ## Bundled families
 
@@ -38,13 +38,15 @@ correctly.
 
 ## Standard PDF fonts
 
-The built-in defaults also use the standard PDF core fonts such as `Helvetica`, which are
+The built-in defaults also use the standard PDF core fonts (Helvetica, Times, and Courier), which are
 always available. You can name them directly:
 
 ```yaml
 _style:
   body:
     font: Helvetica
+  headings:
+    font: Times 
 ```
 
 ## Inline code font

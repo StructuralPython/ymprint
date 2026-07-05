@@ -50,7 +50,7 @@ html_js_files = ["lightbox.js"]
 html_theme_options = {
     "color_mode": "light",
     "accent_color": "violet",
-    "github_url": "https://github.com/StructuralPython/yamlreports",
+    "github_url": "https://github.com/StructuralPython/ymprint",
     "nav_links": [
         {"title": "Quickstart", "url": "quickstart"},
         {"title": "Blocks", "url": "reference/blocks"},
@@ -61,7 +61,7 @@ html_theme_options = {
 html_context = {
     "source_type": "github",
     "source_user": "StructuralPython",
-    "source_repo": "yamlreports",
+    "source_repo": "ymprint",
 }
 
 pygments_style = "friendly"

@@ -7,7 +7,8 @@ others extend it (admonitions, styled horizontal rules, executable Python).
 ## Block syntax
 
 A block is a **key that begins with an underscore**, e.g. `_img` or `_spacer`. Its value is
-a block-specific data structure — sometimes a scalar, sometimes a mapping of parameters.
+a block-specific data structure, typically either a scalar or a mapping that allows several arguments to be passed.
+
 Blocks appear wherever content is allowed, typically as list items:
 
 ```yaml
@@ -20,23 +21,25 @@ Report:
   - _pagebreak:
 ```
 
-Some block codes accept a **suffix** after the underscore code, e.g. `_hrule_red` and
+All block codes accept an optional, user-defined **suffix** after the underscore code, e.g. `_hrule_red` and
 `_hrule_blue` are both handled by the `_hrule` block — the suffix simply keeps the YAML keys
-unique when you use several in one list.
+unique when you use several in one list and allows you to meaningfully identify them if you are using several in a row.
+
+The suffix does not affect how the block is executed. It is simply an optional identifier.
 
 ## Block catalogue
 
 | Block | Purpose |
 | --- | --- |
-| [`_img`](#block-img) | Embed an image with a caption. |
-| [`_matplotfig`](#block-matplotfig) | Embed a matplotlib figure object. |
+| [`_img`](#block-img) | Embed an image with an optional caption. |
+| [`_matplotfig`](#block-matplotfig) | Embed a matplotlib figure object with an optional caption. |
 | [`_info` / `_warning` / `_danger` / `_tip` / `_note`](#block-admonitions) | Callout boxes. |
 | [`_blockquote`](#block-blockquote) | A quotation with attribution. |
-| [`_code`](#block-code) | A non-executable, syntax-highlighted code block. |
-| [`_py`](#block-py) | Execute Python and optionally show the source. |
-| [`_loadjson`](#block-loadjson) | Load variables from a JSON file. |
+| [`_code`](#block-code) | A non-executable code block. |
+| [`_py`](#block-py) | Execute Python and optionally show the syntax-highlighted source. |
+| [`_loadjson`](#block-loadjson) | Load variables into the document from a JSON file. |
 | [`_pagebreak`](#block-pagebreak) | Force a page break. |
-| [`_hrule`](#block-hrule) | A configurable horizontal rule. |
+| [`_hrule`](#block-hrule) | A customizable horizontal rule. |
 | [`_spacer`](#block-spacer) | Insert vertical whitespace. |
 
 ---
@@ -86,7 +89,7 @@ Report:
 | --- | --- | --- | --- |
 | `fig` | ✅ | — | A matplotlib `Figure`, passed as `$var`. |
 | `caption` | | `""` | Caption text shown below the figure. |
-| `scale_ratio` | | `0.8` | Scale factor relative to the available content width. |
+| `scale_ratio` | | `0.8` | Scale factor relative to the available content width. The figure image is automatically shrunk to fit the frame if it would overflow.|
 
 :::{note}
 `matplotlib` is an optional dependency — install it in the same environment as YMPrint to
@@ -141,7 +144,7 @@ _blockquote:
 (block-code)=
 ## `_code` — Preformatted code
 
-A **non-executable**, syntax-highlighted code block. Use this to display code or config
+A **non-executable**, code block for pre-formatted text. Use this to display code or config
 verbatim.
 
 ```yaml
@@ -157,6 +160,9 @@ _code:
 | Parameter | Required | Meaning |
 | --- | --- | --- |
 | `source` | ✅ | The literal text to display. Use a YAML block scalar (`|`) to preserve line breaks. |
+| `line_numbers` | | — | Show line numbers alongside the rendered source. |
+| `caption` | | — | Caption shown with the rendered code. |
+| `width_ratio` | | `0.75` | Width of the rendered code block relative to the content width. |
 
 To **run** code instead of just showing it, use [`_py`](#block-py).
 
@@ -183,6 +189,14 @@ _py:
     c = math.sin(a / b)
 ```
 
+:::{note}
+The `|` after `source:` tells the YAML parser that this is preformatted text, to respect the line breaks exactly as written, and that text should not be wrapped. 
+
+This is in contrast to the `>` character, often used when writing paragraph content, which allows you to break lines wherever you want in the YAML without breaking lines in the finished document.
+
+Both the `|` and `>` character are part of the YAML spec.
+:::
+
 | Parameter | Required | Default | Meaning |
 | --- | --- | --- | --- |
 | `source` | ✅ | — | Python source to execute. |
@@ -194,7 +208,9 @@ _py:
 
 :::{warning}
 `_py` runs `exec()` in the **same** Python environment as YMPrint. External subprocess
-isolation is not currently implemented — only run documents you trust.
+isolation is not currently implemented. Only run documents you trust.
+
+YMPrint is **not** intended to be operated as a public-facing web app.
 :::
 
 After execution the variables are usable everywhere:
@@ -292,5 +308,9 @@ Report:
   - There is a 20 pt spacer above.
 ```
 
-The value is the height of the space in points. A `_spacer: 0` is a handy trick to stop a
+The value is the height of the space in points. 
+
+:::{tip}
+A `_spacer: 0` is a handy trick to stop a
 paragraph being misinterpreted as a bullet when it's immediately followed by a list.
+:::

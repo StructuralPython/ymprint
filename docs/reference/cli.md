@@ -9,7 +9,7 @@ ym --help
 | Command | What it does |
 | --- | --- |
 | [`ym convert`](#ym-convert) | Render a YAML file to a PDF once. |
-| [`ym live`](#ym-live) | Render, open the PDF, and hot-reload on every save. |
+| [`ym live`](#ym-live) | Render, open the PDF in Okular, which will hot-reload on every save. |
 
 ## `ym convert`
 
@@ -23,7 +23,7 @@ ym convert SRC [DEST] [--config-dir DIR]
 | --- | --- | --- |
 | `SRC` | ✅ | Path to the source YAML report. |
 | `DEST` | | Output PDF path. Defaults to the source path with a `.pdf` extension, written next to the source file. |
-| `--config-dir` | | Directory holding a project config file. If omitted, YMPrint searches parent directories for one. |
+| `--config-dir` | | Directory holding a project config file. If omitted, YMPrint searches parent directories for one. If a config file is not found in the parent directories, the internal default configuration will take priority. |
 
 **Examples**
 
@@ -47,7 +47,9 @@ On success it prints the resolved output path:
 ## `ym live`
 
 Render the PDF, open it in the [Okular](https://okular.kde.org/) viewer, and rebuild
-automatically whenever the source (or a watched config file) changes. Ideal for drafting.
+automatically whenever the source (or the non-default config file) changes.
+
+Ideal for live authoring.
 
 ```bash
 ym live SRC [DEST] [--config-dir DIR]
@@ -60,7 +62,7 @@ ym live SRC [DEST] [--config-dir DIR]
 | `--config-dir` | | Directory of config files to also watch for changes. |
 
 **What it watches.** Live mode watches the source file and, if a config directory is in
-play, the config files within it (`doctemplate.yml`, `textstyles.yml`, `tablestyles.yml`).
+play, the config files within it (`config.ymprint.yml`.
 When any of them changes, the PDF is re-rendered and Okular refreshes.
 
 ```bash
@@ -82,7 +84,7 @@ example `sudo apt install okular` on Debian/Ubuntu). See
 ## Config discovery
 
 When you don't pass `--config-dir`, YMPrint walks **up** from the current working directory
-looking for a config file (a `*.ymprint.yml` project config, or the individual
-`doctemplate.yml` / `textstyles.yml` / `tablestyles.yml` files). The nearest match is used.
-This lets a whole tree of documents share one project style. See
+looking for a config file (a `*.ymprint.yml` project config). The nearest match is used.
+
+This enables a whole tree of documents to share one project style. See
 [Configuration](../guide/configuration.md).

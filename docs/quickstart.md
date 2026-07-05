@@ -4,8 +4,12 @@ This walkthrough takes you from an empty folder to a rendered PDF.
 
 ## 1. Write a report
 
-Create a file called `report.yml`. The **top-level keys are your headings**, and their
-values are the content underneath them.
+Create a file called `report.yml` (or, you know, something meaningful to you).
+
+The **top-level keys are your headings**, and their
+values are the content (paragraphs or otherwise) underneath them.
+
+See the example below:
 
 ```yaml
 Site inspection report:
@@ -53,6 +57,8 @@ destination:
 ym convert report.yml output/inspection.pdf
 ```
 
+The output directory(ies) will be created if the do not already exist.
+
 ## 3. Iterate live (optional)
 
 While drafting, run [`ym live`](reference/cli.md#ym-live) to open the PDF and rebuild it
@@ -63,7 +69,7 @@ ym live report.yml
 ```
 
 Leave it running in a terminal, edit `report.yml` in your editor, and the preview refreshes
-on save. Press `Ctrl+C` to stop.
+on save. Press `Ctrl+C` to stop (which will also close the attached Okular instance).
 
 ## 4. Style it
 
