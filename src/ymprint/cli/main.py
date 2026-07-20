@@ -6,10 +6,12 @@ from .throbber import ThrobberState, FPS
 from rich.text import Text
 from rich.console import Console
 from rich.live import Live
+import typer
 from typer import Typer
 
 from ..report_reader import load_report
 from .config import locate_config_dir, CONFIG_FILENAMES
+from .okular import ensure_okular
 from ..config.config_loaders import load_config_directory
 
 app = Typer(name='ymp', no_args_is_help=True)
@@ -102,6 +104,13 @@ def live(
     print(file_watchers)
 
     console = Console()
+
+    # Live mode relies on Okular to display and hot-reload the PDF. Make sure it
+    # is available, offering a platform-specific install if it is missing.
+    okular_cmd = ensure_okular(console)
+    if okular_cmd is None:
+        raise typer.Exit(code=1)
+
     state = ThrobberState()
     # watcher = FileWatcher(WATCH_FILE)
     frame_time = 1.0 / FPS
@@ -112,7 +121,7 @@ def live(
         f"Ctrl+C to quit[/dim]\n"
     )
     load_report(source, destination, config_dir)
-    okular_sub = subprocess.Popen(['okular', str(destination)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    okular_sub = subprocess.Popen([*okular_cmd, str(destination)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     status = ""
     with Live(
         build_display(state, status),
