@@ -6,11 +6,15 @@ _doc:
     left: 84
     right: 84
     bottom: 84
-  background: background_other_pages.pdf
+  background: 
+    filepath: background_other_pages.pdf
+    relative-to: source
   first-page:
     margins:
       top: 240
       left: 84
       right: 84
       bottom: 84
-    background: background_first_page.pdf
+    background: 
+      filepath: background_first_page.pdf
+      relative-to: source

@@ -10,7 +10,8 @@ def build_context(
         tablestyles_yaml: dict, 
         document_vars: dict, 
         source_path: str | pathlib.Path, 
-        destination_path: str | pathlib.Path
+        destination_path: str | pathlib.Path,
+        config_path: str | pathlib.Path
     ) -> dict:
     # inline_styles = {} if "_style" not in content_yaml else content_yaml.pop("_style")
     report_styles = ReportStyles.model_validate(text_styles_yaml['_style'])
@@ -65,6 +66,7 @@ def build_context(
             }
         },
         "source_path": source_path,
+        "config_path": config_path,
         "destination_path": destination_path,
     }
     return context

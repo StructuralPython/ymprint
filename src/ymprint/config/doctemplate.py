@@ -1,3 +1,4 @@
+from enum import StrEnum
 import pathlib
 from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
@@ -12,10 +13,18 @@ class Margins(BaseModel):
     right: float
     bottom: float
 
+class RelativeTo(StrEnum):
+    CONFIG = 'config'
+    SOURCE = 'source'
+
+class PDFBackground(BaseModel):
+    filepath: str
+    relative_to: Optional[RelativeTo] = Field(alias='relative-to', default=None)
+
 class PageConfig(BaseModel):
     # model_config = ConfigDict(populate_by_name=True)
     margins: Margins
-    background: Optional[str] = None
+    background: Optional[PDFBackground] = None
 
 class PageSizeMixin:
     page_size: str = Field(alias='page-size')

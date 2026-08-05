@@ -54,7 +54,8 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         tablestyles, 
         document_vars, 
         source_yaml, 
-        destination_pdf
+        destination_pdf,
+        report_config_path,
     )
     story = build_story(source_data, context)
     if context['doctemplate']['yaml']['_doc'].get('first-page') is not None:
