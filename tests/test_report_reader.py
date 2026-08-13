@@ -16,6 +16,10 @@ def report_ex2():
     return yaml_loader.load_yaml(TEST_DATA / "report_example_2.yml")
 
 @pytest.fixture
+def report_ex4():
+    return yaml_loader.load_yaml(TEST_DATA / "report_example_4.yml")
+
+@pytest.fixture
 def default_config():
     return load_report_config()
 
@@ -34,7 +38,8 @@ def default_context(default_config):
     )
     return context
 
-def test_load_yaml(report_ex1, report_ex2):
+def test_load_yaml(report_ex1, report_ex2, report_ex4):
     load_report(TEST_DATA / "report_example_1.yml", TEST_DATA / "example_output1.pdf", TEST_DATA / "example_1_config")
     load_report(TEST_DATA / "report_example_2.yml", TEST_DATA / "example_output2.pdf", TEST_DATA / "example_2_config")
     load_report(TEST_DATA / "report_example_3.yml", TEST_DATA / "example_output3.pdf", TEST_DATA / "example_1_config")
+    load_report(TEST_DATA / "report_example_4.yml", TEST_DATA / "example_output4.pdf", TEST_DATA / "example_1_config")
