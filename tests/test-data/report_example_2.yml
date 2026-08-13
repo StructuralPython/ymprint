@@ -20,18 +20,11 @@ title:
 
       There is a line break here too.
     - second topic:
-<<<<<<< HEAD
         _ul:
           - first bullet point
           - second bullet point
           - third bullet point
-    - _pagebreak: null
-=======
-      - first bullet point
-      - second bullet point
-      - third bullet point
     - _pagebreak: body
->>>>>>> adb6527 (feat: implement multiple named page templates)
     - third topic:
       - First sub paragraph leading into subheading
       - Second sub paragraph leading into subheading
