@@ -36,29 +36,31 @@ title:
     scale_ratio: 0.5
     caption: Figure 1:Here is my figure
   second topic:
-    - first bullet point. Result = {{c}}
-    - Here is a new bullet a = {{a}}
-    - third bullet point From the vars = {{d}}
-    -
-      - subbullet 1
-      - subbullet 2
+    _ul:
+      - first bullet point. Result = {{c}}
+      - Here is a new bullet a = {{a}}
+      - third bullet point From the vars = {{d}}
       -
-        - subbullet 3
-        - 
-         - subbuullet 4
-    - fourth bullet point
+        - subbullet 1
+        - subbullet 2
+        -
+          - subbullet 3
+          -
+           - subbuullet 4
+      - fourth bullet point
 
 
   third topic:
     - First sub paragraph leading into subheading
     - Third paragraph here.
     - subheading:
-        1: first numbered item
-        2: second numbered item
-        4: third numbered item
-        5: 
-          1: Sub item
-          2: sub item
+        _ol:
+          - first numbered item
+          - second numbered item
+          - third numbered item
+          -
+            - Sub item
+            - sub item
   An actual topic:
     first sub topic: >
       Here is another paragraph.

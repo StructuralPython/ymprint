@@ -16,12 +16,12 @@ Using Blocks:
       scale_ratio: 0.3
   - Admonitions:
     - "The following admonitions blocks are available:"
-    -
-      - _info
-      - _warning
-      - _danger
-      - _tip
-      - _note
+    - _ul:
+        - _info
+        - _warning
+        - _danger
+        - _tip
+        - _note
     - They are rendered below
 
     _info: Here is an "info" admonition
@@ -108,10 +108,10 @@ Using Blocks:
           for k in [a, b, c]:
               acc.append(k)
     - "Now, the values of the variables a, b, and c can be included in the document:"
-    -
-      - a = {{py1.a}} (using py1.a)
-      - b = {{py1.b}} (using py1.b)
-      - c = {{py1.c}} (using py1.c)
+    - _ul:
+        - a = {{py1.a}} (using py1.a)
+        - b = {{py1.b}} (using py1.b)
+        - c = {{py1.c}} (using py1.c)
   - _code:
       source: |
         yaml_data: is being shown
@@ -132,6 +132,6 @@ Using Blocks:
         path: extra_vars.json
         namespace: extra_vars
     - "Here are the values of the vars contained within the 'extravars' namespace:"
-    -
-      - bn = {{extra_vars.bn}}
-      - dx = {{extra_vars.dx}}
+    - _ul:
+        - bn = {{extra_vars.bn}}
+        - dx = {{extra_vars.dx}}

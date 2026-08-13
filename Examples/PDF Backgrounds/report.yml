@@ -26,6 +26,7 @@ Custom styling with PDF backgrounds:
       Form fields are _automatically_ populated when a document variable name exactly matches the PDF form field name.
 
     If you want to avoid this behaviour:
-      - Make sure that none of your variable names match your field names (i.e. using a special naming convention for your form field names to prevent accidental clashes)
-      - Do not use form fields
+      _ul:
+        - Make sure that none of your variable names match your field names (i.e. using a special naming convention for your form field names to prevent accidental clashes)
+        - Do not use form fields
     Example: The form fields below have been populated from the document vars

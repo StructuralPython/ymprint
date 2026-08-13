@@ -24,18 +24,20 @@ title:
 
       There is a line break here too.
     - second topic:
-      - first bullet point
-      - second bullet point
-      - third bullet point
+        _ul:
+          - first bullet point
+          - second bullet point
+          - third bullet point
     - _pagebreak: null
     - third topic:
       - First sub paragraph leading into subheading
       - Second sub paragraph leading into subheading
     - subheading:
-        1: first numbered item
-        2: second numbered item
-        4: third numbered item
-        3: fourth numbered item
+        _ol:
+          - first numbered item
+          - second numbered item
+          - third numbered item
+          - fourth numbered item
   fourth topic:
     first sub topic: >
       Here is another paragraph.
