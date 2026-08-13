@@ -1,0 +1,77 @@
+_vars:
+  company: Structural Python
+_style:
+  body:
+    font: Helvetica
+    size: 11
+    align: justify
+  headings:
+    font: Helvetica
+    ratio: major third
+    color: "#dd9922"
+    underline: true
+  styles:
+    fine-print:
+      body:
+        size: 7
+        color: "#888888"
+    callout:
+      body:
+        size: 13
+        color: "#2266cc"
+        align: center
+    notice:
+      body:
+        align: right
+        underline: true
+
+Text formatting showcase:
+  - >
+    This opening paragraph uses the default body style: justified text at 11 pt,
+    prepared by {{company}}. The heading above is underlined because the heading
+    style sets underline: true.
+
+  - Alignment and named styles:
+    - >
+      The default body is justified. Named text styles let us switch the active
+      family for part of the document, and each style can carry its own alignment.
+
+  - Fine print (switched inline):
+    - _textstyle: fine-print
+    - >
+      Everything from here down in this section renders in the fine-print style —
+      7 pt and grey. Because switching swaps the whole family, this section's heading
+      is scaled down to match.
+    - A nested sub-clause:
+        _ul:
+          - This bullet inherits fine-print from its parent scope.
+          - So does this one.
+    - _textstyle: default
+    - >
+      And now the default style is restored for the remainder of this section.
+
+  - Callout (centered):
+    - _textstyle: callout
+    - >
+      This paragraph uses the callout style: larger, blue, and centered.
+
+  - Legal notice (right aligned, underlined body):
+    - _textstyle: notice
+    - >
+      This paragraph is right-aligned and underlined, driven entirely by the
+      'notice' named style rather than the heading style.
+
+  - Ordered content:
+    - >
+      Back to the default style. Numbered lists render with the active family too:
+    - subitems:
+        _ol:
+          - First numbered item
+          - Second numbered item
+          - Third numbered item
+
+  - Mapping-key switch:
+      _textstyle: fine-print
+      A final note: >
+        This subsection switches style using the mapping-key form of _textstyle
+        (a key inside a mapping, rather than a list item) and renders in fine-print.
