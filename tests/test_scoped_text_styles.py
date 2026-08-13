@@ -151,3 +151,65 @@ def test_unknown_textstyle_in_source_raises():
     source = {"Intro": [{"_textstyle": "nope"}, "para"]}
     with pytest.raises(YMPrintSyntaxException):
         build_story(source, ctx)
+
+
+# --- alignment / underline ---------------------------------------------------------
+
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT, TA_JUSTIFY
+from ymprint.config.helpers import convert_alignment, YMPrintValueError
+from ymprint.content_converters import convert_paragraph
+
+ALIGN_STYLE = {
+    "headings": {"font": "Helvetica", "color": "#222", "ratio": "major third",
+                 "align": "center", "underline": True},
+    "body": {"font": "Helvetica", "color": "black", "size": 10, "spacing": 1.7,
+             "align": "justify",
+             "bullets": {"font": "Helvetica", "size": 10, "color": "black",
+                         "symbols": "•", "spacing": 10, "indent-bullet": 20, "indent-text": 40}},
+    "styles": {"rightaligned": {"body": {"align": "right", "underline": True}}},
+}
+
+
+def test_convert_alignment_names():
+    assert convert_alignment(None) == TA_LEFT
+    assert convert_alignment("center") == TA_CENTER
+    assert convert_alignment("Centre") == TA_CENTER
+    assert convert_alignment("right") == TA_RIGHT
+    assert convert_alignment("justify") == TA_JUSTIFY
+    assert convert_alignment("justified") == TA_JUSTIFY
+
+
+def test_convert_alignment_unknown_raises():
+    with pytest.raises(YMPrintValueError):
+        convert_alignment("diagonal")
+
+
+def test_alignment_applied_to_body_and_headings():
+    families = ReportStyles.model_validate(ALIGN_STYLE).build_families()
+    assert families["default"][1]["body"].alignment == TA_JUSTIFY
+    assert families["default"][1]["h1"].alignment == TA_CENTER
+    assert families["rightaligned"][1]["body"].alignment == TA_RIGHT
+
+
+def test_alignment_defaults_to_left_when_unset():
+    families = ReportStyles.model_validate(BASE_STYLE).build_families()
+    assert families["default"][1]["body"].alignment == TA_LEFT
+
+
+def test_heading_underline_wraps_text():
+    ctx = make_context(ALIGN_STYLE)
+    para = convert_paragraph("My Heading", ctx, "h1", "default")
+    assert para[0].text == "<u>My Heading</u>"
+
+
+def test_body_without_underline_is_not_wrapped():
+    ctx = make_context(ALIGN_STYLE)
+    para = convert_paragraph("Body text", ctx, "body", "default")
+    assert para[0].text == "Body text"
+
+
+def test_underline_follows_active_named_style():
+    ctx = make_context(ALIGN_STYLE)
+    # 'rightaligned' switches on body underline
+    para = convert_paragraph("Small print", ctx, "body", "rightaligned")
+    assert para[0].text == "<u>Small print</u>"

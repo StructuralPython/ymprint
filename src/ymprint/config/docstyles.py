@@ -1,12 +1,18 @@
 from enum import Enum
 from pydantic import BaseModel, Field, ConfigDict, BeforeValidator
-from typing import TypeAlias, Annotated
+from typing import TypeAlias, Annotated, Optional
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.styles import StyleSheet1
 
-from .helpers import convert_color, YMPrintValueError
+from .helpers import convert_color, convert_alignment, YMPrintValueError
 
 from enum import Enum
+
+
+class FormatMixin:
+    """Shared paragraph formatting attributes for text and heading styles."""
+    align: Optional[str] = Field(default=None)
+    underline: bool = Field(default=False)
 
 class HeadingRatio(float, Enum):
     minor_second = 1.067
@@ -32,9 +38,9 @@ class HeadingRatio(float, Enum):
             )
         
 
-class TextStyle(BaseModel):
+class TextStyle(FormatMixin, BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    
+
     font: str
     size: int
     color: str
@@ -42,11 +48,15 @@ class TextStyle(BaseModel):
     @property
     def rl_color(self):
         return convert_color(self.color)
-    
 
-class HeadingStyle(BaseModel):
+    @property
+    def rl_alignment(self):
+        return convert_alignment(self.align)
+
+
+class HeadingStyle(FormatMixin, BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    
+
     font: str
     ratio: Annotated[HeadingRatio | float, BeforeValidator(HeadingRatio.from_ratio_name)]
     color: str
@@ -54,6 +64,10 @@ class HeadingStyle(BaseModel):
     @property
     def rl_color(self):
         return convert_color(self.color)
+
+    @property
+    def rl_alignment(self):
+        return convert_alignment(self.align)
 
 
 class SpacingMixin:
@@ -107,6 +121,7 @@ class StyleFamily(BaseModel):
             bulletFontName=self.body.bullets.font,
             bulletFontSize=self.body.bullets.size,
             textColor=self.body.rl_color,
+            alignment=self.body.rl_alignment,
         )
 
         # Headings
@@ -125,7 +140,8 @@ class StyleFamily(BaseModel):
                 leading=heading_leading,
                 textColor=self.headings.rl_color,
                 spaceBefore=heading_size/4,
-                spaceAfter=heading_size/4
+                spaceAfter=heading_size/4,
+                alignment=self.headings.rl_alignment,
             )
             stylesheet.add(heading_style)
 

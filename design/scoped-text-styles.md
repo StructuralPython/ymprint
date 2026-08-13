@@ -137,9 +137,35 @@ frame-local parameter gets correct scoping for free.
   it would change every block's signature.
 - Style **names only** (no index), since named styles have no natural order the way
   page templates do.
-- Alignment / underline are *not* part of this prototype; they are independent
-  per-style attributes that can be added to `TextStyle` / `HeadingStyle` later and
-  will compose with this mechanism.
+- Style **names only** (no index).
+
+## Alignment and underline
+
+Two independent per-style attributes compose with the family mechanism above; both
+are inherited by named styles like any other field.
+
+```yaml
+_style:
+  body:
+    align: justify          # left | center | right | justify (default: left)
+  headings:
+    underline: true         # default: false
+  styles:
+    callout:
+      body: { align: center }
+```
+
+- `align` maps to ReportLab's native `ParagraphStyle.alignment` in `build_sheet`
+  (`convert_alignment` in `config/helpers.py`; accepts `centre`/`justified`
+  spellings). An unknown value raises `YMPrintValueError`.
+- `underline` is applied at **render time** in `convert_paragraph` by wrapping the
+  rendered text in `<u>…</u>` — ReportLab's `ParagraphStyle` has no honored
+  `underline` attribute, so the inline tag (already used for `<b>`/`<i>`) is the
+  version-independent route. It applies to paragraphs and headings; bullets are not
+  wrapped. (A rule-under-heading variant remains a possible future option.)
+
+Both attributes live on the shared `FormatMixin`, so they are available on `body`,
+`headings`, and every named style.
 
 ## Open questions for later
 

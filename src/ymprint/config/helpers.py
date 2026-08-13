@@ -1,5 +1,32 @@
 from reportlab.lib import colors
 from reportlab.lib import pagesizes as rl_pagesizes
+from reportlab.lib.enums import TA_LEFT, TA_CENTER, TA_RIGHT, TA_JUSTIFY
+
+_ALIGNMENTS = {
+    "left": TA_LEFT,
+    "center": TA_CENTER,
+    "centre": TA_CENTER,
+    "right": TA_RIGHT,
+    "justify": TA_JUSTIFY,
+    "justified": TA_JUSTIFY,
+}
+
+
+def convert_alignment(align_spec: str | None) -> int:
+    """
+    Converts an alignment name (left/center/right/justify) into a ReportLab
+    alignment constant. None or unset defaults to left-aligned.
+    """
+    if align_spec is None:
+        return TA_LEFT
+    key = str(align_spec).strip().lower()
+    if key not in _ALIGNMENTS:
+        raise YMPrintValueError(
+            f"Alignment {align_spec!r} is not recognized. "
+            f"Choose from: {sorted(set(_ALIGNMENTS) - {'centre', 'justified'})}."
+        )
+    return _ALIGNMENTS[key]
+
 
 def convert_color(color_spec: str) -> colors.Color:
     """

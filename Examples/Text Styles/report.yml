@@ -2,10 +2,12 @@ _style:
   body:
     font: Helvetica
     size: 11
+    align: justify             # left | center | right | justify
   headings:
     font: Helvetica
     ratio: major third
     color: "#dd9922"
+    underline: true            # underline all headings
   styles:                      # named styles, each inherits from body/headings
     fine-print:
       body:
@@ -15,6 +17,7 @@ _style:
       body:
         size: 14
         color: "#2266cc"
+        align: center          # this style centers its paragraphs
 
 Scoped text styles:
   - >

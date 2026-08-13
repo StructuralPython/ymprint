@@ -36,15 +36,26 @@ def _family_model(context: dict, current_style: str):
     return context["styles"]["ymprint"]
 
 
+def _wants_underline(context: dict, text_style: str, current_style: str) -> bool:
+    """Whether the active family's style for this role requests an underline."""
+    family = _family_model(context, current_style)
+    if text_style.startswith("h"):
+        return bool(getattr(family.headings, "underline", False))
+    return bool(getattr(family.body, "underline", False))
+
+
 def convert_paragraph(value: str, context: dict, text_style: str = "body", current_style: str = "default") -> list[Paragraph]:
     """Returns a Paragraph obj"""
     style = _family_sheet(context, current_style)[text_style]
+    underline = _wants_underline(context, text_style, current_style)
     paragraphs = value.split("\n")
     paras = []
     for para in paragraphs:
         para_md = convert_inline_markdown(para)
         template = jinja_env.from_string(para_md)
         rendered = template.render(context['vars'])
+        if underline:
+            rendered = f"<u>{rendered}</u>"
         rl_para = Paragraph(rendered, style=style)
         paras.append(rl_para)
 
