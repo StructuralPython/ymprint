@@ -33,7 +33,7 @@ def default_context(default_config):
 def test_convert_paragraph(report_ex1, default_context):
     data = report_ex1
     assert con.convert_paragraph(data['title']['first topic'], default_context)
-    assert con.convert_paragraph(data['title']['fourth topic']['first sub topic'], default_context)
+    assert con.convert_paragraph(data['title']['An actual topic']['first sub topic'], default_context)
 
 def test_convert_ul(report_ex1, default_context):
     data = report_ex1

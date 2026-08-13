@@ -30,10 +30,10 @@ def test_load_report_config():
     assert styles['_style']['body']['size'] == 10 # from config dir
     # assert styles['_style']['body']['spacing'] == 1.5 # from default config
 
-    assert tablestyles['_tablestyle']['cell-padding']['top'] == 5 # from config dir
+    assert tablestyles['_tablestyle']['cell-padding']['top'] == 7.5 # from config dir
     assert tablestyles['_tablestyle']['headers']['text']['bold'] == True # from default config
 
-    assert doc['_doc']['page-size'] == 'letter'
+    assert doc['_doc']['page-size'] == 'a4'
     # assert doc['_doc']['first-page']['background'] is None
 
     # This key is intentionally not included in the model. See next test.

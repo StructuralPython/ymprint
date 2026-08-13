@@ -109,6 +109,7 @@ def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None
 def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
     source_path = pathlib.Path(context['source_path'])
     source_parent = source_path.parent
+    print(f"{source_parent=}")
 
     if context['config_path'] is not None:
         config_path = pathlib.Path(context['config_path'])
@@ -140,7 +141,8 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
         first_page_pdf.save(first_page_data)
         first_page_data.seek(0)
     if remaining is not None:
-        relative_to = remaining.get('relative_to')
+        relative_to = remaining.get('relative-to')
+        print(f"{relative_to=}")
         if relative_to == 'source':
             remaining_page_background = source_parent / remaining.get('filepath')
         elif relative_to == 'config':
@@ -148,6 +150,7 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
         else:
             remaining_page_background = remaining.get('filepath')
 
+        print(f"{remaining_page_background=}")
         remaining_pdf = mu.open(remaining_page_background)
         remaining_page_data = io.BytesIO()
         remaining_pdf.save(remaining_page_data)
