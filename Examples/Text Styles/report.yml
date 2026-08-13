@@ -1,0 +1,43 @@
+_style:
+  body:
+    font: Helvetica
+    size: 11
+  headings:
+    font: Helvetica
+    ratio: major third
+    color: "#dd9922"
+  styles:                      # named styles, each inherits from body/headings
+    fine-print:
+      body:
+        size: 7
+        color: "#888888"
+    callout:
+      body:
+        size: 14
+        color: "#2266cc"
+
+Scoped text styles:
+  - >
+    This opening paragraph uses the default body style. Named text styles let you switch
+    the active family for part of a document.
+
+  - Fine print section:
+    - _textstyle: fine-print
+    - >
+      Everything from here down in this section renders in the fine-print style — smaller
+      and grey. Because switching swaps the whole family, the heading above is scaled to
+      the fine-print size too.
+    - A nested sub-clause:
+      - This inherits fine-print (a child of the switched section).
+    - _textstyle: default
+    - >
+      And now we have switched back to the default style for the remainder of this section.
+
+  - A callout:
+    - _textstyle: callout
+    - >
+      This paragraph uses the callout style — larger and blue.
+
+  - Back to normal:
+    - >
+      This section is default again; the callout scope ended with its list.

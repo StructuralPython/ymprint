@@ -103,6 +103,16 @@ def build_current_config(default_config: dict, config_data: DeepChainMap):
             if default_value is not None:
                 value = build_current_config(default_config[key], value)
         style_map.update({key: value})
+
+    # Carry forward user-defined extension keys that the defaults have no schema for
+    # (e.g. named text `styles`). They are taken wholesale from the highest-priority
+    # layer that defines a non-empty value, rather than merged key-by-key.
+    for mapping in config_data.maps:
+        for key, value in mapping.items():
+            if key in style_map or key in default_config:
+                continue
+            if value:
+                style_map[key] = value
     return style_map
 
 

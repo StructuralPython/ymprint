@@ -63,7 +63,7 @@ class SpacingMixin:
 class SymbolMixin:
     symbols: str = Field(default="-", alias='symbol')
 
-class BulletStyle(SpacingMixin, TextStyle):
+class BulletStyle(SymbolMixin, SpacingMixin, TextStyle):
     indent_bullet: float = Field(alias='indent-bullet')
     indent_text: float = Field(alias='indent-text')
 
@@ -71,14 +71,31 @@ class BulletStyle(SpacingMixin, TextStyle):
 class BodyTextStyle(SpacingMixin, TextStyle):
     bullets: BulletStyle
 
-class ReportStyles(BaseModel):
+
+def _deep_merge(base: dict, override: dict) -> dict:
+    """
+    Returns a new dict: 'override' recursively merged onto 'base'. Nested dicts are
+    merged key-by-key; any other value in 'override' replaces the base value.
+    """
+    result = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(result.get(key), dict):
+            result[key] = _deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
+class StyleFamily(BaseModel):
+    """A complete text family: a body paragraph style plus a derived heading family."""
     model_config = ConfigDict(populate_by_name=True)
     body: BodyTextStyle
     headings: HeadingStyle
 
-    def build(self) -> StyleSheet1:
+    def build_sheet(self) -> StyleSheet1:
         """
-        Returns a reportlab.lib.style.ParagraphStyle
+        Returns a reportlab StyleSheet1 with a 'body' style and derived 'h1'..'h6'
+        heading styles.
         """
         leading = self.body.spacing * self.body.size
         # leading = self.body.size * 1.2
@@ -91,7 +108,7 @@ class ReportStyles(BaseModel):
             bulletFontSize=self.body.bullets.size,
             textColor=self.body.rl_color,
         )
-        
+
         # Headings
         heading_ratio = self.headings.ratio
         headings = ['h6', 'h5', 'h4', 'h3', 'h2', 'h1']
@@ -111,5 +128,36 @@ class ReportStyles(BaseModel):
                 spaceAfter=heading_size/4
             )
             stylesheet.add(heading_style)
-       
+
         return stylesheet
+
+
+class ReportStyles(StyleFamily):
+    # Named text families. Each value is a *sparse* override of the default family
+    # (this instance's body + headings); unspecified fields are inherited.
+    styles: dict[str, dict] = Field(default_factory=dict)
+
+    @property
+    def default_family(self) -> StyleFamily:
+        return StyleFamily(body=self.body, headings=self.headings)
+
+    def build(self) -> StyleSheet1:
+        """Returns the default family's stylesheet (back-compat)."""
+        return self.default_family.build_sheet()
+
+    def build_families(self) -> dict[str, tuple["StyleFamily", StyleSheet1]]:
+        """
+        Returns a mapping of style name -> (StyleFamily, StyleSheet1). The 'default'
+        family is always present; each named style under 'styles' is deep-merged onto
+        the default family before being validated and built.
+        """
+        default_family = self.default_family
+        families: dict[str, tuple[StyleFamily, StyleSheet1]] = {
+            "default": (default_family, default_family.build_sheet())
+        }
+        base_raw = default_family.model_dump(by_alias=True)
+        for name, override in self.styles.items():
+            merged = _deep_merge(base_raw, override or {})
+            family = StyleFamily.model_validate(merged)
+            families[name] = (family, family.build_sheet())
+        return families

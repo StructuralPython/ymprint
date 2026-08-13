@@ -15,7 +15,8 @@ def build_context(
     ) -> dict:
     # inline_styles = {} if "_style" not in content_yaml else content_yaml.pop("_style")
     report_styles = ReportStyles.model_validate(text_styles_yaml['_style'])
-    stylesheet = report_styles.build()
+    families = report_styles.build_families()
+    stylesheet = families['default'][1]
     # inline_doctemplate = {} if "_doc" not in content_yaml else content_yaml.pop("_doc")
     # This is not an appropriate merge. Need the nested chain map.
     combined_doctemplate = doctemplate_yaml# | inline_doctemplate
@@ -28,6 +29,10 @@ def build_context(
         "styles": {
             "yaml": text_styles_yaml,
             "ymprint": report_styles,
+            "families": {
+                name: {"ymprint": family, "rl": sheet}
+                for name, (family, sheet) in families.items()
+            },
             "rl": {
                 "_style": stylesheet
             },

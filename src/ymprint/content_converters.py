@@ -19,9 +19,26 @@ from .markdown.inline import convert_inline_markdown
 RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 jinja_env = Environment(undefined=DebugUndefined)
 
-def convert_paragraph(value: str, context: dict, text_style: str = "body") -> list[Paragraph]:
+def _family_sheet(context: dict, current_style: str):
+    """Returns the reportlab StyleSheet1 for the active text style family."""
+    families = context["styles"].get("families")
+    if families is not None and current_style in families:
+        return families[current_style]["rl"]
+    # Back-compat: fall back to the single default stylesheet.
+    return context["styles"]["rl"]["_style"]
+
+
+def _family_model(context: dict, current_style: str):
+    """Returns the ymprint StyleFamily model for the active text style family."""
+    families = context["styles"].get("families")
+    if families is not None and current_style in families:
+        return families[current_style]["ymprint"]
+    return context["styles"]["ymprint"]
+
+
+def convert_paragraph(value: str, context: dict, text_style: str = "body", current_style: str = "default") -> list[Paragraph]:
     """Returns a Paragraph obj"""
-    style = context["styles"]["rl"]['_style'][text_style]
+    style = _family_sheet(context, current_style)[text_style]
     paragraphs = value.split("\n")
     paras = []
     for para in paragraphs:
@@ -35,19 +52,18 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body") -> li
     return paras
 
 # Test
-def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlowable]:
-    text_spacing = context['styles']['ymprint'].body.spacing
-    text_size = context['styles']['ymprint'].body.size
+def convert_ul(value: list[str], context: dict, level: int = 0, current_style: str = "default") -> list[ListFlowable]:
+    ymp_style = _family_model(context, current_style)
+    text_spacing = ymp_style.body.spacing
+    text_size = ymp_style.body.size
     space_around = text_spacing * text_size / 2
-    sheet = context['styles']['rl']['_style']
+    sheet = _family_sheet(context, current_style)
     bullet_style: ParagraphStyle = sheet['body']
     # bullet_style.spaceAfter = space_around
     # bullet_style.spaceBefore = space_around
-    bul_context = context['styles']['yaml']['_style']['body']['bullets']
-    bul_symbols = bul_context['symbols']
+    bul_symbols = ymp_style.body.bullets.symbols
     level_index = level % len(bul_symbols)
     bul_symbol = bul_symbols[level_index]
-    ymp_style: ReportStyles = context['styles']['ymprint']
     bul_color = ymp_style.body.bullets.rl_color
     bullet_color_hex = "#{:02x}{:02x}{:02x}".format(
         int(bul_color.red),
@@ -57,7 +73,7 @@ def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlow
     bullet_contents = []
     for elem in value:
         if isinstance(elem, list):
-            sub_bullets = convert_ul(elem, context, level=level + 1)
+            sub_bullets = convert_ul(elem, context, level=level + 1, current_style=current_style)
             bullet_contents.append(sub_bullets)
         else:
             para_md = convert_inline_markdown(elem)
@@ -69,10 +85,10 @@ def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlow
     return [ListFlowable(bullet_contents, start=0, bulletType='bullet', spaceAfter=space_around)]
 
 # Test
-def convert_ol(value: list | dict, context: dict, level: int = 0) -> list[ListFlowable]:
-    sheet = context['styles']['rl']['_style']
+def convert_ol(value: list | dict, context: dict, level: int = 0, current_style: str = "default") -> list[ListFlowable]:
+    sheet = _family_sheet(context, current_style)
     bullet_style = sheet['body']
-    ymp_style: ReportStyles = context['styles']['ymprint']
+    ymp_style = _family_model(context, current_style)
     bul_color = ymp_style.body.bullets.rl_color
     bullet_color_hex = "#{:02x}{:02x}{:02x}".format(
         int(bul_color.red),
@@ -86,7 +102,7 @@ def convert_ol(value: list | dict, context: dict, level: int = 0) -> list[ListFl
     number = 1
     for elem in items:
         if isinstance(elem, (list, dict)):
-            sub_bullets = convert_ol(elem, context, level=level + 1)
+            sub_bullets = convert_ol(elem, context, level=level + 1, current_style=current_style)
             bullet_contents.append(sub_bullets)
             continue
         para_md = convert_inline_markdown(elem)
