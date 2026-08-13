@@ -15,14 +15,13 @@ Document Variables (_vars):
     representation is shown (i.e. the result of str(var)).
     
     This document has five variables defined, a, b, c, d, e.
-  - _spacer: 0 # The use of a "0-spacer" is a hack to prevent the paragraph above being interpreted as a bullet point.
-
-  - - a = {{a}}
-    - b = {{b}}
-    - c = {{c}}
-    - d = {{d}}
-    - e = {{e.key2}}
-    - f = {{f}}
+  - _ul:
+      - a = {{a}}
+      - b = {{b}}
+      - c = {{c}}
+      - d = {{d}}
+      - e = {{e.key2}}
+      - f = {{f}}
   - Passing Python Objects: >
       It is also possible to pass variable data as Python objects to blocks (see "YMPrint blocks") using the $var syntax (similar to bash).
 

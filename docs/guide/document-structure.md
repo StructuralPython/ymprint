@@ -16,8 +16,10 @@ Report title:
 ```
 
 Because a YAML key can only have **one** value, anything with more than a single piece of
-content underneath a heading must be written as a **list**. Each list item is rendered in
-order.
+content underneath a heading must be written as a **list**. A list is a **sequence of
+content items rendered in order**: a string becomes a paragraph, a mapping becomes a
+sub-heading with its own content. A list is *not* a bulleted list — bullets and numbers are
+opt-in via the [`_ul` and `_ol`](#bullet-lists) blocks.
 
 ### Heading → paragraph → sub-heading
 
@@ -65,48 +67,54 @@ Inline markdown is supported inside text — see [Inline formatting](#inline-for
 below.
 :::
 
-## Bullet lists
+(bullet-lists)=
+## Bullet lists — `_ul`
 
-A plain YAML list (items that are *not* mappings) renders as a bulleted list:
+A bare list is a sequence of paragraphs/sub-sections (see above), **not** a bulleted list.
+To render bullets, wrap the items in a `_ul` block:
 
 ```yaml
 Standard content types:
-  - Bullets:
+  _ul:
     - Bullet 1
     - Bullet 2
     - Bullet 3
 ```
 
+:::{note}
+This is a change from earlier versions, where a plain list of strings was auto-bulleted.
+A list on its own now means "these items in order" (paragraphs and sub-sections); bullets
+are explicit. This removes the ambiguity where a single wrapped paragraph under a heading
+would come out as a one-item bullet.
+:::
+
 ### Nested bullets
 
-Nest a list inside a list item to indent bullets. The bullet symbol changes with depth
+Nest a list inside a `_ul` item to indent bullets. The bullet symbol changes with depth
 (the default hierarchy is `•‣⁃∘`):
 
 ```yaml
-Bullets:
+_ul:
   - Bullet 1
   - Bullet 2
-  - - Bullet 4
-    - Bullet 5
-    - Bullet 6
+  - - Sub-bullet A
+    - Sub-bullet B
+    - Sub-bullet C
 ```
 
-## Ordered lists
+## Ordered lists — `_ol`
 
-Write a mapping whose keys act as the visible numbers. The keys are used as labels, so you
-control the numbering:
+Wrap the items in an `_ol` block. Numbering is automatic by position, and nesting a list
+inside an item creates a nested numbered list:
 
 ```yaml
 Ordered list:
-  1: First Item
-  2: Second item
-  3:
-    12: Fourth item
-    6: Fifth item
-    10: Sixth Item
+  _ol:
+    - First item
+    - Second item
+    - - Nested first
+      - Nested second
 ```
-
-Nesting a mapping under an item creates a nested ordered list.
 
 ## Tables
 
@@ -179,11 +187,13 @@ Report title:
       A paragraph and a sub-heading under one top-level heading require a list.
   - Standard content types:
     - Bullets:
-      - Bullet 1
-      - Bullet 2
+        _ul:
+          - Bullet 1
+          - Bullet 2
     - Ordered list:
-        1: First Item
-        2: Second item
+        _ol:
+          - First item
+          - Second item
     - Tables:
       - Item Number: 12.01
         Location: Under the stairs

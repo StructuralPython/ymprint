@@ -69,7 +69,7 @@ def convert_ul(value: list[str], context: dict, level: int = 0) -> list[ListFlow
     return [ListFlowable(bullet_contents, start=0, bulletType='bullet', spaceAfter=space_around)]
 
 # Test
-def convert_ol(value: dict, context: dict, level: int = 0) -> list[ListFlowable]:
+def convert_ol(value: list | dict, context: dict, level: int = 0) -> list[ListFlowable]:
     sheet = context['styles']['rl']['_style']
     bullet_style = sheet['body']
     ymp_style: ReportStyles = context['styles']['ymprint']
@@ -79,17 +79,22 @@ def convert_ol(value: dict, context: dict, level: int = 0) -> list[ListFlowable]
         int(bul_color.green),
         int(bul_color.blue),
     )
+    # Accept a list (positional numbering) or a mapping (back-compat: numbered by
+    # insertion order, keys ignored).
+    items = list(value.values()) if isinstance(value, dict) else value
     bullet_contents = []
-    for idx, elem in enumerate(value.values(), start=1):
-        if isinstance(elem, dict):
+    number = 1
+    for elem in items:
+        if isinstance(elem, (list, dict)):
             sub_bullets = convert_ol(elem, context, level=level + 1)
             bullet_contents.append(sub_bullets)
-        else:
-            para_md = convert_inline_markdown(elem)
-            template = jinja_env.from_string(para_md)
-            rendered = template.render(context['vars'])
-        bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}">{idx}. </bullet>{rendered}', bullet_style)
+            continue
+        para_md = convert_inline_markdown(elem)
+        template = jinja_env.from_string(para_md)
+        rendered = template.render(context['vars'])
+        bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}">{number}. </bullet>{rendered}', bullet_style)
         bullet_contents.append(bullet_content)
+        number += 1
     return [ListFlowable(bullet_contents, start=0, bulletType='bullet')]
 
 # Test

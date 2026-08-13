@@ -38,6 +38,8 @@ The suffix does not affect how the block is executed. It is simply an optional i
 | [`_code`](#block-code) | A non-executable code block. |
 | [`_py`](#block-py) | Execute Python and optionally show the syntax-highlighted source. |
 | [`_loadjson`](#block-loadjson) | Load variables into the document from a JSON file. |
+| [`_ul`](#block-ul) | An unordered (bulleted) list. |
+| [`_ol`](#block-ol) | An ordered (numbered) list. |
 | [`_pagebreak`](#block-pagebreak) | Force a page break. |
 | [`_hrule`](#block-hrule) | A customizable horizontal rule. |
 | [`_spacer`](#block-spacer) | Insert vertical whitespace. |
@@ -244,6 +246,45 @@ _loadjson:
 ```yaml
   - - bn = {{extra_vars.bn}}
     - dx = {{extra_vars.dx}}
+```
+
+---
+
+(block-ul)=
+## `_ul` — Unordered lists
+
+A bulleted list. A bare YAML list is a sequence of paragraphs/sub-sections, so bullets are
+written explicitly with `_ul`. Nest a list inside an item to indent (the bullet glyph
+changes with depth, default hierarchy `•‣⁃∘`).
+
+```yaml
+Findings:
+  _ul:
+    - The handrail is loose on the north stair.
+    - Two ceiling tiles are water-stained in the lobby.
+    - - a nested sub-point
+      - another sub-point
+```
+
+`_ul` works as the value of a heading key (as above) or as a list item
+(`- _ul: [...]`). Bullet glyph, colour, and indentation come from `_style.body.bullets`
+(see [Configuration → Text styles](#cfg-style)).
+
+---
+
+(block-ol)=
+## `_ol` — Ordered lists
+
+A numbered list. Numbering is automatic by position; nesting a list inside an item creates
+a nested numbered list.
+
+```yaml
+Recommended actions:
+  _ol:
+    - Re-secure the handrail.
+    - Replace the stained ceiling tiles.
+    - - Nested step one
+      - Nested step two
 ```
 
 ---
