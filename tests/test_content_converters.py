@@ -25,6 +25,7 @@ def default_context(default_config):
         tablestyles, 
         {}, 
         pathlib.Path.cwd(), 
+        pathlib.Path.cwd(),
         pathlib.Path.cwd()
     )
     return context

@@ -10,7 +10,7 @@ import typer
 from typer import Typer
 
 from ..report_reader import load_report
-from .config import locate_config_dir, CONFIG_FILENAMES
+from .config import locate_config_file
 from .okular import ensure_okular
 from ..config.config_loaders import load_config_directory
 
@@ -63,7 +63,7 @@ def convert(
     # Identify config files and content files to watch here
     # ensure_demo_file()
     if config_dir is None:
-        config_dir = locate_config_dir(Path.cwd())
+        config_dir = locate_config_file(Path.cwd())
 
     load_report(source, destination, config_dir)
     console = Console()
@@ -81,7 +81,7 @@ def convert(
 def live(
     src: Annotated[str, "YAML file path to render to PDF"],
     dest: Annotated[Optional[str], "File path of output PDF file. If not provided file name and path of source file will be used (wtih .pdf extension)."] = None,
-    config_dir: Annotated[Optional[str], "Directory of optional config files (doctemplate.yml, textstyles.yml, tablestyles.yml)"] = None,
+    config_file: Annotated[Optional[str], "Location of optional document config *.ymprint.yml file"] = None,
 ):
     source = Path(src)
     if dest is None:
@@ -90,8 +90,8 @@ def live(
         destination = Path(dest)
     # Identify config files and content files to watch here
     # ensure_demo_file()
-    if config_dir is None:
-        config_dir = locate_config_dir(Path.cwd())
+    if config_file is None:
+        config_dir = locate_config_file(Path.cwd())
     
     file_watchers = [FileWatcher(Path(source))]
     if config_dir is not None:

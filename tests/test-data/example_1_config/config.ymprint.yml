@@ -1,15 +1,22 @@
+_doc:
+  page-size: a4
+  landscape: false
+  margins:
+    top: 84
+    left: 84
+    right: 84
+    bottom: 84
+
 _style:
   headings:
     font: Helvetica
     color: "#111111"
-    ratio: minor second
+    ratio: major second
   body:
-    # font: Times
     color: black
     size: 10 # pts
     bullets:
       font: Helvetica
-      size: 12
+      size: 10
       color: black
-      symbol: "-"
       spacing: 1.1

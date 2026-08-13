@@ -16,6 +16,7 @@ def test_context_builder_executes(default_config):
         tablestyles, 
         {}, 
         pathlib.Path.cwd(), 
+        pathlib.Path.cwd(),
         pathlib.Path.cwd()
     )
     assert context['styles']['rl']['_style']['body']

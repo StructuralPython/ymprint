@@ -45,8 +45,6 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     textstyles, tablestyles, doc_data = load_report_config(source_data, report_config_path)
     doctemplate = DocConfig.model_validate(doc_data['_doc'])
     document_vars = extract_vars(source_data)
-    
-
     context = build_context(
         source_data, 
         textstyles, 
@@ -57,6 +55,7 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         destination_pdf,
         report_config_path,
     )
+    print(f"{doc_data=}")
     story = build_story(source_data, context)
     if context['doctemplate']['yaml']['_doc'].get('first-page') is not None:
         story = [NextPageTemplate(1)] + story
@@ -73,10 +72,6 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         pathlib.Path(destination_pdf),
         context
     )
-
-
-
-
 
 
 def extract_vars(source_data: dict) -> dict:

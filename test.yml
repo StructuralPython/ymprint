@@ -4,6 +4,12 @@ _doc:
     left: 1.0
     right: 1.0
     bottom: 1.0
+  first-page:
+    margins:
+      top: 1.0
+      left: 1.0
+      right: 1.0
+      bottom: 1.0
 yep: >
   Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
   ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation
