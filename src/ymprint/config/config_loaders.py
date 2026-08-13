@@ -98,7 +98,10 @@ def build_current_config(default_config: dict, config_data: DeepChainMap):
     for key in default_config:
         value = config_data[key]
         if isinstance(value, DeepChainMap):
-            value = build_current_config(default_config[key], value)
+            default_value = default_config[key]
+            # This condition only exists for the background key which is None in the defaults
+            if default_value is not None:
+                value = build_current_config(default_config[key], value)
         style_map.update({key: value})
     return style_map
 

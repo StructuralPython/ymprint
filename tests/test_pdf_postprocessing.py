@@ -23,4 +23,3 @@ def test_fill_forms_and_bake():
     filled_data = fill_forms_and_bake(vars, {"first": bg_data, "remaining": None})
     filled = pymupdf.open(stream=filled_data['first'])
     filled.save(TEST_DATA / "filled_forms.pdf")
-    assert False

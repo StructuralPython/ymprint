@@ -7,7 +7,9 @@ _vars:
   time: 13:00
   region: Level 1 columns
 _doc: # TODO: this background is not loading
-  background: background_other_pages.pdf
+  background: 
+    filepath: background_other_pages.pdf
+    relative-to: source
 title: 
   first topic:
     - >

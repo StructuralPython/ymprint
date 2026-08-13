@@ -109,15 +109,30 @@ def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None
 def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
     source_path = pathlib.Path(context['source_path'])
     source_parent = source_path.parent
-    first_page = context['doctemplate']['yaml']['_doc'].get('first-page')
-    if isinstance(first_page, dict):
-        first_page_background = first_page.get("background")
-        if first_page_background is not None:
-            first_page_background = source_parent / first_page_background
+    print(f"{source_parent=}")
+
+    if context['config_path'] is not None:
+        config_path = pathlib.Path(context['config_path'])
+        config_parent = config_path.parent
+    else:
+        config_path = source_path
+        config_parent = source_parent
+
+    first_page_bg = context['doctemplate']['yaml']['_doc'].get('first-page', {}).get('background')
+    if isinstance(first_page_bg, dict):
+        print(f"{first_page.get('background', {})=}")
+        first_page_background_filepath = first_page_bg.get('filepath')
+        relative_to = first_page_bg.get('relative_to')
+        if relative_to == 'source':
+            first_page_background = source_parent / first_page_background_filepath
+        elif relative_to == 'config':
+            first_page_background = config_parent / first_page_background_filepath
+        else:
+            first_page_background = first_page_background_filepath
     else:
         first_page_background = None
 
-    remaining = context['doctemplate']['yaml']['_doc'].get('background')
+    remaining = context['doctemplate']['yaml']['_doc'].get('background', {})
     first_page_pdf = remaining_pdf = None
     first_page_data = remaining_page_data = None
     if first_page_background is not None:
@@ -126,7 +141,16 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
         first_page_pdf.save(first_page_data)
         first_page_data.seek(0)
     if remaining is not None:
-        remaining_page_background = source_parent / remaining
+        relative_to = remaining.get('relative-to')
+        print(f"{relative_to=}")
+        if relative_to == 'source':
+            remaining_page_background = source_parent / remaining.get('filepath')
+        elif relative_to == 'config':
+            remaining_page_background = config_parent / remaining.get('filepath')
+        else:
+            remaining_page_background = remaining.get('filepath')
+
+        print(f"{remaining_page_background=}")
         remaining_pdf = mu.open(remaining_page_background)
         remaining_page_data = io.BytesIO()
         remaining_pdf.save(remaining_page_data)

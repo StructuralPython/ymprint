@@ -1,0 +1,69 @@
+_doc:
+  page-size: letter
+  landscape: true
+  margins:
+    top: 84
+    left: 84
+    right: 84
+    bottom: 84
+  background: 
+    filepath: background_other_pages.pdf
+    relative-to: source
+  first-page:
+    margins:
+      top: 240
+      left: 84
+      right: 84
+      bottom: 84
+    background: 
+      filepath: background_first_page.pdf
+      relative-to: source
+
+_tablestyle:
+  cell-padding:
+    top: 5
+    left: 5
+    right: 5
+    bottom: 5
+    
+  headers:
+    text: 
+      font: Helvetica
+      size: 11
+      color: "#000000"
+    row:
+      color: "#ffffff"
+      lines:
+        - above
+        - below
+        - between
+  body:
+    text:
+      font: "Helvetica"
+      size: 11
+      color: "black"
+    rows:
+      color:
+        even: "#ffffff"
+        odd: "#eeeeee"
+      lines:
+        - above
+        - below
+        - between
+        
+      
+_style:
+  headings:
+    font: Helvetica
+    color: "#111111"
+    ratio: minor second
+  body:
+    # font: Times
+    color: black
+    size: 10 # pts
+    bullets:
+      font: Helvetica
+      size: 12
+      color: black
+      symbol: "-"
+      spacing: 1.1

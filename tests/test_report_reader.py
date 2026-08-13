@@ -29,6 +29,7 @@ def default_context(default_config):
         tablestyles, 
         {}, 
         pathlib.Path.cwd(), 
+        pathlib.Path.cwd(),
         pathlib.Path.cwd()
     )
     return context
@@ -37,5 +38,3 @@ def test_load_yaml(report_ex1, report_ex2):
     load_report(TEST_DATA / "report_example_1.yml", TEST_DATA / "example_output1.pdf", TEST_DATA / "example_1_config")
     load_report(TEST_DATA / "report_example_2.yml", TEST_DATA / "example_output2.pdf", TEST_DATA / "example_2_config")
     load_report(TEST_DATA / "report_example_3.yml", TEST_DATA / "example_output3.pdf", TEST_DATA / "example_1_config")
-
-    assert False
