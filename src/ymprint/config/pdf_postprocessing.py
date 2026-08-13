@@ -1,6 +1,5 @@
 import io
 import pathlib
-from typing import Optional
 
 import pymupdf as mu
 
@@ -9,155 +8,122 @@ def overlay_pdf_background(
     pdf_background_streams: dict[str, io.BytesIO | None],
     destination_path: pathlib.Path | io.BytesIO,
     context: dict,
+    page_template_map: dict[int, str],
 ):
     """
-    Overlays the pages from document_path onto the pages from 
-    pdf_background_path and saves the new file to destination_path.
-    If first_page_background_path is provided, then that background
-    will be used for the first page and all other pages will be overlayed
-    onto pdf_background_path.
+    Overlays the rendered document pages onto their page template backgrounds and
+    saves the result to 'destination_path'.
 
-    If pdf_background_path is a PDF file with multiple pages, each page
-    in 'document_path' will be overlayed onto each page of 'pdf_background_path'
-    in sequence. If 'document_path' has more pages than 'pdf_background_path',
-    then the remaining pages of 'document_path' will not have a pdf background
-    applied. If 'pdf_background_path' has more pages than 'document_path', then
-    the final document will have the same number of pages as 'document_path' and
-    the remaining un-overlayed pages from 'pdf_background_path' will remain
-    unused in the final document.
+    'pdf_background_streams' maps a page template name to its (form-filled) PDF
+    background stream, or None when that template has no background.
+
+    'page_template_map' maps a 0-based page index to the name of the page template
+    that rendered it, so each page is overlaid onto the correct template background.
+
+    If a template's background PDF has multiple pages, each document page rendered
+    with that template is overlaid onto the background page at the same absolute
+    document index; document pages beyond the background's page count receive no
+    background.
     """
-    first_data = pdf_background_streams['first']
-    remaining_data = pdf_background_streams['remaining']
     page_dims = context['doctemplate']['ymprint'].page_dims
     page_width, page_height = page_dims
-    first_bg = None
-    if first_data is not None:
-        first_bg = mu.open(stream=pdf_background_streams['first'])
-    remaining_bg = None
-    if remaining_data is not None:
-        remaining_bg = mu.open(stream=pdf_background_streams['remaining'])
+
+    background_docs = {
+        name: (mu.open(stream=data) if data is not None else None)
+        for name, data in pdf_background_streams.items()
+    }
+
     document = mu.open(stream=document_path)
     output = mu.open()
     for i in range(document.page_count):
         document_page = document.load_page(i)
         document_page.wrap_contents()
         out_page = output.new_page(width=page_width, height=page_height)
-        if i == 0 and first_bg is not None:
-            first_bg_page = first_bg.load_page(0)
-            first_bg_page.wrap_contents()
-            out_page.show_pdf_page(first_bg_page.rect, first_bg, pno=0)
-            out_page.show_pdf_page(document_page.rect, document, pno=i)
-            continue
-        if remaining_bg is not None:
-            if remaining_bg.page_count == 1:
-                background_page = remaining_bg.load_page(0)
-                background_page.wrap_contents()
+
+        template_name = page_template_map.get(i)
+        background = background_docs.get(template_name)
+        if background is not None:
+            if background.page_count == 1:
                 background_page_num = 0
+            elif i < background.page_count:
+                background_page_num = i
             else:
-                try:
-                    background_page = remaining_bg.load_page(i)
-                    background_page.wrap_contents()
-                    background_page_num = i
-                except IndexError:
-                    background_page = None
-            out_page.show_pdf_page(background_page.rect, remaining_bg, pno=background_page_num)
+                background_page_num = None
+            if background_page_num is not None:
+                background_page = background.load_page(background_page_num)
+                background_page.wrap_contents()
+                out_page.show_pdf_page(background_page.rect, background, pno=background_page_num)
+
         out_page.show_pdf_page(document_page.rect, document, pno=i)
     output.save(destination_path)
 
-        
 
-def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO]:
-    first_data = pdf_backgrounds['first']
-    remaining_data = pdf_backgrounds['remaining']
-    first_bg = remaining_bg = None
-    if first_data is not None:
-        first_bg = mu.open(stream=first_data)
-    if remaining_data is not None:
-        remaining_bg = mu.open(stream=remaining_data)
-
-    if first_bg is None and remaining_bg is None:
-        return pdf_backgrounds
-    docs = [first_bg, remaining_bg]
-    out_docs = {}
-
-    indexes = ['first', 'remaining']
-    for idx, doc in enumerate(docs):
-        if doc is None:
-            out_docs[indexes[idx]] = None
+def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO | None]:
+    """
+    For each background stream, populates any PDF form fields whose name matches a
+    document variable, then flattens ("bakes") the fields into the page content.
+    Returns a dict with the same keys, mapping to the baked stream (or None).
+    """
+    out_docs: dict[str, io.BytesIO | None] = {}
+    for name, data in pdf_backgrounds.items():
+        if data is None:
+            out_docs[name] = None
             continue
 
+        doc = mu.open(stream=data)
         for page in doc.pages():
             widget = page.first_widget
             while widget is not None:
-                name = widget.field_name
-                widget_value = vars.get(name, None)
-                # THIS IS TRICKY
+                field_name = widget.field_name
+                widget_value = vars.get(field_name, None)
                 if widget_value is not None:
                     widget.field_value = str(widget_value)
                     widget.update()
                 widget = widget.next
 
-
         doc.bake()
         doc_data = io.BytesIO()
         doc.save(filename=doc_data)
         doc_data.seek(0)
-        out_docs[indexes[idx]] = doc_data
+        out_docs[name] = doc_data
     return out_docs
 
 
 def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
+    """
+    Returns a dict mapping each page template name to its background PDF as a
+    BytesIO stream (or None when the template has no background). Relative
+    background paths are resolved against the source or config directory according
+    to each background's 'relative-to' setting.
+    """
     source_path = pathlib.Path(context['source_path'])
     source_parent = source_path.parent
-    print(f"{source_parent=}")
 
     if context['config_path'] is not None:
-        config_path = pathlib.Path(context['config_path'])
-        config_parent = config_path.parent
+        config_parent = pathlib.Path(context['config_path']).parent
     else:
-        config_path = source_path
         config_parent = source_parent
 
-    first_page_bg = context['doctemplate']['yaml']['_doc'].get('first-page', {}).get('background')
-    if isinstance(first_page_bg, dict):
-        print(f"{first_page.get('background', {})=}")
-        first_page_background_filepath = first_page_bg.get('filepath')
-        relative_to = first_page_bg.get('relative_to')
+    doctemplate = context['doctemplate']['ymprint']
+    backgrounds: dict[str, io.BytesIO | None] = {}
+    for name, template in doctemplate.templates.items():
+        background = template.background
+        if background is None:
+            backgrounds[name] = None
+            continue
+
+        relative_to = background.relative_to
         if relative_to == 'source':
-            first_page_background = source_parent / first_page_background_filepath
+            background_path = source_parent / background.filepath
         elif relative_to == 'config':
-            first_page_background = config_parent / first_page_background_filepath
+            background_path = config_parent / background.filepath
         else:
-            first_page_background = first_page_background_filepath
-    else:
-        first_page_background = None
+            background_path = background.filepath
 
-    remaining = context['doctemplate']['yaml']['_doc'].get('background', {})
-    first_page_pdf = remaining_pdf = None
-    first_page_data = remaining_page_data = None
-    if first_page_background is not None:
-        first_page_pdf = mu.open(first_page_background)
-        first_page_data = io.BytesIO()
-        first_page_pdf.save(first_page_data)
-        first_page_data.seek(0)
-    if remaining is not None:
-        relative_to = remaining.get('relative-to')
-        print(f"{relative_to=}")
-        if relative_to == 'source':
-            remaining_page_background = source_parent / remaining.get('filepath')
-        elif relative_to == 'config':
-            remaining_page_background = config_parent / remaining.get('filepath')
-        else:
-            remaining_page_background = remaining.get('filepath')
+        pdf = mu.open(background_path)
+        data = io.BytesIO()
+        pdf.save(data)
+        data.seek(0)
+        backgrounds[name] = data
 
-        print(f"{remaining_page_background=}")
-        remaining_pdf = mu.open(remaining_page_background)
-        remaining_page_data = io.BytesIO()
-        remaining_pdf.save(remaining_page_data)
-        remaining_page_data.seek(0)
-
-    backgrounds = {
-        "first": first_page_data,
-        "remaining": remaining_page_data
-    }
     return backgrounds

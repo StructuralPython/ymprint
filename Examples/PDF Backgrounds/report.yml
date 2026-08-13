@@ -1,5 +1,14 @@
 _doc:
-  background: background.pdf
+  templates:
+    default:
+      margins:
+        top: 72.0
+        left: 72.0
+        right: 72.0
+        bottom: 72.0
+      background:
+        filepath: background.pdf
+        relative-to: source
 _vars:
   field_a: 1645
   field_b: 99 Sycamore St, Canada

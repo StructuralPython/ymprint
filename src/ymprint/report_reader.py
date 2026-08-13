@@ -5,6 +5,7 @@ from .blocks import image_block
 from .blocks import admonition_block
 from .blocks import quote_block
 from .blocks import page_break_block
+from .blocks import nextpagetemplate_block
 from .blocks import spacer_block
 from .blocks import hrule_block
 from .blocks import python_block
@@ -19,7 +20,7 @@ from .story_builder import build_story
 
 
 from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake, overlay_pdf_background
-from reportlab.platypus import Spacer, NextPageTemplate
+from reportlab.platypus import Spacer
 from reportlab.lib.units import mm
 
 from .config.font_registry import register_fonts
@@ -57,20 +58,19 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     )
     print(f"{doc_data=}")
     story = build_story(source_data, context)
-    if context['doctemplate']['yaml']['_doc'].get('first-page') is not None:
-        story = [NextPageTemplate(1)] + story
-    rl_doc = doctemplate.build(destination_pdf)
+    rl_doc, page_template_map = doctemplate.build(destination_pdf)
     rl_report_buffer = BytesIO()
     rl_doc.build(story, filename=rl_report_buffer)
     rl_report_buffer.seek(0)
-    # rl_doc.build(story, filename=str(pathlib.Path(destination_pdf).resolve()))
+    # page_template_map is now populated with {page_index: template_name}
     pdf_backgrounds = load_pdf_backgrounds(context)
     populated_backgrounds = fill_forms_and_bake(context['vars'], pdf_backgrounds)
     overlay_pdf_background(
         rl_report_buffer,
         populated_backgrounds,
         pathlib.Path(destination_pdf),
-        context
+        context,
+        page_template_map,
     )
 
 

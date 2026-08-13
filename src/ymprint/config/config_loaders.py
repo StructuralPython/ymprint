@@ -96,6 +96,18 @@ def build_current_config(default_config: dict, config_data: DeepChainMap):
     """
     style_map = {}
     for key in default_config:
+        # 'templates' is a user-extensible mapping whose keys are arbitrary
+        # template names, so it must not be merged key-by-key against the
+        # defaults (which would drop any user-named templates and inject the
+        # default one). Instead, take the whole mapping from the highest-priority
+        # layer that defines a non-empty 'templates'.
+        if key == 'templates':
+            for mapping in config_data.maps:
+                templates = mapping.get('templates')
+                if templates:
+                    style_map['templates'] = templates
+                    break
+            continue
         value = config_data[key]
         if isinstance(value, DeepChainMap):
             default_value = default_config[key]

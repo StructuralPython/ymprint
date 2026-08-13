@@ -20,7 +20,7 @@ def build_context(
     # This is not an appropriate merge. Need the nested chain map.
     combined_doctemplate = doctemplate_yaml# | inline_doctemplate
     doctemplate = DocConfig.model_validate(combined_doctemplate['_doc'])
-    rl_basedoctemplate = doctemplate.build(destination_path)
+    rl_basedoctemplate, _ = doctemplate.build(destination_path)
     report_tablestyles = TableStyle.model_validate(tablestyles_yaml['_tablestyle'])
     tablestyles = report_tablestyles.build()
     context = {
@@ -49,21 +49,21 @@ def build_context(
         "vars": document_vars,
         "page_dims": doctemplate.page_dims,
         "frames": {
-            "first_page": {
-                "anchor": doctemplate.page_anchor('first'),
-                "width": doctemplate.available_width('first'),
-                "height": doctemplate.available_height('first'),
+            **{
+                name: {
+                    "anchor": doctemplate.page_anchor(name),
+                    "width": doctemplate.available_width(name),
+                    "height": doctemplate.available_height(name),
+                }
+                for name in doctemplate.template_names
             },
-            "remaining_pages": {
-                "anchor": doctemplate.page_anchor('all'),
-                "width": doctemplate.available_width('all'),
-                "height": doctemplate.available_height('all'),
-            },
+            # Conservative frame used by blocks to size flowables that could land
+            # on any page: the smallest content box across all templates.
             "all_pages": {
-                "anchor": doctemplate.page_anchor('all'),
-                "width": min(doctemplate.available_width('all'), doctemplate.available_width('first')),
-                "height": min(doctemplate.available_height('all'), doctemplate.available_height('first')),
-            }
+                "anchor": doctemplate.page_anchor(doctemplate.template_names[0]),
+                "width": doctemplate.min_available_width(),
+                "height": doctemplate.min_available_height(),
+            },
         },
         "source_path": source_path,
         "config_path": config_path,

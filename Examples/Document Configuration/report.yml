@@ -24,13 +24,18 @@ Customizing your document configuration and styling:
     
     Using a combination of configuration levels, you can customize the style of your documents with a minimum amount of configuration text.
     
-  - The document template (_doc): 
+  - The document template (_doc):
     - >
-      The template controls settings such as
-    - - Page size
-      - Margins
+      The `_doc` configuration controls the document-wide page size and orientation, along with
+      one or more named `page templates`. Each page template controls settings such as
+    - - Margins
       - PDF background file path
-      - And whether or not you have a separate set of the above settings applying to the first page of your document or not.
+
+    - >
+      The first page template listed is the one your document starts on. Within your report you
+      can switch between page templates using the `_pagebreak` block (pass it the name or index of
+      the template to use for the following pages) or the `_nextpagetemplate` block (which arms the
+      template to switch to at the next page break).
 
     - >
       Currently, the document template is internally configured to only use a single content frame. This limitation would only affect you if you wanted to do something like a two-column layout (where text flows into the second column on the same page once the first one is full).
