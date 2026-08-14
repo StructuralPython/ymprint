@@ -56,7 +56,6 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
         destination_pdf,
         report_config_path,
     )
-    print(f"{doc_data=}")
     story = build_story(source_data, context)
     rl_doc, page_template_map = doctemplate.build(destination_pdf)
     rl_report_buffer = BytesIO()

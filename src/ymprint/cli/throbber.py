@@ -97,6 +97,11 @@ class ThrobberState:
         colour = self.next_explosion_colour()
         self.explosions.append(Explosion(origin=origin_cell, colour=colour))
 
+    def trigger_error_explosion(self):
+        """A vivid red burst used to signal a failed reload."""
+        origin_cell = self.pos * (self.width - 1)
+        self.explosions.append(Explosion(origin=origin_cell, colour=(255, 40, 40)))
+
     def advance(self):
         # Move the white wave head
         self.pos += self.direction * WAVE_SPEED
