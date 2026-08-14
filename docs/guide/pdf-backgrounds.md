@@ -7,11 +7,16 @@ illusion of a sophisticated page-layout workflow while you keep writing plain YA
 
 ## Using a background
 
-Point `_doc.background` at a PDF file:
+Give a [page template](#cfg-doc) a `background` pointing at a PDF file:
 
 ```yaml
 _doc:
-  background: background.pdf
+  templates:
+    default:
+      margins: {top: 72.0, left: 72.0, right: 72.0, bottom: 72.0}
+      background:
+        filepath: background.pdf
+        relative-to: source
 
 Custom styling with PDF backgrounds:
   - >
@@ -19,13 +24,15 @@ Custom styling with PDF backgrounds:
     can carry your letterhead, borders, watermarks, and form fields.
 ```
 
-The path is resolved relative to the report file. Each page of your document is composited
-over the corresponding page of the background.
+`relative-to` may be `source` (resolve the path against the report file) or `config`
+(against the project config directory). Each page rendered with a template is composited
+over its background; when a background PDF has multiple pages, they are matched by page
+number.
 
 :::{tip}
-Give the first page its own background using `_doc.first-page.background` — useful for a
-title page or a cover sheet that differs from the body pages. See
-[Configuration → Document template](#cfg-doc).
+Give a cover or title page its own background by defining a **separate page template** with
+its own `background` and switching to the body template with `_pagebreak` — useful when the
+first page differs from the rest. See [Configuration → Document template](#cfg-doc).
 :::
 
 ## Auto-populated form fields
@@ -37,7 +44,12 @@ the values look like normal, static PDF content.
 
 ```yaml
 _doc:
-  background: background.pdf
+  templates:
+    default:
+      margins: {top: 72.0, left: 72.0, right: 72.0, bottom: 72.0}
+      background:
+        filepath: background.pdf
+        relative-to: source
 _vars:
   field_a: 1645
   field_b: 99 Sycamore St, Canada

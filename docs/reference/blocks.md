@@ -38,9 +38,14 @@ The suffix does not affect how the block is executed. It is simply an optional i
 | [`_code`](#block-code) | A non-executable code block. |
 | [`_py`](#block-py) | Execute Python and optionally show the syntax-highlighted source. |
 | [`_loadjson`](#block-loadjson) | Load variables into the document from a JSON file. |
+<<<<<<< HEAD
 | [`_ul`](#block-ul) | An unordered (bulleted) list. |
 | [`_ol`](#block-ol) | An ordered (numbered) list. |
 | [`_pagebreak`](#block-pagebreak) | Force a page break. |
+=======
+| [`_pagebreak`](#block-pagebreak) | Force a page break, optionally switching page template. |
+| [`_nextpagetemplate`](#block-nextpagetemplate) | Arm the page template to switch to at the next break. |
+>>>>>>> adb6527 (feat: implement multiple named page templates)
 | [`_hrule`](#block-hrule) | A customizable horizontal rule. |
 | [`_spacer`](#block-spacer) | Insert vertical whitespace. |
 
@@ -292,15 +297,35 @@ Recommended actions:
 (block-pagebreak)=
 ## `_pagebreak` — Page breaks
 
-Force a page break. Takes `null` as its value (an empty block).
+Force a page break. Called with no value, it just breaks the page and keeps the current
+[page template](configuration.md#cfg-doc). Pass the **name or 0-based index** of a page
+template to switch to it for the pages that follow.
 
 ```yaml
 Report:
   - >
     This content ends the page.
-  - _pagebreak:
+  - _pagebreak:            # break, keep the current template
   - >
     This content starts a new page.
+  - _pagebreak: body       # break AND switch to the "body" template
+  - _pagebreak: 1          # equivalently, by index
+```
+
+---
+
+(block-nextpagetemplate)=
+## `_nextpagetemplate` — Switch template at the next break
+
+Arm the [page template](configuration.md#cfg-doc) to switch to at the **next** page break,
+without inserting a break itself. Useful when the break is produced elsewhere (for example,
+by content overflowing the page). Takes the template **name or 0-based index**.
+
+```yaml
+Report:
+  - _nextpagetemplate: body   # the next page break will switch to "body"
+  - >
+    Long content that flows onto a second page, which will use the "body" template.
 ```
 
 ---

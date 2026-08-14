@@ -6,11 +6,7 @@ _vars:
   date: 2026-06-12
   time: 13:00
   region: Level 1 columns
-_doc: # TODO: this background is not loading
-  background: 
-    filepath: background_other_pages.pdf
-    relative-to: source
-title: 
+title:
   first topic:
     - >
       Here is the start of a new paragraph of {{region}}. Any text can be written Here
@@ -28,7 +24,7 @@ title:
           - first bullet point
           - second bullet point
           - third bullet point
-    - _pagebreak: null
+    - _pagebreak: body
     - third topic:
       - First sub paragraph leading into subheading
       - Second sub paragraph leading into subheading
