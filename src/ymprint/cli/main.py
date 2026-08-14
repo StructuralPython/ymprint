@@ -1,18 +1,23 @@
 import subprocess
 import time
+from datetime import datetime
 from typing import Optional, Annotated
 from pathlib import Path
 from .throbber import ThrobberState, FPS
+from .error_display import format_authoring_error
+from ..errors import YmprintAuthoringError
+from rich import box
 from rich.text import Text
-from rich.console import Console
+from rich.console import Console, Group, RenderableType
 from rich.live import Live
+from rich.panel import Panel
+from rich.rule import Rule
 import typer
 from typer import Typer
 
 from ..report_reader import load_report
 from .config import locate_config_file
 from .okular import ensure_okular
-from ..config.config_loaders import load_config_directory
 
 app = Typer(name='ymp', no_args_is_help=True)
 
@@ -39,11 +44,42 @@ class FileWatcher:
         return False
 
 
-def build_display(state: ThrobberState, status: str) -> Text:
-    bar = state.render()
-    label = Text(f"\n {status}", style="dim white")
-    bar.append_text(label)
-    return bar
+def build_live_panel(
+    state: ThrobberState,
+    watchers: list[FileWatcher],
+    lower: RenderableType,
+    border_style: str,
+) -> Panel:
+    """Assemble the two-part live panel: watch list + throbber over a status area."""
+    header = Text()
+    header.append("👁  ", style="bold")
+    header.append("YMPrint live", style="bold cyan")
+    header.append("  ·  hot-reloading", style="dim")
+
+    files = Text()
+    for watcher in watchers:
+        files.append("   • ", style="dim")
+        files.append(f"{watcher.path.name}\n", style="cyan")
+    files.append("     ", style="dim")
+    files.append(str(watchers[0].path.resolve().parent), style="dim")
+
+    upper = Group(header, Text(), files, Text(), state.render())
+    body = Group(upper, Rule(style=border_style), lower)
+
+    return Panel(
+        body,
+        title="[bold]✨ ymprint ✨[/bold]",
+        subtitle="[dim]Ctrl+C to quit[/dim]",
+        border_style=border_style,
+        box=box.ROUNDED,
+        padding=(1, 2),
+    )
+
+
+def _resolve_config(config_file: Optional[str], source: Path) -> Optional[Path]:
+    if config_file is not None:
+        return Path(config_file)
+    return locate_config_file(source.resolve().parent)
 
 
 @app.command(
@@ -52,21 +88,35 @@ def build_display(state: ThrobberState, status: str) -> Text:
     no_args_is_help=True
 )
 def convert(
-    src: str, 
-    dest: str | None = None, 
+    src: str,
+    dest: str | None = None,
     config_dir: str | None = None
     ):
     source = Path(src)
     destination = Path(dest) if dest is not None else None
     if destination is None:
         destination = source.parent / f"{source.stem}.pdf"
-    # Identify config files and content files to watch here
-    # ensure_demo_file()
-    if config_dir is None:
-        config_dir = locate_config_file(Path.cwd())
 
-    load_report(source, destination, config_dir)
+    config_path = _resolve_config(config_dir, source)
     console = Console()
+
+    try:
+        load_report(source, destination, config_path)
+    except YmprintAuthoringError as exc:
+        # This is a problem in the author's document, not an ymprint crash. Make
+        # that explicit and show the actionable, compact error.
+        console.print(
+            Panel(
+                format_authoring_error(exc),
+                title="[bold red]ymprint convert — error in your document[/bold red]",
+                subtitle="[dim]this is an error in the file you authored, not an ymprint bug[/dim]",
+                border_style="red",
+                box=box.ROUNDED,
+                padding=(1, 2),
+            )
+        )
+        raise typer.Exit(code=1)
+
     console.print(
         f"✍️ .... 📝 ... PDF created: {destination.resolve()}"
     )
@@ -88,20 +138,12 @@ def live(
         destination = source.parent / f"{source.stem}.pdf"
     else:
         destination = Path(dest)
-    # Identify config files and content files to watch here
-    # ensure_demo_file()
-    if config_file is None:
-        config_dir = locate_config_file(Path.cwd())
-    
-    file_watchers = [FileWatcher(Path(source))]
-    if config_dir is not None:
-        config_dir = Path(config_dir)
-        for filename in CONFIG_FILENAMES:
-            if (config_dir / filename).exists():
-                file_watchers.append(FileWatcher(config_dir / filename))
-    else:
-        config_dir = source.parent
-    print(file_watchers)
+
+    config_path = _resolve_config(config_file, source)
+
+    file_watchers = [FileWatcher(source)]
+    if config_path is not None and config_path.is_file():
+        file_watchers.append(FileWatcher(config_path))
 
     console = Console()
 
@@ -112,19 +154,29 @@ def live(
         raise typer.Exit(code=1)
 
     state = ThrobberState()
-    # watcher = FileWatcher(WATCH_FILE)
     frame_time = 1.0 / FPS
 
-    console.print(
-        f"\n[bold cyan]YMPrint live mode[/bold cyan]  "
-        f"[dim]watching [white]{str(source)}[/white] — "
-        f"Ctrl+C to quit[/dim]\n"
+    def render() -> tuple[RenderableType, str]:
+        """Attempt a render; return the (lower panel, border colour) to show."""
+        try:
+            load_report(source, destination, config_path)
+        except YmprintAuthoringError as exc:
+            state.trigger_error_explosion()
+            return format_authoring_error(exc), "red"
+        names = ", ".join(w.path.name for w in file_watchers)
+        stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return Text(f"✓ Reloaded {names} at {stamp}", style="green"), "green"
+
+    # Initial render before opening the viewer.
+    lower, border = render()
+    okular_sub = subprocess.Popen(
+        [*okular_cmd, str(destination)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
     )
-    load_report(source, destination, config_dir)
-    okular_sub = subprocess.Popen([*okular_cmd, str(destination)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    status = ""
+
     with Live(
-        build_display(state, status),
+        build_live_panel(state, file_watchers, lower, border),
         console=console,
         refresh_per_second=FPS,
         transient=False,
@@ -132,22 +184,22 @@ def live(
         try:
             while True:
                 t0 = time.monotonic()
-                for watcher in file_watchers:
-                    if watcher.changed():
-                        state.trigger_explosion()
-                        status = f"change detected in {str(watcher.path)}!"
-                        load_report(source, destination, config_dir)
-                        break
 
-                    elif not state.explosions:
-                        status = f"watching {(str(file_watchers))} …"
+                changed = next((w for w in file_watchers if w.changed()), None)
+                if changed is not None:
+                    # A save clears any prior error immediately and shows the
+                    # reload in progress before we attempt it.
+                    state.trigger_explosion()
+                    lower = Text(f"⟳ reloading ({changed.path.name}) …", style="yellow")
+                    border = "yellow"
+                    live.update(build_live_panel(state, file_watchers, lower, border))
+                    lower, border = render()
 
                 state.advance()
-                live.update(build_display(state, status))
+                live.update(build_live_panel(state, file_watchers, lower, border))
 
                 elapsed = time.monotonic() - t0
-                sleep = max(0.0, frame_time - elapsed)
-                time.sleep(sleep)
+                time.sleep(max(0.0, frame_time - elapsed))
 
         except KeyboardInterrupt:
             console.print("\n[dim]Live mode ended.[/dim]\n")

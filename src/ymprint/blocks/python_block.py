@@ -1,6 +1,7 @@
 from reportlab.platypus import Table, KeepTogether
 from . import register_block
 from .code_block_styles import python_code_block
+from ..errors import PythonBlockError
 from typing import Callable
 
 
@@ -19,7 +20,12 @@ def convert_python_block(block_key: str, block_value: dict, context: dict) -> li
     if namespace is not None:
         context['vars'][namespace] = {}
     local_namespace = context['vars'][namespace] if namespace is not None else context['vars']
-    exec(source, globals=context['vars'], locals=local_namespace)
+    try:
+        exec(source, globals=context['vars'], locals=local_namespace)
+    except Exception as e:
+        # The author's own code raised — surface it as an authoring error that
+        # keeps the source and traceback for a compact, actionable report.
+        raise PythonBlockError(block_key, source, e) from e
     if block_value.get("echo", True):
         code_block = python_code_block(source, available_width * width_ratio, context, caption=caption, show_line_numbers=line_numbers)
         code_block.spaceBefore = space_around
