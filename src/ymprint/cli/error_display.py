@@ -48,23 +48,56 @@ def _format_yaml_error(exc: YamlSyntaxError) -> RenderableType:
 
 def _format_python_error(exc: PythonBlockError) -> RenderableType:
     original = exc.original
-    frames = traceback.extract_tb(original.__traceback__)
-    source_lines = exc.source.splitlines()
-
     parts: list[RenderableType] = [
         Text(f"Error in Python block '{exc.block_key}'", style="bold red")
     ]
 
-    failing = _failing_source_line(frames, source_lines)
-    if failing is not None:
-        parts.append(failing)
+    if isinstance(original, SyntaxError):
+        # A SyntaxError fails at compile time, so there is no `<string>` frame in
+        # the traceback. Use the exception's own line/offset instead, and detect
+        # the common cause: forgetting the `|` block scalar, which folds the code
+        # into a single line.
+        parts.extend(_syntax_error_parts(exc, original))
+        message = original.msg
+    else:
+        frames = traceback.extract_tb(original.__traceback__)
+        source_lines = exc.source.splitlines()
+        failing = _failing_source_line(frames, source_lines)
+        if failing is not None:
+            parts.append(failing)
+        parts.append(Text("Traceback (most relevant frames):", style="dim"))
+        parts.extend(_compact_frames(frames, source_lines))
+        message = str(original)
 
-    parts.append(Text("Traceback (most relevant frames):", style="dim"))
-    parts.extend(_compact_frames(frames, source_lines))
-    parts.append(
-        Text(f"{type(original).__name__}: {original}", style="bold red")
-    )
+    parts.append(Text(f"{type(original).__name__}: {message}", style="bold red"))
     return Group(*parts)
+
+
+def _syntax_error_parts(
+    exc: PythonBlockError, original: SyntaxError
+) -> list[RenderableType]:
+    parts: list[RenderableType] = []
+    single_line = "\n" not in exc.source.strip()
+    text = (original.text or "").rstrip("\n")
+    lineno = original.lineno or 1
+
+    if text:
+        line = Text()
+        line.append(f"→ line {lineno}: ", style="bold yellow")
+        line.append(text.strip(), style="yellow")
+        parts.append(line)
+
+    if single_line:
+        # The code collapsed onto one line — almost always a missing block scalar.
+        parts.append(
+            Text(
+                "Hint: this block parsed as a single line. If the code was meant "
+                "to span multiple lines, use a YAML block scalar — write "
+                "'source: |' and indent the code beneath it.",
+                style="yellow",
+            )
+        )
+    return parts
 
 
 def _frame_source(frame: traceback.FrameSummary, source_lines: list[str]) -> Optional[str]:

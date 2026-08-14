@@ -77,6 +77,35 @@ def test_python_block_error_display_points_to_line():
         pytest.fail("expected PythonBlockError")
 
 
+# ── SyntaxError from a `_py` block ────────────────────────────────────────────
+
+def _render(exc):
+    from rich.console import Console
+    console = Console(width=100)
+    with console.capture() as cap:
+        console.print(format_authoring_error(exc))
+    return cap.get()
+
+
+def test_folded_source_gets_block_scalar_hint():
+    # Simulates `source:` (no `|`): YAML folds the code onto a single line.
+    folded = "from math import pi a = pi b = a * 2"
+    with pytest.raises(PythonBlockError) as info:
+        _run_py_block(folded)
+    text = _render(info.value)
+    assert "SyntaxError" in text
+    assert "source: |" in text  # actionable hint about the block scalar
+
+
+def test_multiline_syntax_error_has_no_folding_hint():
+    with pytest.raises(PythonBlockError) as info:
+        _run_py_block("x = 1\ny = (1 +\n")
+    text = _render(info.value)
+    assert "SyntaxError" in text
+    assert "line 2" in text
+    assert "source: |" not in text  # multi-line source: not a folding mistake
+
+
 # ── Top-and-bottom truncation ─────────────────────────────────────────────────
 
 def test_compact_frames_truncates_deep_stacks():
