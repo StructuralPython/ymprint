@@ -587,7 +587,6 @@ wheels = [
 
 [[package]]
 name = "ymprint"
-version = "0.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "jinja2" },
