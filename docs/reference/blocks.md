@@ -38,14 +38,11 @@ The suffix does not affect how the block is executed. It is simply an optional i
 | [`_code`](#block-code) | A non-executable code block. |
 | [`_py`](#block-py) | Execute Python and optionally show the syntax-highlighted source. |
 | [`_loadjson`](#block-loadjson) | Load variables into the document from a JSON file. |
-<<<<<<< HEAD
 | [`_ul`](#block-ul) | An unordered (bulleted) list. |
 | [`_ol`](#block-ol) | An ordered (numbered) list. |
-| [`_pagebreak`](#block-pagebreak) | Force a page break. |
-=======
 | [`_pagebreak`](#block-pagebreak) | Force a page break, optionally switching page template. |
 | [`_nextpagetemplate`](#block-nextpagetemplate) | Arm the page template to switch to at the next break. |
->>>>>>> adb6527 (feat: implement multiple named page templates)
+| [`_textstyle`](#block-textstyle) | Switch the active named text style for the rest of the section. |
 | [`_hrule`](#block-hrule) | A customizable horizontal rule. |
 | [`_spacer`](#block-spacer) | Insert vertical whitespace. |
 
@@ -298,7 +295,7 @@ Recommended actions:
 ## `_pagebreak` — Page breaks
 
 Force a page break. Called with no value, it just breaks the page and keeps the current
-[page template](configuration.md#cfg-doc). Pass the **name or 0-based index** of a page
+[page template](#cfg-doc). Pass the **name or 0-based index** of a page
 template to switch to it for the pages that follow.
 
 ```yaml
@@ -317,7 +314,7 @@ Report:
 (block-nextpagetemplate)=
 ## `_nextpagetemplate` — Switch template at the next break
 
-Arm the [page template](configuration.md#cfg-doc) to switch to at the **next** page break,
+Arm the [page template](#cfg-doc) to switch to at the **next** page break,
 without inserting a break itself. Useful when the break is produced elsewhere (for example,
 by content overflowing the page). Takes the template **name or 0-based index**.
 
@@ -327,6 +324,36 @@ Report:
   - >
     Long content that flows onto a second page, which will use the "body" template.
 ```
+
+---
+
+(block-textstyle)=
+## `_textstyle` — Switch text style
+
+Activate a [named text style](#style-named) for the rest of the section it
+appears in, and for every nested descendant. Takes a style **name** (declared under
+`_style.styles`) or the special name `default`. It renders nothing of its own.
+
+The switch is **scoped to its list**: it restyles every following sibling plus their
+descendants, then reverts automatically when the section ends — no manual switch-back is
+needed unless you want to change style again within the same section. Switching swaps the
+whole family, so body paragraphs, bullet lists, and derived headings all follow the active
+style. An undeclared style name raises an error.
+
+```yaml
+Legal disclaimer:
+  - _textstyle: fine-print     # applies from here down in THIS section
+  - This paragraph is fine-print.
+  - Sub-clause:
+      - Inherited fine-print (a nested descendant).
+  - _textstyle: default        # switch back within the same section
+  - Back to the default style.
+
+Next section:
+  - Body style again — the disclaimer's scope ended with its list.
+```
+
+See [Switching text styles](#style-switching) for the full behaviour.
 
 ---
 
