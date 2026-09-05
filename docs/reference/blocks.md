@@ -39,14 +39,10 @@ The suffix does not affect how the block is executed. It is simply an optional i
 | [`_py`](#block-py) | Execute Python and optionally show the syntax-highlighted source. |
 | [`_loadjson`](#block-loadjson) | Load variables into the document from a JSON file. |
 | [`_p`](#block-p) | A standalone paragraph, with a selectable text style. |
-<<<<<<< HEAD
 | [`_ul`](#block-ul) | An unordered (bulleted) list. |
 | [`_ol`](#block-ol) | An ordered (numbered) list. |
-| [`_pagebreak`](#block-pagebreak) | Force a page break. |
-=======
 | [`_pagebreak`](#block-pagebreak) | Force a page break, optionally switching page template. |
 | [`_nextpagetemplate`](#block-nextpagetemplate) | Arm the page template to switch to at the next break. |
->>>>>>> adb6527 (feat: implement multiple named page templates)
 | [`_hrule`](#block-hrule) | A customizable horizontal rule. |
 | [`_spacer`](#block-spacer) | Insert vertical whitespace. |
 
