@@ -38,6 +38,7 @@ The suffix does not affect how the block is executed. It is simply an optional i
 | [`_code`](#block-code) | A non-executable code block. |
 | [`_py`](#block-py) | Execute Python and optionally show the syntax-highlighted source. |
 | [`_loadjson`](#block-loadjson) | Load variables into the document from a JSON file. |
+| [`_p`](#block-p) | A standalone paragraph, with a selectable text style. |
 <<<<<<< HEAD
 | [`_ul`](#block-ul) | An unordered (bulleted) list. |
 | [`_ol`](#block-ol) | An ordered (numbered) list. |
@@ -252,6 +253,45 @@ _loadjson:
   - - bn = {{extra_vars.bn}}
     - dx = {{extra_vars.dx}}
 ```
+
+---
+
+(block-p)=
+## `_p` — Standalone paragraphs
+
+Emit a paragraph on its own, without first introducing a heading key. This is handy
+for body text that follows another block — a note after an admonition, a caption-like
+line under a figure — where you don't want a heading and a bare list item wouldn't let
+you choose the text style.
+
+The quickest form takes the text directly:
+
+```yaml
+Report:
+  - _info: Something worth noting.
+  - _p: A follow-up paragraph, no heading required.
+```
+
+Use the mapping form to pick a **text style** — any family defined in
+[`_style.styles`](configuration.md#cfg-style):
+
+```yaml
+Report:
+  - _matplotfig:
+      fig: $fig
+      caption: "Figure 1"
+  - _p:
+      content: Figures are approximate; see the appendix for exact values.
+      style: fine-print
+```
+
+| Parameter | Required | Default | Meaning |
+| --- | --- | --- | --- |
+| `content` | ✅ | — | The paragraph text. `text` is accepted as an alias. |
+| `style` | | `default` | Name of the text style family to render the paragraph in. |
+
+Paragraph text supports the same inline markdown and `{{variable}}` interpolation as
+ordinary body text. An unknown `style` raises an error listing the available styles.
 
 ---
 

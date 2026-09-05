@@ -106,6 +106,7 @@ ym live report.yml
   | `_blockquote` | A quotation with attribution |
   | `_code` | A non-executable, syntax-highlighted code block |
   | `_py` | Execute Python and optionally show the source |
+  | `_p` | A standalone paragraph with a selectable text style |
   | `_loadjson` | Load variables from a JSON file |
   | `_pagebreak` | Force a page break |
   | `_hrule` | A configurable horizontal rule |
