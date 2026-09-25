@@ -101,15 +101,19 @@ def check_for_ordered_nested_lists(value: YAML_Values, context: dict):
 def check_for_tables(
     value: YAML_Values, context: dict
     ):
+    # A table needs at least two same-shaped mappings (rows). A single mapping in a
+    # list is treated as a sub-section, not a one-row table — this avoids
+    # accidentally creating a table when a bulleted list (_ul) or sub-heading was
+    # intended.
     if not isinstance(value, list):
+        return False
+    if len(value) < 2:
         return False
     if not all([isinstance(elem, dict) for elem in value]):
         return False
     table_keys = [tuple([k for k in elem]) for elem in value]
     if (
-        isinstance(value, list)
-        and all([isinstance(elem, dict) for elem in value])
-        and len(set([len(elem) for elem in value])) == 1
+        len(set([len(elem) for elem in value])) == 1
         and len(set(table_keys)) == 1
     ):
         return True
