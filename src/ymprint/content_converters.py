@@ -84,8 +84,10 @@ def convert_ul(value: list[str], context: dict, level: int = 0, current_style: s
     bullet_contents = []
     for elem in value:
         if isinstance(elem, list):
+            # A list item that is itself a list is a nested list: append the nested
+            # ListFlowable (not the wrapping python list) so ReportLab indents it.
             sub_bullets = convert_ul(elem, context, level=level + 1, current_style=current_style)
-            bullet_contents.append(sub_bullets)
+            bullet_contents.extend(sub_bullets)
         else:
             para_md = convert_inline_markdown(elem)
             template = jinja_env.from_string(para_md)
@@ -116,8 +118,10 @@ def convert_ol(value: list | dict, context: dict, level: int = 0, current_style:
     number = 1
     for elem in items:
         if isinstance(elem, (list, dict)):
+            # A nested ordered list: append the nested ListFlowable itself so
+            # ReportLab indents it (rather than a wrapping python list).
             sub_bullets = convert_ol(elem, context, level=level + 1, current_style=current_style)
-            bullet_contents.append(sub_bullets)
+            bullet_contents.extend(sub_bullets)
             continue
         para_md = convert_inline_markdown(elem)
         template = jinja_env.from_string(para_md)
