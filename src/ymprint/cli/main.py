@@ -82,6 +82,38 @@ def _resolve_config(config_file: Optional[str], source: Path) -> Optional[Path]:
     return locate_config_file(source.resolve().parent)
 
 
+# A minimal, valid starter document written when the user opts to initialize a new
+# file in live mode. It renders to a one-heading, one-paragraph PDF.
+STARTER_DOCUMENT = """\
+{title}:
+  - >
+    Start writing your report here. This paragraph sits under the heading above.
+    Edit this file and save — live mode will hot-reload the PDF.
+"""
+
+
+def _initialize_document(source: Path, console: Console) -> bool:
+    """
+    Offer to create a starter document at `source` when it does not exist.
+
+    Returns True if a document now exists at `source` (it was created), False if
+    the user declined.
+    """
+    console.print(
+        f"[yellow]The document [bold]{source}[/bold] does not exist yet.[/yellow]"
+    )
+    if not typer.confirm(f"Create a new starter document at {source}?", default=True):
+        return False
+    try:
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_text(STARTER_DOCUMENT.format(title=source.stem or "Untitled document"))
+    except OSError as exc:
+        console.print(f"[red]Could not create {source}: {exc}[/red]")
+        return False
+    console.print(f"[green]Created {source}.[/green]")
+    return True
+
+
 @app.command(
     name='convert',
     short_help="Convert will render a single YAML file to a PDF file.",
@@ -146,6 +178,15 @@ def live(
         file_watchers.append(FileWatcher(config_path))
 
     console = Console()
+
+    # Live mode can bootstrap a new document: if the source does not exist yet,
+    # offer to create a starter file so the user can begin editing immediately.
+    if not source.exists():
+        if not _initialize_document(source, console):
+            console.print("[dim]No document to render. Exiting.[/dim]")
+            raise typer.Exit(code=0)
+        # Refresh the watcher so the first render sees the file we just created.
+        file_watchers[0] = FileWatcher(source)
 
     # Live mode relies on Okular to display and hot-reload the PDF. Make sure it
     # is available, offering a platform-specific install if it is missing.
