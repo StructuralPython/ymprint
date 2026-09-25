@@ -130,3 +130,20 @@ def test_compact_frames_truncates_deep_stacks():
     assert "frame(s) hidden" in text
     # Fewer rendered items than total frames (head + marker + tail).
     assert len(rendered) < len(frames)
+
+
+# ── empty document ────────────────────────────────────────────────────────────
+
+def test_empty_document_raises_authoring_error(tmp_path):
+    empty = tmp_path / "empty.yml"
+    empty.write_text("")
+    with pytest.raises(YmprintAuthoringError):
+        load_report(empty, tmp_path / "empty.pdf", None)
+
+
+def test_convert_reports_empty_document_without_traceback(tmp_path):
+    empty = tmp_path / "empty.yml"
+    empty.write_text("")
+    result = runner.invoke(app, ["convert", str(empty)])
+    assert result.exit_code == 1
+    assert "Traceback (most recent call last)" not in result.stdout

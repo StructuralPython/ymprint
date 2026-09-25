@@ -24,6 +24,7 @@ from reportlab.platypus import Spacer
 from reportlab.lib.units import mm
 
 from .config.font_registry import register_fonts
+from .exceptions import YMPrintSyntaxException
 
 from rich import print
 
@@ -39,6 +40,13 @@ def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.
     if not source_path.exists():
         raise FileNotFoundError(f"The source YAML file at {str(source_path)} does not exist")
     source_data = load_yaml(source_path)
+    if source_data is None:
+        # An empty document (or one with no content) loads as None. Report it as an
+        # authoring error so the CLI/live mode shows it instead of crashing with a
+        # raw TypeError further down.
+        raise YMPrintSyntaxException(
+            f"The document {source_path.name!r} is empty. Add some content to render it."
+        )
     register_fonts()
     # source_config = extract_source_config(source_data)
     # source_config = {}
