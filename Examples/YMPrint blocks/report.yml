@@ -11,7 +11,7 @@ Using Blocks:
 
   - Images (`_img`):
     _img:
-      src: catpuccin.png # Either relative or absolute path. Relative paths are relative to the .yml report file.
+      source: catpuccin.png # Either relative or absolute path. Relative paths are relative to the .yml report file.
       caption: "Figure 1: The catpuccin cat"
       width_ratio: 0.3
   - Admonitions:

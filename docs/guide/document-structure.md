@@ -173,7 +173,7 @@ _style:            # front-matter configuration
 Report:
   - Photo:
     _img:          # a block
-      src: photo.png
+      source: photo.png
       caption: "Figure 1"
 ```
 

@@ -3,6 +3,7 @@ from PIL import Image as PillowImg
 from reportlab.platypus import Image, Table, Paragraph
 from . import register_block
 from . import blockstyles
+from ..errors import BlockError
 
 
 def convert_image_block(block_key: str, block_value: dict, context: dict) -> list[Table]:
@@ -11,14 +12,22 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
     # `width_ratio` is the current name; `scale_ratio` is kept as a deprecated alias
     # so existing documents keep working.
     scale_ratio = value.get('width_ratio', value.get('scale_ratio', 1))
+    # `source` is the current name; `src` is kept as a deprecated alias.
+    source = value.get('source', value.get('src'))
+    if source is None:
+        raise BlockError(
+            key,
+            f"Block {key!r} needs an image path. Add a 'source:' field.",
+        )
     source_path = pathlib.Path(context['source_path']).parent
-    image_path = source_path / pathlib.Path(value['src'])
+    image_path = source_path / pathlib.Path(source)
     if not image_path.exists():
         raise FileNotFoundError(
             f"The image file for block '{key}' was not found: {str(image_path)}"
         )
     caption_textstyle = blockstyles.get_text_styles().get(f'image_caption')
-    caption = value['caption']
+    # Caption is optional: when absent/empty, no caption row is rendered.
+    caption = value.get('caption')
     img_width, img_height = get_photo_size(image_path)
     aspect = img_height / img_width
     available_width = context['frames']['all_pages']['width']
@@ -34,8 +43,9 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
         scaled_width = img_width * scale_ratio
         scaled_height = img_height * scale_ratio
     image_flowable = Image(str(image_path), width=scaled_width, height=scaled_height)
-    caption_para = Paragraph(caption, style=caption_textstyle)
-    table_data = [[image_flowable], [caption_para]]
+    table_data = [[image_flowable]]
+    if caption:
+        table_data.append([Paragraph(caption, style=caption_textstyle)])
     col_width = scaled_width
     table = Table(table_data, colWidths=[col_width])
     return [table]
