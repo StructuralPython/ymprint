@@ -45,6 +45,21 @@ class YamlSyntaxError(YmprintAuthoringError):
         super().__init__(self.problem or str(original))
 
 
+class BlockError(YmprintAuthoringError):
+    """A block could not be rendered because of a problem in the author's document.
+
+    Covers a missing required field, an empty/`None` block value, or the wrong
+    data shape being passed to a block — author mistakes that would otherwise
+    surface as a raw ``KeyError``/``TypeError``/``AttributeError`` and crash
+    live mode. Retains the block key so the report can point at the offending
+    block.
+    """
+
+    def __init__(self, block_key: str, message: str):
+        self.block_key = block_key
+        super().__init__(message)
+
+
 class PythonBlockError(YmprintAuthoringError):
     """An author's Python (`_py`) block raised an exception during execution.
 

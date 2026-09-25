@@ -13,6 +13,7 @@ from reportlab.platypus import (
 from reportlab.lib.units import mm
 from ymprint.config.docstyles import ReportStyles
 from ..content_checks import check_for_variable
+from ..errors import BlockError, YmprintAuthoringError
 
 RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 
@@ -74,9 +75,45 @@ def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> l
     else:
         raise ValueError(f"Block code not found within block key: {block_key=}")
     block_converter = get_block_callable(block_code)
+    if block_converter is None:
+        raise BlockError(
+            block_key,
+            f"Unknown block {block_code!r} (from key {block_key!r}). "
+            f"Available blocks: {sorted(list_blocks())}",
+        )
     block_value_w_python_objects = retrieve_block_variables(block_value, context)
-    flowables = block_converter(block_key, block_value_w_python_objects, context)
+    try:
+        flowables = block_converter(block_key, block_value_w_python_objects, context)
+    except YmprintAuthoringError:
+        # Already a friendly, author-facing error (e.g. PythonBlockError) — let it
+        # propagate so the CLI can render it as-is.
+        raise
+    except Exception as exc:
+        # An author mistake (missing key, empty/None value, wrong shape) surfaced as
+        # a raw KeyError/TypeError/AttributeError. Wrap it so live mode reports it
+        # instead of crashing.
+        raise BlockError(block_key, _explain_block_error(block_key, exc)) from exc
     return flowables
+
+
+def _explain_block_error(block_key: str, exc: Exception) -> str:
+    """Turn a raw exception from a block converter into an author-facing message."""
+    if isinstance(exc, KeyError):
+        missing = exc.args[0] if exc.args else exc
+        return (
+            f"Block {block_key!r} is missing a required field: {missing!r}."
+        )
+    if isinstance(exc, TypeError) and "NoneType" in str(exc):
+        return (
+            f"Block {block_key!r} was left empty (or has no value). "
+            f"Provide the fields this block needs."
+        )
+    if isinstance(exc, AttributeError) and "'NoneType'" in str(exc):
+        return (
+            f"Block {block_key!r} was left empty (or has no value). "
+            f"Provide the fields this block needs."
+        )
+    return f"Block {block_key!r} could not be rendered: {type(exc).__name__}: {exc}"
 
 
 def retrieve_block_variables(block_value: YAML_Values, context: dict) -> YAML_Values:
