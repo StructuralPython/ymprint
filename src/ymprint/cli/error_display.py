@@ -14,7 +14,7 @@ from typing import Optional
 from rich.console import Group, RenderableType
 from rich.text import Text
 
-from ..errors import PythonBlockError, YamlSyntaxError, YmprintAuthoringError
+from ..errors import BlockError, PythonBlockError, YamlSyntaxError, YmprintAuthoringError
 
 # How many stack frames to keep from each end before collapsing the middle.
 HEAD_FRAMES = 2
@@ -27,7 +27,18 @@ def format_authoring_error(exc: YmprintAuthoringError) -> RenderableType:
         return _format_yaml_error(exc)
     if isinstance(exc, PythonBlockError):
         return _format_python_error(exc)
+    if isinstance(exc, BlockError):
+        return _format_block_error(exc)
     return Text(str(exc), style="red")
+
+
+def _format_block_error(exc: BlockError) -> RenderableType:
+    parts: list[RenderableType] = [
+        Text(f"Error in block '{exc.block_key}'", style="bold red"),
+        Text(str(exc), style="red"),
+        Text("Fix the block in your document, then save to reload.", style="dim italic"),
+    ]
+    return Group(*parts)
 
 
 def _format_yaml_error(exc: YamlSyntaxError) -> RenderableType:
