@@ -65,6 +65,10 @@ ym live SRC [DEST] [--config-dir DIR]
 play, the config files within it (`config.ymprint.yml`.
 When any of them changes, the PDF is re-rendered and Okular refreshes.
 
+**Starting from scratch.** If `SRC` does not exist yet, live mode offers to create a
+minimal starter document at that path (after a confirming prompt) so you can begin
+authoring immediately. Decline the prompt to exit without creating anything.
+
 ```bash
 ym live report.yml
 ```
