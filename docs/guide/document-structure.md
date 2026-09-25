@@ -118,8 +118,10 @@ Ordered list:
 
 ## Tables
 
-A list of mappings becomes a **table**. The keys of the first mapping are the column
-headers, and each mapping is a row:
+A list of **two or more** same-shaped mappings becomes a **table**. The keys of the first
+mapping are the column headers, and each mapping is a row. (A list with a single mapping is
+treated as a sub-section, not a one-row table — this keeps you from accidentally creating a
+table when you meant a [`_ul`](#bullet-lists) or a sub-heading.)
 
 ```yaml
 Tables:
