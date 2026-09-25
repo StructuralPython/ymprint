@@ -58,14 +58,14 @@ Embed a raster image (PNG, JPEG, …) with a caption. Paths are relative to the 
 _img:
   src: catpuccin.png
   caption: "Figure 1: The catpuccin cat"
-  scale_ratio: 0.3
+  width_ratio: 0.3
 ```
 
 | Parameter | Required | Default | Meaning |
 | --- | --- | --- | --- |
 | `src` | ✅ | — | Path to the image, relative to the `.yml` file or absolute. |
 | `caption` | ✅ | — | Caption text shown below the image. |
-| `scale_ratio` | | `1` | Scale factor relative to the available content width. The image is automatically shrunk to fit the frame if it would overflow. |
+| `width_ratio` | | `1` | Scale factor relative to the available content width. The image is automatically shrunk to fit the frame if it would overflow. (`scale_ratio` is accepted as a deprecated alias.) |
 
 ---
 

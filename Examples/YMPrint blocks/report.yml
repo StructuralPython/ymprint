@@ -13,7 +13,7 @@ Using Blocks:
     _img:
       src: catpuccin.png # Either relative or absolute path. Relative paths are relative to the .yml report file.
       caption: "Figure 1: The catpuccin cat"
-      scale_ratio: 0.3
+      width_ratio: 0.3
   - Admonitions:
     - "The following admonitions blocks are available:"
     - _ul:

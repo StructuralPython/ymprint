@@ -8,7 +8,9 @@ from . import blockstyles
 def convert_image_block(block_key: str, block_value: dict, context: dict) -> list[Table]:
     key = block_key
     value = block_value
-    scale_ratio = value.get('scale_ratio', 1)
+    # `width_ratio` is the current name; `scale_ratio` is kept as a deprecated alias
+    # so existing documents keep working.
+    scale_ratio = value.get('width_ratio', value.get('scale_ratio', 1))
     source_path = pathlib.Path(context['source_path']).parent
     image_path = source_path / pathlib.Path(value['src'])
     if not image_path.exists():
