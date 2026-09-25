@@ -340,6 +340,10 @@ needed unless you want to change style again within the same section. Switching 
 whole family, so body paragraphs, bullet lists, and derived headings all follow the active
 style. An undeclared style name raises an error.
 
+If a `_textstyle` switch is the **first** content item under a heading, that heading adopts
+the switched style too — so writing it at the top of a section restyles the whole section,
+title included.
+
 ```yaml
 Legal disclaimer:
   - _textstyle: fine-print     # applies from here down in THIS section

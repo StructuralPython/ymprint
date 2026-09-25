@@ -213,3 +213,36 @@ def test_underline_follows_active_named_style():
     # 'rightaligned' switches on body underline
     para = convert_paragraph("Small print", ctx, "body", "rightaligned")
     assert para[0].text == "<u>Small print</u>"
+
+
+# --- section heading adopts a leading _textstyle -----------------------------------
+
+def test_heading_adopts_leading_textstyle():
+    from ymprint.story_builder import _leading_textstyle
+    ctx = make_context()
+    assert _leading_textstyle([{"_textstyle": "fine-print"}, "x"], ctx) == "fine-print"
+    # a leading paragraph (not a switch) means the heading keeps its style
+    assert _leading_textstyle(["x", {"_textstyle": "fine-print"}], ctx) is None
+
+
+def test_heading_rendered_in_leading_style():
+    ctx = make_context()
+    source = {
+        "Fine print section": [
+            {"_textstyle": "fine-print"},
+            "small text",
+        ],
+    }
+    sizes = dict(para_sizes(build_story(source, ctx)))
+    # top-level heading is h1; it now scales to the fine-print family (body size 6)
+    # instead of the default 10-based one
+    assert sizes["Fine print section"] == pytest.approx(6 * (1.25 ** 5))
+    assert sizes["small text"] == 6
+
+
+def test_heading_without_leading_switch_stays_default():
+    ctx = make_context()
+    source = {"Normal section": ["body text", {"_textstyle": "fine-print"}, "small"]}
+    sizes = dict(para_sizes(build_story(source, ctx)))
+    # switch comes after a paragraph, so the heading is unaffected
+    assert sizes["Normal section"] == pytest.approx(10 * (1.25 ** 5))
