@@ -12,6 +12,7 @@ from .blocks import python_block
 from .blocks import json_block
 from .blocks import matplotfig_block
 from .blocks import code_block
+from .blocks import p_block
 
 from .config.config_loaders import load_report_config
 from .config import ReportStyles, TableStyle, DocConfig
