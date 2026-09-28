@@ -120,10 +120,26 @@ def _initialize_document(source: Path, console: Console) -> bool:
     no_args_is_help=True
 )
 def convert(
-    src: str,
-    dest: str | None = None,
-    config_dir: str | None = None
-    ):
+    src: Annotated[str, typer.Argument(
+        help="Path to YAML source file to be converted to PDF."
+    )],
+    dest: Annotated[str | None, typer.Option(
+        help='File path of the PDF to be created. If not provided the destination file name will match the source file name.'
+    )] = None,
+    config_dir: Annotated[str | None, typer.Option(
+        help=
+            "Path to specific config directory to use. "
+            "Config directory must have an *.ymprint.yml file in it. "
+            "If not provided, ymprint will recursively search the source file's parent directories until an *.ymprint.yml file is found. "
+            "If no config file is found, ymprint will use the default config file."
+        )] = None
+):
+    """
+    Render a single YAML source file to a PDF, once.
+
+    Writes the PDF next to the source file (or to DEST if given) and exits.
+    Errors in the authored document are reported without a traceback.
+    """
     source = Path(src)
     destination = Path(dest) if dest is not None else None
     if destination is None:
@@ -157,14 +173,28 @@ def convert(
 
 @app.command(
     name='live',
-    short_help='Live mode renders your PDF file and opens it with Okular. Any changes are hot-reloaded.',
+    short_help='Live mode renders your PDF file and opens it with Okular. Any changes are hot-reloaded. If the source file does not exist, you can create a starter document to begin authoring.',
     no_args_is_help=True
 )
 def live(
-    src: Annotated[str, "YAML file path to render to PDF"],
-    dest: Annotated[Optional[str], "File path of output PDF file. If not provided file name and path of source file will be used (wtih .pdf extension)."] = None,
-    config_file: Annotated[Optional[str], "Location of optional document config *.ymprint.yml file"] = None,
+    src: Annotated[str, typer.Argument(
+        help="YAML file to render and watch. If it does not exist, live mode offers to create a starter document at that path."
+    )],
+    dest: Annotated[Optional[str], typer.Option(
+        help="File path of output PDF file. If not provided file name and path of source file will be used (with .pdf extension)."
+    )] = None,
+    config_file: Annotated[Optional[str], typer.Option(
+        help="Location of optional document config *.ymprint.yml file"
+    )] = None,
 ):
+    """
+    Render SRC to a PDF, open it in Okular, and hot-reload on every save.
+
+    Live mode watches the source file (and the config file, if one is in play)
+    and rebuilds the PDF whenever they change. If SRC does not exist, you'll be
+    prompted to create a minimal starter document at that path and drop straight
+    into live editing. Press Ctrl+C to stop.
+    """
     source = Path(src)
     if dest is None:
         destination = source.parent / f"{source.stem}.pdf"
