@@ -28,14 +28,6 @@ Customizing your document configuration and styling:
     
   - The document template (_doc):
     - >
-<<<<<<< HEAD
-      The template controls settings such as
-    - _ul:
-        - Page size
-        - Margins
-        - PDF background file path
-        - And whether or not you have a separate set of the above settings applying to the first page of your document or not.
-=======
       The `_doc` configuration controls the document-wide page size and orientation, along with
       one or more named `page templates`. Each page template controls settings such as
     - - Margins
@@ -46,7 +38,6 @@ Customizing your document configuration and styling:
       can switch between page templates using the `_pagebreak` block (pass it the name or index of
       the template to use for the following pages) or the `_nextpagetemplate` block (which arms the
       template to switch to at the next page break).
->>>>>>> adb6527 (feat: implement multiple named page templates)
 
     - >
       Currently, the document template is internally configured to only use a single content frame. This limitation would only affect you if you wanted to do something like a two-column layout (where text flows into the second column on the same page once the first one is full).
@@ -72,6 +63,12 @@ Customizing your document configuration and styling:
         - Font family
         - Text color
         - Typographic ratio (in musical intervals, e.g. "minor second" or "major third")
+        - Alignment (left, center, right, justify) and underline
+
+    - >
+      Beyond the default `body` and `headings`, you can define named `styles` — alternate text
+      families you switch between within the document using the `_textstyle` block. Each named
+      style is a sparse override that inherits everything you don't change from the defaults.
   - Table styles (_tablestyle):
     - >
       You can control how your tables are displayed by modifying the table style. With the _tablestyle key, you can control

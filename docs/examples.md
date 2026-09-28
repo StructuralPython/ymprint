@@ -81,6 +81,27 @@ block in the document front matter. See [Configuration](guide/configuration.md).
 
 ---
 
+## Scoped text styles
+
+Define named text styles under `_style.styles`, then switch the active family part-way through
+the document with the `_textstyle` block. Here a `fine-print` style (smaller, grey) and a
+`callout` style (larger, blue, centred) are switched in and out — each swap restyles the body,
+headings, and lists that follow it, and reverts when the section ends. See
+[Configuration → Named text styles](#style-named).
+
+```{literalinclude} ../Examples/Text Styles/report.yml
+:language: yaml
+```
+
+::::{container} ym-single-shot
+```{image} _static/examples/text-styles.png
+:alt: Scoped text styles — default, fine-print, and callout families switched within one document
+:class: ym-page-shot
+```
+::::
+
+---
+
 ## Document variables
 
 Define `_vars`, render them into text with Jinja (`{{ "{{var}}" }}`), and reach into nested

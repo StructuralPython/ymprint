@@ -40,6 +40,23 @@ def test_load_report_config():
     # assert doc['_doc']['first-page']['cat'] == 'here'
 
 
+def test_load_report_config_empty_file(tmp_path):
+    """An empty config file must be treated as 'no config', not crash.
+
+    load_yaml returns None for an empty file; load_report_config should coalesce
+    that to an empty mapping and fall back to the internal defaults.
+    """
+    empty_config = tmp_path / "doc.ymprint.yml"
+    empty_config.write_text("")
+
+    styles, tablestyles, doc = load_report_config(None, empty_config)
+
+    # Falls back to internal defaults rather than raising AttributeError.
+    assert doc['_doc']['page-size'] == 'a4'
+    assert styles['_style']['body']['size'] == 10
+    assert tablestyles['_tablestyle']['headers']['text']['bold'] is True
+
+
 def test_load_doc_config():
     source_data = {
         "_style": {

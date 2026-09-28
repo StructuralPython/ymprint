@@ -38,7 +38,9 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
         raise FileNotFoundError(f"The supplied path for the report_config_path does not exist. Here is what you passed:\n\n{str(report_config_path.resolve())}")
     
     if report_config_path is not None and report_config_path.is_file():
-        config_data = load_yaml(report_config_path)
+        # load_yaml returns None when the file exists but is empty; treat that as
+        # "no config here" rather than crashing on the .get() lookups below.
+        config_data = load_yaml(report_config_path) or {}
         config_styles = config_data.get("_style", {})
         config_tablestyles = config_data.get("_tablestyle", {})
         config_doctemplate = config_data.get("_doc", {})

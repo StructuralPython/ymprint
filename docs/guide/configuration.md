@@ -127,7 +127,9 @@ Report:
 (cfg-style)=
 ## Text styles — `_style`
 
-Controls body and heading typography.
+Controls body and heading typography. Alongside the default `body` and `headings` families,
+`_style` can define **named text styles** under `styles` — alternate families you switch
+between within the document with the [`_textstyle`](#style-switching) block.
 
 ```yaml
 _style:
@@ -135,11 +137,13 @@ _style:
     font: Helvetica
     color: "#222222"
     ratio: Major Third      # typographic scale as a musical interval
+    underline: false        # underline every heading
   body:
     font: Helvetica
     color: black
     size: 10                # points
     spacing: 1.7            # line spacing ratio
+    align: left             # left | center | right | justify
     bullets:
       font: Helvetica
       size: 10
@@ -148,6 +152,17 @@ _style:
       spacing: 10
       indent-bullet: 20
       indent-text: 40
+  styles:                   # named styles (see "Named text styles" below)
+    fine-print:
+      body:
+        size: 8
+        color: "#666666"
+    callout:
+      body:
+        size: 12
+        align: center
+      headings:
+        ratio: major third
 ```
 
 ### Headings
@@ -157,6 +172,8 @@ _style:
 | `font` | Heading font family (see [Fonts](../reference/fonts.md)). |
 | `color` | Heading colour, hex or name. |
 | `ratio` | Typographic scale expressed as a **musical interval** — e.g. `minor third`, `major second`, `Major Third`. Larger intervals produce a bigger jump between heading levels. |
+| `align` | Text alignment — `left`, `center`, `right`, or `justify` (default `left`). |
+| `underline` | `true` to underline every heading (default `false`). |
 
 ### Body
 
@@ -166,7 +183,80 @@ _style:
 | `color` | Body text colour. |
 | `size` | Body font size in points. |
 | `spacing` | Line-spacing ratio. |
+| `align` | Text alignment — `left`, `center`, `right`, or `justify` (default `left`). |
+| `underline` | `true` to underline body paragraphs (default `false`). |
 | `bullets` | Bullet styling — glyph hierarchy (`symbols`), colour, size, and indentation of the bullet (`indent-bullet`) and its text (`indent-text`). |
+
+:::{note}
+`align` and `underline` are available on `body`, `headings`, and every named style. Both are
+inherited by named styles like any other field.
+:::
+
+(style-named)=
+### Named text styles
+
+Under `styles`, declare any number of **named families**. Each name maps to a **sparse
+override** of the default family — you specify only what differs, and every unspecified field
+(fonts, colours, bullets, alignment …) is inherited from `body`/`headings`. This mirrors the
+inherit-from-defaults behaviour of the config system itself.
+
+```yaml
+_style:
+  body:     { font: NotoSans, size: 10, color: black, spacing: 1.7 }
+  headings: { font: AppleGaramond, ratio: minor third, color: "#dd9922" }
+  styles:
+    fine-print:               # a smaller, grey family
+      body:
+        size: 8
+        color: "#666666"
+    callout:                  # a larger, centred family with bigger headings
+      body:
+        size: 12
+        align: center
+      headings:
+        ratio: major third
+```
+
+Switching to a named style swaps the **whole family** — body paragraphs, bullet lists, and
+the derived `h1`…`h6` headings all follow the active style. Because heading sizes are derived
+from `body.size` (`body.size × ratio`), a named style with a smaller `body.size` also shrinks
+its headings.
+
+The special name **`default`** is always available and refers to the top-level `body`/
+`headings`. Switching to an undeclared name raises an error.
+
+(style-switching)=
+### Switching text styles
+
+Within your report content, change the active family with the `_textstyle` block:
+
+- `_textstyle: <name>` — activate the named style (or `default`) **from that point onward
+  within its section**, and for every nested descendant. It renders nothing of its own.
+
+`_textstyle` is **scoped to the list it appears in**: it restyles every following sibling in
+that frame plus their descendants, and reverts automatically when the section (list) ends.
+There is no need to switch back manually unless you want to change style *within* the same
+section. (This differs from page templates, which persist across sections until you switch
+them again.)
+
+```yaml
+Legal disclaimer:
+  - _textstyle: fine-print     # applies from here down in THIS section
+  - This paragraph is fine-print.
+  - Sub-clause:
+      - Inherited fine-print (a nested descendant).
+  - _textstyle: default        # switch back within the same section
+  - Back to the default style.
+
+Next section:
+  - Body style again — the disclaimer's scope ended with its list.
+```
+
+:::{note}
+Named styles apply to **paragraphs, headings, and bullet/numbered lists**. Other blocks
+(admonitions, quotes, code, images, tables) keep their own styling regardless of the active
+text style.
+:::
 
 (cfg-tablestyle)=
 ## Table styles — `_tablestyle`
