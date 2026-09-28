@@ -5,7 +5,7 @@ import pathlib
 
 from .errors import YamlSyntaxError
 
-yaml = YAML(typ='safe')
+yaml = YAML(typ='rt')
 
 def load_yaml(filepath: str | pathlib.Path) -> dict:
     """
