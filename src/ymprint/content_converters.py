@@ -69,9 +69,9 @@ def convert_ul(value: list[str], context: dict, level: int = 0, current_style: s
     text_size = ymp_style.body.size
     space_around = text_spacing * text_size / 2
     sheet = _family_sheet(context, current_style)
-    bullet_style: ParagraphStyle = sheet['body']
-    # bullet_style.spaceAfter = space_around
-    # bullet_style.spaceBefore = space_around
+    # Size the bullet marker to the active body text size so it tracks the text
+    # style (rather than the fixed `bullets.size` from config).
+    bullet_style = ParagraphStyle('ul-item', parent=sheet['body'], bulletFontSize=text_size)
     bul_symbols = ymp_style.body.bullets.symbols
     level_index = level % len(bul_symbols)
     bul_symbol = bul_symbols[level_index]
@@ -84,8 +84,10 @@ def convert_ul(value: list[str], context: dict, level: int = 0, current_style: s
     bullet_contents = []
     for elem in value:
         if isinstance(elem, list):
+            # A list item that is itself a list is a nested list: append the nested
+            # ListFlowable (not the wrapping python list) so ReportLab indents it.
             sub_bullets = convert_ul(elem, context, level=level + 1, current_style=current_style)
-            bullet_contents.append(sub_bullets)
+            bullet_contents.extend(sub_bullets)
         else:
             para_md = convert_inline_markdown(elem)
             template = jinja_env.from_string(para_md)
@@ -98,8 +100,11 @@ def convert_ul(value: list[str], context: dict, level: int = 0, current_style: s
 # Test
 def convert_ol(value: list | dict, context: dict, level: int = 0, current_style: str = "default") -> list[ListFlowable]:
     sheet = _family_sheet(context, current_style)
-    bullet_style = sheet['body']
     ymp_style = _family_model(context, current_style)
+    # Size the number to the active body text size so it matches the text style.
+    bullet_style = ParagraphStyle(
+        'ol-item', parent=sheet['body'], bulletFontSize=ymp_style.body.size
+    )
     bul_color = ymp_style.body.bullets.rl_color
     bullet_color_hex = "#{:02x}{:02x}{:02x}".format(
         int(bul_color.red),
@@ -113,8 +118,10 @@ def convert_ol(value: list | dict, context: dict, level: int = 0, current_style:
     number = 1
     for elem in items:
         if isinstance(elem, (list, dict)):
+            # A nested ordered list: append the nested ListFlowable itself so
+            # ReportLab indents it (rather than a wrapping python list).
             sub_bullets = convert_ol(elem, context, level=level + 1, current_style=current_style)
-            bullet_contents.append(sub_bullets)
+            bullet_contents.extend(sub_bullets)
             continue
         para_md = convert_inline_markdown(elem)
         template = jinja_env.from_string(para_md)

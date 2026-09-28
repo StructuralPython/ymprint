@@ -5,13 +5,13 @@ import pathlib
 
 from .errors import YamlSyntaxError
 
-yaml = YAML(typ='safe')
+yaml = YAML(typ='rt')
 
 def load_yaml(filepath: str | pathlib.Path) -> dict:
     """
     Reads the Yaml document and returns the dict
     """
-    with open(filepath) as file:
+    with open(filepath, encoding='utf-8') as file:
         try:
             data = yaml.load(file)
         except YAMLError as e:

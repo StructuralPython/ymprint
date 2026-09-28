@@ -15,7 +15,7 @@ Blocks appear wherever content is allowed, typically as list items:
 Report:
   - Photos:
     _img:
-      src: photo.png
+      source: photo.png
       caption: "Figure 1"
   - _info: A short informational note.
   - _pagebreak:
@@ -56,16 +56,16 @@ Embed a raster image (PNG, JPEG, …) with a caption. Paths are relative to the 
 
 ```yaml
 _img:
-  src: catpuccin.png
+  source: catpuccin.png
   caption: "Figure 1: The catpuccin cat"
-  scale_ratio: 0.3
+  width_ratio: 0.3
 ```
 
 | Parameter | Required | Default | Meaning |
 | --- | --- | --- | --- |
-| `src` | ✅ | — | Path to the image, relative to the `.yml` file or absolute. |
-| `caption` | ✅ | — | Caption text shown below the image. |
-| `scale_ratio` | | `1` | Scale factor relative to the available content width. The image is automatically shrunk to fit the frame if it would overflow. |
+| `source` | ✅ | — | Path to the image, relative to the `.yml` file or absolute. (`src` is accepted as a deprecated alias.) |
+| `caption` | | — | Optional caption text shown below the image. Omit it for an image with no caption. |
+| `width_ratio` | | `1` | Scale factor relative to the available content width. The image is automatically shrunk to fit the frame if it would overflow. (`scale_ratio` is accepted as a deprecated alias.) |
 
 ---
 
@@ -378,6 +378,10 @@ descendants, then reverts automatically when the section ends — no manual swit
 needed unless you want to change style again within the same section. Switching swaps the
 whole family, so body paragraphs, bullet lists, and derived headings all follow the active
 style. An undeclared style name raises an error.
+
+If a `_textstyle` switch is the **first** content item under a heading, that heading adopts
+the switched style too — so writing it at the top of a section restyles the whole section,
+title included.
 
 ```yaml
 Legal disclaimer:

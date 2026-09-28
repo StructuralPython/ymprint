@@ -64,6 +64,30 @@ def _extract_list_block(k, v):
     return kind, value
 
 
+def _leading_textstyle(value, context: dict):
+    """
+    If `value`'s leading content item(s) are `_textstyle` switches, returns the
+    style name they select (the last one in the leading run), else None.
+
+    This lets a section heading adopt a text style assigned at the top of its own
+    content — writing `_textstyle` as the first item under a heading restyles the
+    whole section, heading included.
+    """
+    if isinstance(value, dict):
+        items = list(value.items())
+    elif isinstance(value, list):
+        items = [(None, elem) for elem in value]
+    else:
+        return None
+    resolved = None
+    for k, v in items:
+        style_name = _extract_textstyle(k, v)
+        if style_name is None:
+            break
+        resolved = _resolve_style(style_name, context)
+    return resolved
+
+
 def build_story(source_data: dict | list, context: dict, level: int = 0, current_style: str = "default") -> list:
     """
     Returns a list of Flowables generated from 'source_data' and 'context'.
@@ -116,7 +140,11 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
                     heading_level = 1
                 heading_style_name = f"h{heading_level}"
                 if check_for_paragraph(k, context):
-                    heading = convert_paragraph(k, context, heading_style_name, current_style)
+                    # If this section's content opens with a `_textstyle` switch, the
+                    # heading adopts that style too, so the whole section (title
+                    # included) is styled uniformly.
+                    heading_style = _leading_textstyle(v, context) or current_style
+                    heading = convert_paragraph(k, context, heading_style_name, heading_style)
                     story.extend(heading)
 
         if check_for_variable(v, context):

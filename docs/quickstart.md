@@ -101,9 +101,9 @@ underscore and expands into custom content:
 Report:
   - Photos:
     _img:
-      src: site.png
+      source: site.png
       caption: "Figure 1: The north stairwell"
-      scale_ratio: 0.5
+      width_ratio: 0.5
   - _info: Remember to file this report by end of week.
   - _pagebreak:
 ```

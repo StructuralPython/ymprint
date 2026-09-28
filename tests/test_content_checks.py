@@ -40,7 +40,8 @@ def test_check_for_subelements():
     assert con.check_for_subelements(subs1['heading'], context={})
     assert not con.check_for_subelements(subs2['heading'], context={})
     assert not con.check_for_subelements(subs3['heading'], context={})
-    assert not con.check_for_subelements(subs4['heading'], context={})
+    # A single mapping in a list is no longer a one-row table; it is a sub-section.
+    assert con.check_for_subelements(subs4['heading'], context={})
     assert con.check_for_subelements(subs5['heading'], context={})
 
 
@@ -93,6 +94,14 @@ def test_check_for_tables():
 
     assert not con.check_for_tables(subs5['heading'], context={})
     assert not con.check_for_tables(subs6['heading'], context={})
+
+
+def test_table_needs_two_or_more_records():
+    one_row = [{"a": 1, "b": 2}]
+    two_rows = [{"a": 1, "b": 2}, {"a": 3, "b": 4}]
+    # A single mapping is NOT a table (it's a sub-section); two same-shaped mappings are.
+    assert not con.check_for_tables(one_row, context={})
+    assert con.check_for_tables(two_rows, context={})
 
 
 def test_check_for_bullets():
