@@ -1,0 +1,116 @@
+# A slide deck. With `slides: true` every top-level heading is one slide, so no
+# `_pagebreak` is needed. Render with: ym convert presentation.yml
+_vars:
+  author: Connor Ferster
+  title: Data Design for Engineering Fun and Profit
+_doc:
+  page-size: [960, 540]       # 16:9, in points
+  slides: true
+  templates:
+    slide:
+      margins:
+        top: 36
+        left: 48
+        right: 48
+        bottom: 36
+  layouts:
+    image-right:              # [x, y, width, height] as fractions of the content box
+      title: [0, 0, 1, 0.22]
+      text: [0, 0.25, 0.5, 0.75]
+      image:
+        box: [0.55, 0.25, 0.45, 0.75]
+        valign: middle
+_style:
+  headings:
+    font: NotoSans
+    ratio: Minor Third
+  body:
+    font: NotoSans
+    size: 24
+    spacing: 1.5
+    align: left
+  styles:
+    centered:
+      align: center
+
+
+"{{title}}":
+  - _slide: title
+  - "{{author}}"
+
+How Long Have Computers Been in Structural Engineering?:
+  - _textstyle: centered
+  - _spacer: 60
+  - 1990s?
+  - 1980s?
+  - 1970s?
+  - ...1960s?
+
+Here is what people were doing in 1966:
+  - _slide: image-right
+  - "\"We have not created the software yet...\""
+  - A CAD research program at the University of London Atlas Computing Service
+  - _frame: image
+  - _img:
+      # Stand-in image: swap in images/bbc_1966_turing_machines.png
+      source: ../YMPrint blocks/catpuccin.png
+      caption: https://youtu.be/oRBS70J2Poo?si=Yo3OWa0kr7qp5ByY&t=995
+
+What you just saw:
+  - "\"We have not created the software yet...\""
+  - This CAD program would have been research software developed at the University of London Atlas Computing Service and was directly inspired by Sketchpad, developed at MIT by Ivan Sutherland in 1963
+  - The ideas for the software we are currently using were created over 60 years ago
+  - We have just got slightly fancier versions of the same ideas
+
+"'No no...I do engineering. I don't process data.'":
+  - I am arguing that "engineering" can be broken into five general steps
+  - _spacer: 20
+  - _ol:
+      - Gathering information
+      - Performing a simulation
+      - Making decisions
+      - Validating those decisions
+      - Reporting
+  - _spacer: 30
+  - Each of those steps requires data to be processed, either by us or by a computer
+
+Until we understand data, we will never be in control:
+  - I am here to share what I have learned about data
+  - _ul:
+    - How to recognize different structures
+    - - Tables
+      - Trees
+    - Different representation formats for tables and trees
+    - - Strengths and weaknesses
+      - Why you might use one over the other
+
+Tables and Trees:
+  - _slide: two-column
+  - "**Tables**: a collection of records (rows) each with the same fields (columns)"
+  - _frame: right
+  - "**Trees**: a hierarchy of nodes where each node holds a value, an array of values, or another tree"
+
+Tree values:
+  - _slide: two-column
+  - A value can be a scalar, an array, or another tree
+  - _frame: right
+  - _code:
+      source: |
+        {
+          node1: value1,
+          node2: [v2.1, v2.2],
+          node3: {
+            node4: value4
+          }
+        }
+
+Comparing Trees and Tables:
+  - Finite element models, an example everyone is familiar with
+  - "Commonly (but not always):"
+  - _ul:
+    - Finite element analysis models are created as trees
+    - Finite element analysis results are created as tables
+  - "Which is a mistake:"
+  - _ul:
+    - Finite element analysis models _should_ be tables
+    - Finite element analysis results _should_ be trees

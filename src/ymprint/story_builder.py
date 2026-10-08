@@ -1,7 +1,5 @@
 import re
 
-from reportlab.platypus import PageBreak
-
 from .content_checks import (
     check_for_paragraph,
     check_for_tables,
@@ -111,8 +109,7 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
     elif isinstance(source_data, list):
         source_iter = iter(source_data)
     registered_blocks = list_blocks()
-    # In slide mode each top-level heading is one slide: every slide after the
-    # first starts on a new page.
+    # In slide mode each top-level heading is one slide on its own page.
     slides_at_this_level = level == 0 and _slide_mode(context)
     slide_count = 0
 
@@ -157,10 +154,8 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
                 if heading_level == 0:
                     heading_level = 1
                 if slides_at_this_level:
-                    if slide_count > 0:
-                        story.append(PageBreak())
+                    story.extend(build_slide(k, v, context, current_style, first=slide_count == 0))
                     slide_count += 1
-                    story.extend(build_slide(k, v, context, current_style))
                     continue
                 heading_style_name = f"h{heading_level}"
                 if check_for_paragraph(k, context):

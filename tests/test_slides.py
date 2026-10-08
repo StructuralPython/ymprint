@@ -171,7 +171,7 @@ def test_custom_layouts_merge_across_config_layers(tmp_path):
         "_doc:\n  layouts:\n    from-config:\n      main: [0, 0, 1, 1]\n"
     )
     doc = {**SLIDE_DOC, "layouts": {"from-content": {"main": [0, 0, 1, 1]}}}
-    first, _, second = slide_story(
+    first, *_, second = slide_story(
         {"A": [{"_slide": "from-config"}, "a"], "B": [{"_slide": "from-content"}, "b"]},
         doc=doc, config_path=tmp_path,
     )
@@ -234,3 +234,123 @@ def test_overflow_error_is_an_authoring_error(tmp_path):
               - _slide: strict
               - "{LONG_TEXT}"
         """)
+
+
+# --- Per-slide page templates ------------------------------------------------------
+
+TEMPLATED_DECK = """
+    _doc:
+      page-size: [960, 540]
+      slides: true
+      templates:
+        content:
+          margins: {top: 20, left: 20, right: 20, bottom: 20}
+        cover:
+          margins: {top: 200, left: 100, right: 100, bottom: 20}
+          background:
+            filepath: background.pdf
+            relative-to: source
+    First:
+      - one
+    Cover slide:
+      - _slide: {template: cover}
+      - two
+    Back to content:
+      - three
+"""
+
+
+def make_background(path: pathlib.Path):
+    from reportlab.pdfgen.canvas import Canvas
+
+    canvas = Canvas(str(path), pagesize=(960, 540))
+    canvas.drawString(10, 10, "BACKGROUND MARK")
+    canvas.showPage()
+    canvas.save()
+
+
+def test_slide_template_applies_to_that_slide_only(tmp_path):
+    make_background(tmp_path / "background.pdf")
+    texts = page_texts(render(tmp_path, TEMPLATED_DECK))
+    assert len(texts) == 3
+    assert "BACKGROUND MARK" not in texts[0]
+    assert "BACKGROUND MARK" in texts[1] and "two" in texts[1]
+    assert "BACKGROUND MARK" not in texts[2]
+
+
+def test_slide_frames_use_the_slide_template_content_box():
+    doc = {
+        **SLIDE_DOC,
+        "templates": {
+            "content": {"margins": {"top": 20, "left": 20, "right": 20, "bottom": 20}},
+            "narrow": {"margins": {"top": 20, "left": 200, "right": 200, "bottom": 20}},
+        },
+    }
+    first, _, _, second = slide_story(
+        {"A": ["a"], "B": [{"_slide": {"template": "narrow"}}, "b"]}, doc=doc
+    )
+    assert first.width == 920
+    assert second.width == 560
+
+
+def test_unknown_slide_template_is_an_authoring_error():
+    with pytest.raises(YMPrintSyntaxException, match="not found"):
+        slide_story({"A": ["a"], "B": [{"_slide": {"template": "nope"}}]})
+
+
+def test_first_slide_cannot_switch_template():
+    doc = {
+        **SLIDE_DOC,
+        "templates": {
+            "content": {"margins": {"top": 20, "left": 20, "right": 20, "bottom": 20}},
+            "cover": {"margins": {"top": 20, "left": 20, "right": 20, "bottom": 20}},
+        },
+    }
+    with pytest.raises(YMPrintSyntaxException, match="list it first"):
+        slide_story({"A": [{"_slide": {"template": "cover"}}, "a"]}, doc=doc)
+
+
+def test_unknown_slide_setting_is_an_authoring_error():
+    with pytest.raises(YMPrintSyntaxException, match="Unknown `_slide` setting"):
+        slide_story({"A": [{"_slide": {"colour": "red"}}]})
+
+
+# --- Frame content -------------------------------------------------------------------
+
+def test_keep_together_blocks_render_inside_frames(tmp_path):
+    # _code returns a KeepTogether, which has nothing to draw inside a frame
+    reader = render(tmp_path, """
+        _doc:
+          slides: true
+        Code slide:
+          - _slide: two-column
+          - _frame: right
+          - _code:
+              source: print("hi")
+    """)
+    assert 'print("hi")' in page_texts(reader)[0]
+
+
+def test_pagebreak_inside_slide_is_ignored(tmp_path):
+    reader = render(tmp_path, """
+        _doc:
+          slides: true
+        One:
+          - a
+          - _pagebreak:
+        Two:
+          - b
+    """)
+    assert len(reader.pages) == 2
+
+
+def test_template_switch_inside_slide_is_an_authoring_error():
+    doc = {
+        **SLIDE_DOC,
+        "templates": {
+            "content": {"margins": {"top": 20, "left": 20, "right": 20, "bottom": 20}},
+            "other": {"margins": {"top": 20, "left": 20, "right": 20, "bottom": 20}},
+        },
+    }
+    with pytest.raises(YMPrintSyntaxException, match="template"):
+        slide_story({"A": ["a", {"_pagebreak": "other"}]}, doc=doc)
