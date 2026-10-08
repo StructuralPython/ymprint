@@ -34,9 +34,9 @@ _doc:
   slides: true
   layouts:
     two-column:
-      title: [0, 0, 1, 0.15]
-      left:  [0, 0.2, 0.48, 0.8]
-      right: [0.52, 0.2, 0.48, 0.8]
+      title: [0, 0, 1, 0.22]
+      left:  [0, 0.25, 0.48, 0.75]
+      right: [0.52, 0.25, 0.48, 0.75]
 
 How long have computers been in structural engineering?:
   - 1990s?

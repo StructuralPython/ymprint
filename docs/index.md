@@ -136,6 +136,7 @@ guide/document-structure
 guide/configuration
 guide/variables
 guide/pdf-backgrounds
+guide/slides
 ```
 
 ```{toctree}
