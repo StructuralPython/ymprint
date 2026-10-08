@@ -1,5 +1,5 @@
 from reportlab.platypus import Table, Paragraph, Spacer, KeepTogether
-from . import register_block
+from . import register_block, content_box
 from typing import Callable, Any
 from . import blockstyles
 
@@ -11,7 +11,7 @@ def generate_admonition_block(kind: str) -> Callable:
 
     def convert_admonition_block(block_key: str, block_value: Any, context: dict) -> list[KeepTogether | Spacer]:
         # Need an admonition block style or style modification
-        available_width = context['frames']['all_pages']['width']
+        available_width = content_box(context)['width']
         text_spacing = context['styles']['ymprint'].body.spacing
         text_size = context['styles']['ymprint'].body.size
         space_around = text_spacing * text_size

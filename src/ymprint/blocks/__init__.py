@@ -67,6 +67,15 @@ def create_block_registry() -> tuple[Callable, Callable, Callable]:
 
 list_blocks, get_block_callable, register_block = create_block_registry()
 
+def content_box(context: dict) -> dict:
+    """
+    Returns the content box ({'anchor', 'width', 'height'}) that a block should size
+    itself against: the slide frame it is being rendered into, if any, otherwise
+    the conservative box shared by all page templates.
+    """
+    return context['frames'].get('current') or context['frames']['all_pages']
+
+
 def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> list[RLFlowables]:
     block_code_pattern = re.compile(r"(^_[a-zA-Z0-9]+)")
     matches = block_code_pattern.match(block_key)
