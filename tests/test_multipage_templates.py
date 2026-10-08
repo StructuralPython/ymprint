@@ -135,3 +135,68 @@ def test_config_without_templates_falls_back_to_default():
     templates = doc["_doc"]["templates"]
     assert list(templates.keys()) == ["default"]
     assert templates["default"]["margins"]["top"] == 84
+
+
+# --- Explicit [width, height] page sizes -------------------------------------------
+
+def make_sized_doc_config(page_size, landscape=False):
+    return config.DocConfig.model_validate(
+        {
+            "page-size": page_size,
+            "landscape": landscape,
+            "templates": {
+                "default": {"margins": {"top": 20, "left": 20, "right": 20, "bottom": 20}},
+            },
+        }
+    )
+
+
+def test_explicit_page_size_list():
+    doc = make_sized_doc_config([960, 540])
+    assert doc.page_dims == (960.0, 540.0)
+    assert doc.available_width("default") == 920.0
+    assert doc.available_height("default") == 500.0
+
+
+def test_explicit_page_size_ignores_landscape():
+    assert make_sized_doc_config([540, 960], landscape=True).page_dims == (540.0, 960.0)
+    assert make_sized_doc_config([960, 540], landscape=True).page_dims == (960.0, 540.0)
+
+
+def test_named_page_size_still_rotates_with_landscape():
+    portrait = make_sized_doc_config("letter").page_dims
+    assert make_sized_doc_config("letter", landscape=True).page_dims == (portrait[1], portrait[0])
+
+
+@pytest.mark.parametrize(
+    "bad_size", [[960], [960, 540, 10], [960, 0], [-960, 540], ["wide", 540], [True, 540]]
+)
+def test_explicit_page_size_rejects_invalid(bad_size):
+    with pytest.raises(ValueError):
+        make_sized_doc_config(bad_size)
+
+
+def test_explicit_page_size_from_content_overrides_default():
+    source = {"_doc": {"page-size": [960, 540]}}
+    _, _, doc_data = load_report_config(source, None)
+    doc = config.DocConfig.model_validate(doc_data["_doc"])
+    assert doc.page_dims == (960.0, 540.0)
+
+
+def test_explicit_page_size_from_config_file(tmp_path):
+    (tmp_path / "deck.ymprint.yml").write_text("_doc:\n  page-size: [1920, 1080]\n")
+    _, _, doc_data = load_report_config({}, tmp_path)
+    doc = config.DocConfig.model_validate(doc_data["_doc"])
+    assert doc.page_dims == (1920.0, 1080.0)
+
+
+def test_explicit_page_size_renders_pdf(tmp_path):
+    from pypdf import PdfReader
+    from ymprint.report_reader import load_report
+
+    source = tmp_path / "deck.yml"
+    source.write_text("_doc:\n  page-size: [960, 540]\nHello:\n  - World\n")
+    dest = tmp_path / "deck.pdf"
+    load_report(source, dest, None)
+    box = PdfReader(dest).pages[0].mediabox
+    assert (float(box.width), float(box.height)) == (960.0, 540.0)
