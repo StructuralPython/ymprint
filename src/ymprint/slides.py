@@ -5,8 +5,10 @@ the named frames of a slide layout (see design/slides.md).
 import re
 from dataclasses import dataclass, field
 
-from reportlab.platypus import Flowable, KeepInFrame
+from reportlab.platypus import Flowable, KeepInFrame, NextPageTemplate, PageBreak
 from reportlab.platypus.doctemplate import LayoutError
+from reportlab.platypus.doctemplate import ActionFlowable
+from reportlab.platypus.flowables import KeepTogether
 
 from .content_checks import check_for_paragraph
 from .exceptions import YMPrintSyntaxException
@@ -16,7 +18,7 @@ from .exceptions import YMPrintSyntaxException
 # within a mapping, consistent with other block codes.
 SLIDE_DIRECTIVE_PATTERN = re.compile(r"^_(slide|frame)(?:_|$)")
 
-SLIDE_SETTINGS = ("layout",)
+SLIDE_SETTINGS = ("layout", "template")
 
 
 def _extract_slide_directive(k, v):
@@ -153,10 +155,35 @@ def _frame_context(context: dict, x: float, y: float, width: float, height: floa
     return {**context, "frames": frames}
 
 
-def build_slide(title, value, context: dict, current_style: str) -> list:
+def _frame_flowables(flowables: list, title) -> list:
+    """
+    Returns 'flowables' made drawable inside a frame. KeepTogether is a page-flow
+    instruction with nothing to draw, so its content is unwrapped. Page breaks are
+    dropped (every slide is already its own page); other page-flow actions such as
+    template switches have no meaning inside a slide.
+    """
+    drawable = []
+    for flowable in flowables:
+        if isinstance(flowable, KeepTogether):
+            drawable.extend(_frame_flowables(flowable._content, title))
+        elif isinstance(flowable, PageBreak):
+            continue
+        elif isinstance(flowable, ActionFlowable):
+            raise YMPrintSyntaxException(
+                f"Slide {title!r} switches page template inside its content. Each "
+                f"slide is its own page: choose its template with "
+                f"`_slide: {{template: <name>}}` instead."
+            )
+        else:
+            drawable.append(flowable)
+    return drawable
+
+
+def build_slide(title, value, context: dict, current_style: str, first: bool = False) -> list:
     """
     Returns the flowables for one slide: the section 'title' and its content 'value',
-    placed into the frames of the slide's layout.
+    placed into the frames of the slide's layout. Every slide but the 'first' starts
+    with a page break onto the slide's page template.
     """
     from .story_builder import _extract_textstyle, _resolve_style, build_content
     from .content_converters import convert_paragraph
@@ -209,7 +236,19 @@ def build_slide(title, value, context: dict, current_style: str) -> list:
             )
         current_frame = frame_name
 
-    template_name = doctemplate.template_names[0]
+    # A slide's template applies to that slide only; otherwise the deck's first
+    # (starting) template is used.
+    starting_template = doctemplate.template_names[0]
+    try:
+        template_name = doctemplate.resolve_template_id(settings.get("template", starting_template))
+    except ValueError as exc:
+        raise YMPrintSyntaxException(f"Slide {title!r}: {exc}") from exc
+    if first and template_name != starting_template:
+        raise YMPrintSyntaxException(
+            f"The first slide ({title!r}) always uses the first page template, "
+            f"{starting_template!r}. To start the deck on {template_name!r}, list it "
+            f"first under `_doc: templates:`."
+        )
     box_width = context["frames"][template_name]["width"]
     box_height = context["frames"][template_name]["height"]
 
@@ -229,7 +268,10 @@ def build_slide(title, value, context: dict, current_style: str) -> list:
             SlideFrame(
                 name=name, x=x, y=y, width=width, height=height,
                 valign=frame_config.valign, overflow=frame_config.overflow,
-                flowables=flowables,
+                flowables=_frame_flowables(flowables, title),
             )
         )
-    return [SlideFlowable(str(title), box_width, box_height, frames)]
+    slide = SlideFlowable(str(title), box_width, box_height, frames)
+    if first:
+        return [slide]
+    return [NextPageTemplate(template_name), PageBreak(), slide]
