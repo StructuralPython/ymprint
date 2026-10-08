@@ -6,7 +6,7 @@ import pathlib
 from PIL import Image as PillowImg
 
 from reportlab.platypus import Table, Image, Paragraph
-from . import register_block
+from . import register_block, content_box
 from . import blockstyles
 
 if TYPE_CHECKING:
@@ -19,8 +19,8 @@ def convert_matplotfig_block(block_key: str, block_value: dict, context: dict) -
 
     caption_textstyle = blockstyles.get_text_styles().get(f'image_caption')
     caption = block_value.get('caption', "")
-    available_width = context['frames']['all_pages']['width']
-    available_height = context['frames']['all_pages']['height']
+    available_width = content_box(context)['width']
+    available_height = content_box(context)['height']
     fig: Figure = block_value['fig']
     img_width_inch, img_height_inch = fig.get_size_inches()
     img_width, img_height = img_width_inch * 72, img_height_inch * 72

@@ -1,5 +1,5 @@
 from reportlab.platypus import Table, Paragraph
-from . import register_block
+from . import register_block, content_box
 from typing import Callable
 from . import blockstyles
 
@@ -7,7 +7,7 @@ from . import blockstyles
 
 def convert_quote_block(block_key: str, block_value: dict, context: dict) -> list[Table]:
     # Need an admonition block style or style modification
-    available_width = context['frames']['all_pages']['width']
+    available_width = content_box(context)['width']
     width_ratio = 0.8
     block_width = width_ratio * available_width
     styles = blockstyles.get_text_styles()

@@ -43,6 +43,7 @@ The suffix does not affect how the block is executed. It is simply an optional i
 | [`_ol`](#block-ol) | An ordered (numbered) list. |
 | [`_pagebreak`](#block-pagebreak) | Force a page break, optionally switching page template. |
 | [`_nextpagetemplate`](#block-nextpagetemplate) | Arm the page template to switch to at the next break. |
+| [`_slide` / `_frame`](#block-slide) | Choose a slide's layout and template; route content into a frame. Slide mode only. |
 | [`_hrule`](#block-hrule) | A customizable horizontal rule. |
 | [`_spacer`](#block-spacer) | Insert vertical whitespace. |
 
@@ -397,6 +398,26 @@ Next section:
 ```
 
 See [Switching text styles](#style-switching) for the full behaviour.
+
+---
+
+(block-slide)=
+## `_slide` / `_frame` — Slide layout
+
+Only in [slide mode](#slides) (`_doc: slides: true`). `_slide` must be the first item of a
+slide and takes a layout name or a mapping of `layout` and `template`. `_frame` sends the
+content that follows into the named frame of the slide's layout.
+
+```yaml
+Here is what people were doing in 1966:
+  - _slide: two-column
+  - Text in the left column
+  - _frame: right
+  - _img:
+      source: bbc_1966.png
+```
+
+See [Slide presentations](#slides) for layouts, frames and overflow.
 
 ---
 

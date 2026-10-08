@@ -1,7 +1,7 @@
 from enum import StrEnum
 import pathlib
-from typing import Optional
-from pydantic import BaseModel, Field, field_validator
+from typing import Literal, Optional
+from pydantic import BaseModel, Field, field_validator, model_validator
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 import reportlab.lib.pagesizes as rl_pagesizes
 from .helpers import get_pagesize
@@ -25,6 +25,65 @@ class TemplateConfig(BaseModel):
     """A single named page template: its content margins and optional PDF background."""
     margins: Margins
     background: Optional[PDFBackground] = None
+
+class FrameConfig(BaseModel):
+    """
+    One frame of a slide layout. 'box' is [x, y, width, height] measured from the
+    top-left of the page template's content box. Values <= 1 are fractions of the
+    content box; values > 1 are points.
+    """
+    box: tuple[float, float, float, float]
+    valign: Literal['top', 'middle', 'bottom'] = 'top'
+    overflow: Literal['shrink', 'error', 'truncate'] = 'shrink'
+
+    @model_validator(mode='before')
+    @classmethod
+    def _accept_bare_box(cls, value):
+        # A frame may be written as just its box: `left: [0, 0, 0.5, 1]`
+        if isinstance(value, (list, tuple)):
+            return {'box': value}
+        return value
+
+    @field_validator('box')
+    @classmethod
+    def _check_box(cls, box):
+        x, y, width, height = box
+        if x < 0 or y < 0 or width <= 0 or height <= 0:
+            raise ValueError(
+                f"A frame box is [x, y, width, height] with x, y >= 0 and a positive "
+                f"width and height. Got: {list(box)!r}"
+            )
+        return box
+
+    def resolve(self, content_width: float, content_height: float) -> tuple[float, float, float, float]:
+        """
+        Returns (x, y, width, height) in points within a content box of the given size,
+        with y measured from the *bottom* (ReportLab's convention).
+        """
+        x, y, width, height = self.box
+        x = x * content_width if x <= 1 else x
+        width = width * content_width if width <= 1 else width
+        y = y * content_height if y <= 1 else y
+        height = height * content_height if height <= 1 else height
+        return x, content_height - y - height, width, height
+
+
+# Layouts available in every slide deck. A user layout of the same name replaces one.
+BUILTIN_LAYOUTS: dict[str, dict] = {
+    'default': {
+        'body': [0, 0, 1, 1],
+    },
+    'title': {
+        'title': {'box': [0, 0, 1, 0.55], 'valign': 'bottom'},
+        'body': [0, 0.6, 1, 0.4],
+    },
+    'two-column': {
+        'title': [0, 0, 1, 0.22],
+        'left': [0, 0.25, 0.48, 0.75],
+        'right': [0.52, 0.25, 0.48, 0.75],
+    },
+}
+
 
 class PageSizeMixin:
     # Either a named ReportLab page size (e.g. 'a4', 'letter') or an explicit
@@ -52,6 +111,27 @@ class LandscapeMixin:
 
 class DocConfig(PageSizeMixin, LandscapeMixin, BaseModel):
     templates: dict[str, TemplateConfig]
+    # Slide mode: every top-level heading becomes one slide (its own page).
+    slides: bool = False
+    # Named slide layouts: {layout name: {frame name: FrameConfig}}
+    layouts: dict[str, dict[str, FrameConfig]] = Field(default_factory=dict)
+
+    @property
+    def all_layouts(self) -> dict[str, dict[str, FrameConfig]]:
+        """Built-in layouts overlaid with the document's own layouts."""
+        builtins = {
+            name: {frame: FrameConfig.model_validate(spec) for frame, spec in frames.items()}
+            for name, frames in BUILTIN_LAYOUTS.items()
+        }
+        return builtins | self.layouts
+
+    def get_layout(self, name: str) -> dict[str, FrameConfig]:
+        layouts = self.all_layouts
+        if name not in layouts:
+            raise ValueError(
+                f"Slide layout {name!r} not found. Available layouts: {sorted(layouts)}"
+            )
+        return layouts[name]
 
     @property
     def page_dims(self):

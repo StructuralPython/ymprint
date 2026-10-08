@@ -1,5 +1,5 @@
 from reportlab.platypus import Table, KeepTogether
-from . import register_block
+from . import register_block, content_box
 from .code_block_styles import generic_code_block
 from typing import Callable
 
@@ -11,7 +11,7 @@ def convert_code_block(block_key: str, block_value: dict, context: dict) -> list
     caption = block_value.get('caption')
     line_numbers = block_value.get('line_numbers')
     width_ratio = block_value.get('width_ratio', 0.75)
-    available_width = context['frames']['all_pages']['width']
+    available_width = content_box(context)['width']
     text_spacing = context['styles']['ymprint'].body.spacing
     text_size = context['styles']['ymprint'].body.size
     space_around = text_spacing * text_size
