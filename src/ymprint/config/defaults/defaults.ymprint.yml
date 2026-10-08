@@ -1,6 +1,7 @@
 _doc:
   page-size: a4
   landscape: false
+  slides: false
   templates:
     default:
       margins:

@@ -52,6 +52,8 @@ class LandscapeMixin:
 
 class DocConfig(PageSizeMixin, LandscapeMixin, BaseModel):
     templates: dict[str, TemplateConfig]
+    # Slide mode: every top-level heading becomes one slide (its own page).
+    slides: bool = False
 
     @property
     def page_dims(self):
