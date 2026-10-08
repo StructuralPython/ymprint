@@ -76,7 +76,7 @@ backgrounds are set per **named page template**. Declare one or more templates u
 
 ```yaml
 _doc:
-  page-size: a4          # a4, letter, etc. (document-wide)
+  page-size: a4          # a4, letter, etc., or [width, height] in points (document-wide)
   landscape: false       # document-wide
   templates:
     cover:               # first listed → the document starts here
@@ -99,11 +99,25 @@ _doc:
 
 | Key | Meaning |
 | --- | --- |
-| `page-size` | Named page size, e.g. `a4`, `letter`. Document-wide. |
-| `landscape` | `true` to rotate to landscape. Document-wide. |
+| `page-size` | Named page size, e.g. `a4`, `letter`, or an explicit `[width, height]` in points, e.g. `[960, 540]`. Document-wide. |
+| `landscape` | `true` to rotate a named page size to landscape. Ignored for an explicit `[width, height]`, which is used as written. Document-wide. |
 | `templates` | Mapping of template name → page template. The first entry is the starting template. |
 | `templates.<name>.margins` | Page margins in points (`top`, `left`, `right`, `bottom`). |
 | `templates.<name>.background` | Path to a PDF whose pages are used as a background. See [PDF backgrounds](pdf-backgrounds.md). |
+
+### Custom page sizes
+
+Pass `page-size` a `[width, height]` list (in points, 72 pt = 1 inch) for any page
+size or screen format:
+
+```yaml
+_doc:
+  page-size: [960, 540]   # 16:9, 13.33 × 7.5 in (the PowerPoint widescreen size)
+```
+
+Because sizes are in points, `[1920, 1080]` is a 26.7 × 15 in page. PDF viewers scale
+the page to fit the screen, so what matters is the size of your text *relative* to the
+page: on `[960, 540]` a body size of 24–32 pt reads well on a projector.
 
 ### Switching page templates
 
