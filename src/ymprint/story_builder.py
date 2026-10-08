@@ -15,6 +15,7 @@ from .content_converters import (
 )
 from .exceptions import YMPrintSyntaxException
 from .blocks import get_block_callable, list_blocks, convert_blocks
+from .slides import build_slide, _extract_slide_directive, _misplaced_directive_message
 
 TEXTSTYLE_BLOCK = "_textstyle"
 
@@ -130,6 +131,12 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
             current_style = _resolve_style(style_name, context)
             continue
 
+        # `_slide` / `_frame` are consumed by the slide builder at the top of a slide's
+        # content. Reaching here means one was used somewhere else.
+        directive = _extract_slide_directive(k, v)
+        if directive is not None:
+            raise YMPrintSyntaxException(_misplaced_directive_message(directive[0], context))
+
         # Explicit unordered / ordered lists are structural, intercepted before any
         # heading or block dispatch. They honour the active text style.
         list_block = _extract_list_block(k, v)
@@ -153,6 +160,8 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
                     if slide_count > 0:
                         story.append(PageBreak())
                     slide_count += 1
+                    story.extend(build_slide(k, v, context, current_style))
+                    continue
                 heading_style_name = f"h{heading_level}"
                 if check_for_paragraph(k, context):
                     # If this section's content opens with a `_textstyle` switch, the
@@ -162,22 +171,26 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
                     heading = convert_paragraph(k, context, heading_style_name, heading_style)
                     story.extend(heading)
 
-        if check_for_variable(v, context):
-            raise YMPrintSyntaxException(
-                f"The variable syntax of $VAR is intended to be used with in custom blocks only. "
-                "To evaluate a string representation of the variable use the {{VAR}} syntax instead."
-            )
-        if check_for_paragraph(v, context):
-            paragraph = convert_paragraph(v, context, "body", current_style)
-            story.extend(paragraph)
-        elif check_for_tables(v, context):
-            table = convert_table(v, context)
-            story.extend(table)
-        elif isinstance(v, (list, dict)):
-            # A bare list/mapping is a sequence of content items: strings become
-            # paragraphs, mappings become subsections. Bullets/numbers require _ul/_ol.
-            story.extend(build_story(v, context, level=level + 1, current_style=current_style))
-            continue
-        else:
-            continue
+        story.extend(build_content(v, context, level, current_style))
     return story
+
+
+def build_content(value, context: dict, level: int = 0, current_style: str = "default") -> list:
+    """
+    Returns the flowables for a section's content 'value' (the value under a heading,
+    or a single list item) found at 'level'.
+    """
+    if check_for_variable(value, context):
+        raise YMPrintSyntaxException(
+            f"The variable syntax of $VAR is intended to be used with in custom blocks only. "
+            "To evaluate a string representation of the variable use the {{VAR}} syntax instead."
+        )
+    if check_for_paragraph(value, context):
+        return convert_paragraph(value, context, "body", current_style)
+    if check_for_tables(value, context):
+        return convert_table(value, context)
+    if isinstance(value, (list, dict)):
+        # A bare list/mapping is a sequence of content items: strings become
+        # paragraphs, mappings become subsections. Bullets/numbers require _ul/_ol.
+        return build_story(value, context, level=level + 1, current_style=current_style)
+    return []

@@ -1,7 +1,7 @@
 import pathlib
 from PIL import Image as PillowImg
 from reportlab.platypus import Image, Table, Paragraph
-from . import register_block
+from . import register_block, content_box
 from . import blockstyles
 from ..errors import BlockError
 
@@ -30,8 +30,8 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
     caption = value.get('caption')
     img_width, img_height = get_photo_size(image_path)
     aspect = img_height / img_width
-    available_width = context['frames']['all_pages']['width']
-    available_height = context['frames']['all_pages']['height']
+    available_width = content_box(context)['width']
+    available_height = content_box(context)['height']
 
     if img_width > available_width * scale_ratio:
         scaled_width = available_width * scale_ratio

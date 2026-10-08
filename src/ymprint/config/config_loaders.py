@@ -125,6 +125,16 @@ def build_current_config(default_config: dict, config_data: DeepChainMap):
         for key, value in mapping.items():
             if key in style_map or key in default_config:
                 continue
+            if key == 'layouts':
+                # Slide layouts are merged by name across layers, so a document can
+                # add layouts to those a project config file defines. A layout itself
+                # is taken whole from the highest-priority layer that names it.
+                merged = {}
+                for layer in reversed(config_data.maps):
+                    merged.update(layer.get('layouts') or {})
+                if merged:
+                    style_map[key] = merged
+                continue
             if value:
                 style_map[key] = value
     return style_map
