@@ -1,7 +1,7 @@
 from enum import StrEnum
 import pathlib
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 import reportlab.lib.pagesizes as rl_pagesizes
 from .helpers import get_pagesize
@@ -27,7 +27,24 @@ class TemplateConfig(BaseModel):
     background: Optional[PDFBackground] = None
 
 class PageSizeMixin:
-    page_size: str = Field(alias='page-size')
+    # Either a named ReportLab page size (e.g. 'a4', 'letter') or an explicit
+    # [width, height] in points (e.g. [960, 540] for a 16:9 slide).
+    page_size: str | tuple[float, float] = Field(alias='page-size')
+
+    @field_validator('page_size', mode='before')
+    @classmethod
+    def _check_page_size(cls, value):
+        if isinstance(value, (list, tuple)):
+            if len(value) != 2 or not all(
+                isinstance(dim, (int, float)) and not isinstance(dim, bool) and dim > 0
+                for dim in value
+            ):
+                raise ValueError(
+                    f"An explicit page-size must be [width, height] with two positive "
+                    f"numbers in points, e.g. [960, 540]. Got: {list(value)!r}"
+                )
+            return tuple(float(dim) for dim in value)
+        return value
 
 class LandscapeMixin:
     landscape: bool = Field(default = False)
@@ -38,6 +55,10 @@ class DocConfig(PageSizeMixin, LandscapeMixin, BaseModel):
 
     @property
     def page_dims(self):
+        # An explicit [width, height] is used exactly as written; `landscape` only
+        # rotates named page sizes.
+        if isinstance(self.page_size, tuple):
+            return self.page_size
         if hasattr(rl_pagesizes, self.page_size.upper()):
             page_dims = get_pagesize(self.page_size)
             if self.landscape:
