@@ -31,7 +31,8 @@ _style:
     align: left
   styles:
     centered:
-      align: center
+      body:
+        align: center
 
 
 "{{title}}":
