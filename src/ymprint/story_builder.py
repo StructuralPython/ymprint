@@ -1,5 +1,7 @@
 import re
 
+from reportlab.platypus import PageBreak
+
 from .content_checks import (
     check_for_paragraph,
     check_for_tables,
@@ -88,6 +90,11 @@ def _leading_textstyle(value, context: dict):
     return resolved
 
 
+def _slide_mode(context: dict) -> bool:
+    doctemplate = context.get("doctemplate", {}).get("ymprint")
+    return bool(getattr(doctemplate, "slides", False))
+
+
 def build_story(source_data: dict | list, context: dict, level: int = 0, current_style: str = "default") -> list:
     """
     Returns a list of Flowables generated from 'source_data' and 'context'.
@@ -103,6 +110,10 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
     elif isinstance(source_data, list):
         source_iter = iter(source_data)
     registered_blocks = list_blocks()
+    # In slide mode each top-level heading is one slide: every slide after the
+    # first starts on a new page.
+    slides_at_this_level = level == 0 and _slide_mode(context)
+    slide_count = 0
 
     for elem in source_iter:
         # print(f"{level=} | {elem=}")
@@ -138,6 +149,10 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
             else:
                 if heading_level == 0:
                     heading_level = 1
+                if slides_at_this_level:
+                    if slide_count > 0:
+                        story.append(PageBreak())
+                    slide_count += 1
                 heading_style_name = f"h{heading_level}"
                 if check_for_paragraph(k, context):
                     # If this section's content opens with a `_textstyle` switch, the

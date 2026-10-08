@@ -101,6 +101,7 @@ _doc:
 | --- | --- |
 | `page-size` | Named page size, e.g. `a4`, `letter`, or an explicit `[width, height]` in points, e.g. `[960, 540]`. Document-wide. |
 | `landscape` | `true` to rotate a named page size to landscape. Ignored for an explicit `[width, height]`, which is used as written. Document-wide. |
+| `slides` | `true` turns on slide mode: every top-level heading becomes one slide on its own page, so no `_pagebreak` is needed. Default `false`. |
 | `templates` | Mapping of template name → page template. The first entry is the starting template. |
 | `templates.<name>.margins` | Page margins in points (`top`, `left`, `right`, `bottom`). |
 | `templates.<name>.background` | Path to a PDF whose pages are used as a background. See [PDF backgrounds](pdf-backgrounds.md). |
