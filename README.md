@@ -116,7 +116,7 @@ ym live report.yml
 
 The [`Examples/`](Examples) directory contains a runnable report for each major feature —
 a simple document, document configuration, variables, PDF backgrounds, Python execution,
-and the full set of blocks. Render any of them with `ym convert`.
+the full set of blocks, and a 1080p slide deck with custom backgrounds. Render any of them with `ym convert`.
 
 ## Documentation
 

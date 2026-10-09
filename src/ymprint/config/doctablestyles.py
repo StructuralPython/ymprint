@@ -73,10 +73,11 @@ class TableStyle(BaseModel):
         """
         Returns a ReportLab TableStyle Object
         """
+        # Font names are case-sensitive (e.g. "NotoSans", "Helvetica-Bold")
         if self.headers.text.bold:
-            fontname = f"{self.headers.text.font.title()}-Bold"
+            fontname = f"{self.headers.text.font}-Bold"
         else:
-            fontname = self.headers.text.font.title()
+            fontname = self.headers.text.font
         table_commands = [
             # HEADER STYLES
             ("BACKGROUND", (0, 0), (-1, 0), self.headers.row.color),
@@ -89,6 +90,8 @@ class TableStyle(BaseModel):
             # BODY STYLES
             ("FONTNAME", (0, 1), (-1, -1), self.body.text.font),
             ("FONTSIZE", (0, 1), (-1, -1), self.body.text.size),
+            ("LEADING", (0, 1), (-1, -1), self.body.text.size * 1.4),
+            ("TEXTCOLOR", (0, 1), (-1, -1), self.body.text.rl_color),
             ("ROWBACKGROUNDS", (0, 1), (-1, -1), self.body.rows.rl_color),
             ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
             ("TOPPADDING", (0, 0), (-1, -1), self.cell_padding.top),

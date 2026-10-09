@@ -293,6 +293,15 @@ def _line_number_style(context: dict) -> ParagraphStyle:
     )
 
 
+def _gutter_width(last_line_number: int, lnum_style: ParagraphStyle) -> float:
+    """
+    Width of the line-number column: wide enough for the largest number plus the
+    column's right padding (GUTTER_WIDTH), which sits inside the column.
+    """
+    digits_width = pdfmetrics.stringWidth(str(last_line_number), lnum_style.fontName, lnum_style.fontSize)
+    return max(LINE_NUM_WIDTH, digits_width + GUTTER_WIDTH + 2)
+
+
 def _caption_style(context: dict) -> ParagraphStyle:
     body_size = context['styles']['yaml']['_style']['body']['size']
     body_font = context['styles']['yaml']['_style']['body']['font']
@@ -434,7 +443,7 @@ def python_code_block(
 
     # --- Build inner grid rows ---
     if show_line_numbers:
-        gutter_w = LINE_NUM_WIDTH
+        gutter_w = _gutter_width(first_line + n_lines - 1, lnum_style)
         code_w   = col_width - gutter_w - GUTTER_WIDTH - (CELL_PAD_H * 2)
     else:
         gutter_w = 0
@@ -519,7 +528,7 @@ def generic_code_block(
 
     # --- Build inner grid rows ---
     if show_line_numbers:
-        gutter_w = LINE_NUM_WIDTH
+        gutter_w = _gutter_width(first_line + n_lines - 1, lnum_style)
         code_w   = col_width - gutter_w - GUTTER_WIDTH - (CELL_PAD_H * 2)
     else:
         gutter_w = 0
@@ -528,7 +537,7 @@ def generic_code_block(
     inner_rows = []
     for i, markup in enumerate(markup_lines):
         line_num_para = Paragraph(str(first_line + i), lnum_style)
-        code_para     = XPreformatted(markup, line_style)
+        code_para     = XPreformatted(_escape(markup), line_style)
         if show_line_numbers:
             inner_rows.append([line_num_para, code_para])
         else:

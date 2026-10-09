@@ -17,7 +17,7 @@ def convert_matplotfig_block(block_key: str, block_value: dict, context: dict) -
     width_ratio = block_value.get('scale_ratio', 0.8)
     scale_ratio = width_ratio
 
-    caption_textstyle = blockstyles.get_text_styles().get(f'image_caption')
+    caption_textstyle = blockstyles.get_text_styles(blockstyles.block_scale(context)).get('image_caption')
     caption = block_value.get('caption', "")
     available_width = content_box(context)['width']
     available_height = content_box(context)['height']

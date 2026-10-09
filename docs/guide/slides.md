@@ -32,8 +32,9 @@ headings stay on their slide.
 ```{tip}
 Page sizes are in points (72 pt = 1 inch). `[960, 540]` is the PowerPoint widescreen size
 (13.33 × 7.5 in), where a 24–32 pt body reads well on a projector. A larger page such as
-`[1920, 1080]` works too, but scale your text sizes up to match. See
-[Custom page sizes](configuration.md#custom-page-sizes).
+`[1920, 1080]` works too, but scale your text sizes up to match. Admonitions, block
+quotes, captions and code blocks size themselves from the body text, so they follow
+along. See [Custom page sizes](configuration.md#custom-page-sizes).
 ```
 
 ## Layouts and frames
@@ -144,3 +145,11 @@ Fine print:
   page template, use `_slide: {template: ...}`, not `_pagebreak: <template>`.
 - In a mapping-style slide, give repeated `_frame` keys a suffix to keep them unique:
   `_frame_a: left`, `_frame_b: right`.
+- A slide title that starts with an underscore is read as a block, so write
+  `` Run it with `_py` `` rather than `_py: run it`.
+
+## Example deck
+
+[`Examples/Slides`](https://github.com/StructuralPython/yamlreports/tree/main/Examples/Slides)
+is a complete 1080p deck with its own title, section, content and closing backgrounds.
+See it on the [Examples](../examples.md#slides) page.

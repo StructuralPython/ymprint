@@ -10,7 +10,8 @@ def convert_quote_block(block_key: str, block_value: dict, context: dict) -> lis
     available_width = content_box(context)['width']
     width_ratio = 0.8
     block_width = width_ratio * available_width
-    styles = blockstyles.get_text_styles()
+    scale = blockstyles.block_scale(context)
+    styles = blockstyles.get_text_styles(scale)
     quote_para = Paragraph(block_value['quote'], styles["blockquote_body"])
     rows = [[quote_para]]
     attribution = block_value.get('attribution')
@@ -19,7 +20,7 @@ def convert_quote_block(block_key: str, block_value: dict, context: dict) -> lis
         attr_para = Paragraph(attr_text, styles["blockquote_attribution"])
         rows.append([attr_para])
  
-    tbl = Table(rows, colWidths=[block_width], style=blockstyles.get_table_style("blockquote"))
+    tbl = Table(rows, colWidths=[block_width], style=blockstyles.get_table_style("blockquote", scale))
     return [tbl]
 
 register_block("_blockquote", convert_quote_block)

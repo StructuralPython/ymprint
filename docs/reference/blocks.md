@@ -126,6 +126,10 @@ Report:
 | `_tip` | A helpful suggestion. |
 | `_note` | An aside worth remembering. |
 
+Admonition text and padding scale with the document's body size: they are designed for a
+10 pt body, so with a 40 pt body (a 1080p slide) they are drawn four times as large. Block
+quotes and image captions scale the same way.
+
 ---
 
 (block-blockquote)=

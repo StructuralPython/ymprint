@@ -82,3 +82,26 @@ def register_fonts() -> None:
 
             else:
                 pdfmetrics.registerFont(TTFont(font_name, font_filename))
+
+        # Map <b>/<i> markup (and so **bold** / *italic*) onto the family's faces.
+        # Italic faces are named either -Italic or -Oblique; a missing face falls
+        # back to the regular one.
+        registered = set(pdfmetrics.getRegisteredFontNames())
+
+        def face(*candidates: str) -> str:
+            for candidate in candidates:
+                if candidate in registered:
+                    return candidate
+            return font_family
+
+        if font_family in registered:
+            bold = face(f"{font_family}-Bold")
+            pdfmetrics.registerFontFamily(
+                font_family,
+                normal=font_family,
+                bold=bold,
+                italic=face(f"{font_family}-Italic", f"{font_family}-Oblique"),
+                boldItalic=face(
+                    f"{font_family}-BoldItalic", f"{font_family}-BoldOblique", bold
+                ),
+            )
