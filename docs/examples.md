@@ -205,3 +205,95 @@ See the [Blocks reference](reference/blocks.md).
 :::
 
 ::::
+
+---
+
+## Slides
+
+A 1080p deck (`page-size: [1920, 1080]`) in slide mode: custom layouts and frames, a
+different PDF background for title, section, content and closing slides, and most of the
+block catalogue (code, executed Python, matplotlib, admonitions, tables) sized for a
+screen. The four backgrounds are vector PDFs drawn with ReportLab by
+`make_backgrounds.py`, which sits next to the deck. See
+[Slide presentations](guide/slides.md).
+
+```{literalinclude} ../Examples/Slides/slides.yml
+:language: yaml
+```
+
+::::{grid} 1 2 2 2
+:gutter: 3
+
+:::{grid-item}
+```{image} _static/examples/slides-1.png
+:alt: Slides example, title slide
+:class: ym-page-shot
+```
++++
+<p class="ym-page-caption">Slide — Title slide — custom hero background</p>
+:::
+
+:::{grid-item}
+```{image} _static/examples/slides-2.png
+:alt: Slides example, a slide that shows its own source
+:class: ym-page-shot
+```
++++
+<p class="ym-page-caption">Slide — A slide that shows its own source</p>
+:::
+
+:::{grid-item}
+```{image} _static/examples/slides-3.png
+:alt: Slides example, images in a frame
+:class: ym-page-shot
+```
++++
+<p class="ym-page-caption">Slide — Images in a frame</p>
+:::
+
+:::{grid-item}
+```{image} _static/examples/slides-4.png
+:alt: Slides example, executed python feeding a table
+:class: ym-page-shot
+```
++++
+<p class="ym-page-caption">Slide — Executed Python feeding a table</p>
+:::
+
+:::{grid-item}
+```{image} _static/examples/slides-5.png
+:alt: Slides example, a live matplotlib figure
+:class: ym-page-shot
+```
++++
+<p class="ym-page-caption">Slide — A live matplotlib figure</p>
+:::
+
+:::{grid-item}
+```{image} _static/examples/slides-6.png
+:alt: Slides example, admonitions and quotes, scaled for slides
+:class: ym-page-shot
+```
++++
+<p class="ym-page-caption">Slide — Admonitions and quotes, scaled for slides</p>
+:::
+
+:::{grid-item}
+```{image} _static/examples/slides-7.png
+:alt: Slides example, tables from lists of mappings
+:class: ym-page-shot
+```
++++
+<p class="ym-page-caption">Slide — Tables from lists of mappings</p>
+:::
+
+:::{grid-item}
+```{image} _static/examples/slides-8.png
+:alt: Slides example, closing slide
+:class: ym-page-shot
+```
++++
+<p class="ym-page-caption">Slide — Closing slide</p>
+:::
+
+::::
