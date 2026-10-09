@@ -25,7 +25,7 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
         raise FileNotFoundError(
             f"The image file for block '{key}' was not found: {str(image_path)}"
         )
-    caption_textstyle = blockstyles.get_text_styles().get(f'image_caption')
+    caption_textstyle = blockstyles.get_text_styles(blockstyles.block_scale(context)).get('image_caption')
     # Caption is optional: when absent/empty, no caption row is rendered.
     caption = value.get('caption')
     img_width, img_height = get_photo_size(image_path)

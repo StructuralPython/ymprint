@@ -18,9 +18,11 @@ def generate_admonition_block(kind: str) -> Callable:
         width_ratio = 0.8
         block_width = width_ratio * available_width
         value = block_value
-        tablestyle = blockstyles.get_table_style(kind)
-        body_textstyle = blockstyles.get_text_styles().get(f'admonition_{kind}_body')
-        title_textstyle = blockstyles.get_text_styles().get(f'admonition_{kind}_title')
+        scale = blockstyles.block_scale(context)
+        tablestyle = blockstyles.get_table_style(kind, scale)
+        text_styles = blockstyles.get_text_styles(scale)
+        body_textstyle = text_styles.get(f'admonition_{kind}_body')
+        title_textstyle = text_styles.get(f'admonition_{kind}_title')
         notice = Paragraph(text=blockstyles.admonition_title_text(kind), style=title_textstyle)
         content = Paragraph(text=value, style=body_textstyle)
         table = Table(
@@ -30,7 +32,7 @@ def generate_admonition_block(kind: str) -> Callable:
             spaceBefore=space_around,
             spaceAfter=space_around
         )    
-        return [KeepTogether(table), Spacer(1, 10)]
+        return [KeepTogether(table), Spacer(1, 10 * scale)]
     
     return convert_admonition_block
 

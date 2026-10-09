@@ -93,9 +93,19 @@ class Palette:
 # Paragraph styles
 # ---------------------------------------------------------------------------
 
-def get_text_styles():
+def block_scale(context: dict) -> float:
     """
-    Return a dict of ParagraphStyle objects keyed by name.
+    Returns how much to scale block text and padding so that blocks keep their
+    proportions to the document's body text. The design sizes in this module are
+    for a 10 pt body, so a 40 pt body (e.g. a 1080p slide) scales blocks by 4.
+    """
+    return context['styles']['ymprint'].body.size / BODY_FONT_SIZE
+
+
+def get_text_styles(scale: float = 1.0):
+    """
+    Return a dict of ParagraphStyle objects keyed by name, with every size
+    multiplied by 'scale' (see block_scale).
 
     Keys
     ----
@@ -104,12 +114,15 @@ def get_text_styles():
     image_caption             — caption below an image
     """
     base = getSampleStyleSheet()
+    body_size = BODY_FONT_SIZE * scale
+    label_size = LABEL_FONT_SIZE * scale
+    caption_size = CAPTION_FONT_SIZE * scale
 
     # Shared defaults for admonition body text
     _admonition_body_defaults = dict(
         fontName=FONT_NORMAL,
-        fontSize=BODY_FONT_SIZE,
-        leading=BODY_FONT_SIZE * 1.4,
+        fontSize=body_size,
+        leading=body_size * 1.4,
         spaceAfter=0,
         spaceBefore=0,
     )
@@ -117,9 +130,9 @@ def get_text_styles():
     # Shared defaults for admonition title / label
     _admonition_title_defaults = dict(
         fontName=FONT_BOLD,
-        fontSize=LABEL_FONT_SIZE,
-        leading=LABEL_FONT_SIZE * 1.3,
-        spaceAfter=3,
+        fontSize=label_size,
+        leading=label_size * 1.3,
+        spaceAfter=3 * scale,
         spaceBefore=0,
         textTransform="uppercase",
     )
@@ -150,8 +163,8 @@ def get_text_styles():
     styles["blockquote_body"] = ParagraphStyle(
         name="blockquote_body",
         fontName=FONT_ITALIC,
-        fontSize=BODY_FONT_SIZE + 1,        # slightly larger feels more editorial
-        leading=(BODY_FONT_SIZE + 1) * 1.5, # generous leading for readability
+        fontSize=body_size * 1.1,           # slightly larger feels more editorial
+        leading=body_size * 1.1 * 1.5,      # generous leading for readability
         textColor=Palette.BLOCKQUOTE_TEXT,
         spaceAfter=0,
         spaceBefore=0,
@@ -161,11 +174,11 @@ def get_text_styles():
     styles["blockquote_attribution"] = ParagraphStyle(
         name="blockquote_attribution",
         fontName=FONT_NORMAL,
-        fontSize=BODY_FONT_SIZE - 1,
-        leading=(BODY_FONT_SIZE - 1) * 1.4,
+        fontSize=body_size * 0.9,
+        leading=body_size * 0.9 * 1.4,
         textColor=Palette.BLOCKQUOTE_ATTRIBUTION,
         spaceAfter=0,
-        spaceBefore=6,
+        spaceBefore=6 * scale,
         alignment=2,   # right-align attribution
     )
 
@@ -174,11 +187,11 @@ def get_text_styles():
     styles["image_caption"] = ParagraphStyle(
         name="image_caption",
         fontName=FONT_ITALIC,
-        fontSize=CAPTION_FONT_SIZE,
-        leading=CAPTION_FONT_SIZE * 1.4,
+        fontSize=caption_size,
+        leading=caption_size * 1.4,
         textColor=Palette.CAPTION_TEXT,
         alignment=1,   # centre
-        spaceBefore=4,
+        spaceBefore=4 * scale,
         spaceAfter=0,
     )
 
@@ -193,7 +206,8 @@ def get_text_styles():
 ACCENT_WIDTH = 4
 
 def _admonition_table_style(bg: colors.Color,
-                             border: colors.Color) -> TableStyle:
+                             border: colors.Color,
+                             scale: float = 1.0) -> TableStyle:
     """
     Build a TableStyle for a single-column admonition table.
 
@@ -207,25 +221,25 @@ def _admonition_table_style(bg: colors.Color,
         ("BACKGROUND",    (0, 0), (-1, -1), bg),
 
         # Left accent bar
-        ("LINEBEFORE",    (0, 0), (0, -1), ACCENT_WIDTH, border),
+        ("LINEBEFORE",    (0, 0), (0, -1), ACCENT_WIDTH * scale, border),
 
         # Outer border (thin, same hue as accent)
-        ("BOX",           (0, 0), (-1, -1), 0.5, border),
+        ("BOX",           (0, 0), (-1, -1), 0.5 * scale, border),
 
         # No internal grid lines
         ("INNERGRID",     (0, 0), (-1, -1), 0, colors.transparent),
 
         # Padding
-        ("LEFTPADDING",   (0, 0), (-1, -1), CELL_PADDING_H),
-        ("RIGHTPADDING",  (0, 0), (-1, -1), CELL_PADDING_H),
-        ("TOPPADDING",    (0, 0), (0,  0),  CELL_PADDING_V),       # title row top
-        ("BOTTOMPADDING", (0, 0), (0,  0),  3),                     # title row bottom (tight)
-        ("TOPPADDING",    (0, 1), (0, -1),  4),                     # body row top
-        ("BOTTOMPADDING", (0, 1), (0, -1),  CELL_PADDING_V),        # body row bottom
+        ("LEFTPADDING",   (0, 0), (-1, -1), CELL_PADDING_H * scale),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), CELL_PADDING_H * scale),
+        ("TOPPADDING",    (0, 0), (0,  0),  CELL_PADDING_V * scale),   # title row top
+        ("BOTTOMPADDING", (0, 0), (0,  0),  3 * scale),                 # title row bottom (tight)
+        ("TOPPADDING",    (0, 1), (0, -1),  4 * scale),                 # body row top
+        ("BOTTOMPADDING", (0, 1), (0, -1),  CELL_PADDING_V * scale),    # body row bottom
 
         # Vertical alignment
         ("VALIGN",        (0, 0), (-1, -1), "TOP"),
-        ("ROUNDEDCORNERS", [4, 4, 4, 4])
+        ("ROUNDEDCORNERS", [4 * scale] * 4)
         # ROUNDEDCORNERS, [tl, tr, bl, br]
     ])
 
@@ -236,41 +250,50 @@ def _admonition_table_style(bg: colors.Color,
 #   row 1 — attribution     (optional; omit the row if no attribution)
 BLOCKQUOTE_ACCENT_WIDTH = 5   # slightly thicker than admonition bars
  
-BLOCKQUOTE_TABLE_STYLE = TableStyle([
-    # Subtle background tint
-    ("BACKGROUND",    (0, 0), (-1, -1), Palette.BLOCKQUOTE_BG),
- 
-    # Thick left accent bar — the defining visual of a blockquote
-    ("LINEBEFORE",    (0, 0), (0, -1), BLOCKQUOTE_ACCENT_WIDTH, Palette.BLOCKQUOTE_BORDER),
- 
-    # No outer box, no grid — keep it clean and "open"
-    ("BOX",           (0, 0), (-1, -1), 0, colors.transparent),
-    ("INNERGRID",     (0, 0), (-1, -1), 0, colors.transparent),
- 
-    # Generous horizontal padding to offset the accent bar visually
-    ("LEFTPADDING",   (0, 0), (-1, -1), 14),
-    ("RIGHTPADDING",  (0, 0), (-1, -1), 12),
- 
-    # Vertical padding: roomy on the quote body
-    ("TOPPADDING",    (0, 0), (0,  0),  10),
-    ("BOTTOMPADDING", (0, 0), (0,  0),  6),
- 
-    # Attribution row (row 1) sits tight to the quote
-    ("TOPPADDING",    (0, 1), (0, -1),  0),
-    ("BOTTOMPADDING", (0, 1), (0, -1),  10),
-    ("ROUNDEDCORNERS", [4, 4, 4, 4]),
+def _blockquote_table_style(scale: float = 1.0) -> TableStyle:
+    return TableStyle([
+        # Subtle background tint
+        ("BACKGROUND",    (0, 0), (-1, -1), Palette.BLOCKQUOTE_BG),
 
-    ("VALIGN",        (0, 0), (-1, -1), "TOP"),
-])
+        # Thick left accent bar — the defining visual of a blockquote
+        ("LINEBEFORE",    (0, 0), (0, -1), BLOCKQUOTE_ACCENT_WIDTH * scale, Palette.BLOCKQUOTE_BORDER),
 
+        # No outer box, no grid — keep it clean and "open"
+        ("BOX",           (0, 0), (-1, -1), 0, colors.transparent),
+        ("INNERGRID",     (0, 0), (-1, -1), 0, colors.transparent),
+
+        # Generous horizontal padding to offset the accent bar visually
+        ("LEFTPADDING",   (0, 0), (-1, -1), 14 * scale),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 12 * scale),
+
+        # Vertical padding: roomy on the quote body
+        ("TOPPADDING",    (0, 0), (0,  0),  10 * scale),
+        ("BOTTOMPADDING", (0, 0), (0,  0),  6 * scale),
+
+        # Attribution row (row 1) sits tight to the quote
+        ("TOPPADDING",    (0, 1), (0, -1),  0),
+        ("BOTTOMPADDING", (0, 1), (0, -1),  10 * scale),
+        ("ROUNDEDCORNERS", [4 * scale] * 4),
+
+        ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+    ])
+
+
+BLOCKQUOTE_TABLE_STYLE = _blockquote_table_style()
+
+
+# Background and border colours for each admonition kind
+ADMONITION_COLORS: dict[str, tuple[colors.Color, colors.Color]] = {
+    "info":    (Palette.INFO_BG,    Palette.INFO_BORDER),
+    "warning": (Palette.WARNING_BG, Palette.WARNING_BORDER),
+    "danger":  (Palette.DANGER_BG,  Palette.DANGER_BORDER),
+    "tip":     (Palette.TIP_BG,     Palette.TIP_BORDER),
+    "note":    (Palette.NOTE_BG,    Palette.NOTE_BORDER),
+}
 
 # Pre-built table styles for each admonition kind
 ADMONITION_TABLE_STYLES: dict[str, TableStyle] = {
-    "info":    _admonition_table_style(Palette.INFO_BG,    Palette.INFO_BORDER),
-    "warning": _admonition_table_style(Palette.WARNING_BG, Palette.WARNING_BORDER),
-    "danger":  _admonition_table_style(Palette.DANGER_BG,  Palette.DANGER_BORDER),
-    "tip":     _admonition_table_style(Palette.TIP_BG,     Palette.TIP_BORDER),
-    "note":    _admonition_table_style(Palette.NOTE_BG,    Palette.NOTE_BORDER),
+    kind: _admonition_table_style(bg, border) for kind, (bg, border) in ADMONITION_COLORS.items()
 }
 
 # Image/caption table style
@@ -293,14 +316,16 @@ IMAGE_TABLE_STYLE = TableStyle([
 ])
 
 
-def get_table_style(block_type: str) -> TableStyle:
+def get_table_style(block_type: str, scale: float = 1.0) -> TableStyle:
     """
     Return the TableStyle for a given block type.
  
     Parameters
     ----------
     block_type : str
-        One of: "info", "warning", "danger", "tip", "note", "image"
+        One of: "info", "warning", "danger", "tip", "note", "blockquote", "image"
+    scale : float
+        Multiplies padding and rule widths (see block_scale).
  
     Returns
     -------
@@ -309,14 +334,15 @@ def get_table_style(block_type: str) -> TableStyle:
     if block_type == "image":
         return IMAGE_TABLE_STYLE
     if block_type == "blockquote":
-        return BLOCKQUOTE_TABLE_STYLE
+        return _blockquote_table_style(scale)
     try:
-        return ADMONITION_TABLE_STYLES[block_type]
+        bg, border = ADMONITION_COLORS[block_type]
     except KeyError:
         valid = list(ADMONITION_TABLE_STYLES) + ["blockquote", "image"]
         raise ValueError(
             f"Unknown block type '{block_type}'. Choose from: {valid}"
         )
+    return _admonition_table_style(bg, border, scale)
 
 
 # ---------------------------------------------------------------------------
