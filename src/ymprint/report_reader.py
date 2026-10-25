@@ -1,76 +1,23 @@
-from io import BytesIO
 import pathlib
-from .yaml_loader import load_yaml
+from typing import Optional, Sequence
 
-from .config.config_loaders import load_report_config
-from .config import ReportStyles, TableStyle, DocConfig
-from .context_builder import build_context
+from .app import default_app
+from .render import extract_vars
 from .story_builder import build_story
 
-
-from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake, overlay_pdf_background
-from reportlab.platypus import Spacer
-from reportlab.lib.units import mm
-
-from .config.font_registry import register_fonts
-from .exceptions import YMPrintSyntaxException
-
-from rich import print
+ConfigPath = str | pathlib.Path
 
 
-TYP_SPACER = Spacer(1, 4 * mm)
-
-
-def load_report(source_yaml: str | pathlib.Path, destination_pdf: str | pathlib.Path, report_config_path: str | pathlib.Path) -> None:
+def load_report(
+    source_yaml: str | pathlib.Path,
+    destination_pdf: str | pathlib.Path,
+    report_config_path: Optional[ConfigPath | Sequence[ConfigPath]] = None,
+) -> None:
     """
-    Converts the report at yaml_path into a PDF.
+    Converts the report at 'source_yaml' into a PDF with the default app.
+
+    Uses exactly the config given by 'report_config_path' (a config file or
+    directory, or a sequence of them, lowest priority first); no *.ymprint.yml
+    discovery is done. Use Ymprint.render for an app's full config resolution.
     """
-    source_path = pathlib.Path(source_yaml).resolve()
-    if not source_path.exists():
-        raise FileNotFoundError(f"The source YAML file at {str(source_path)} does not exist")
-    source_data = load_yaml(source_path)
-    if source_data is None:
-        # An empty document (or one with no content) loads as None. Report it as an
-        # authoring error so the CLI/live mode shows it instead of crashing with a
-        # raw TypeError further down.
-        raise YMPrintSyntaxException(
-            f"The document {source_path.name!r} is empty. Add some content to render it."
-        )
-    register_fonts()
-    # source_config = extract_source_config(source_data)
-    # source_config = {}
-    # This should not return RL objects as each of these can build their own RL objects
-    textstyles, tablestyles, doc_data = load_report_config(source_data, report_config_path)
-    doctemplate = DocConfig.model_validate(doc_data['_doc'])
-    document_vars = extract_vars(source_data)
-    context = build_context(
-        source_data, 
-        textstyles, 
-        doc_data, 
-        tablestyles, 
-        document_vars, 
-        source_yaml, 
-        destination_pdf,
-        report_config_path,
-    )
-    story = build_story(source_data, context)
-    rl_doc, page_template_map = doctemplate.build(destination_pdf)
-    rl_report_buffer = BytesIO()
-    rl_doc.build(story, filename=rl_report_buffer)
-    rl_report_buffer.seek(0)
-    # page_template_map is now populated with {page_index: template_name}
-    pdf_backgrounds = load_pdf_backgrounds(context)
-    populated_backgrounds = fill_forms_and_bake(context['vars'], pdf_backgrounds)
-    overlay_pdf_background(
-        rl_report_buffer,
-        populated_backgrounds,
-        pathlib.Path(destination_pdf),
-        context,
-        page_template_map,
-    )
-
-
-def extract_vars(source_data: dict) -> dict:
-    if "_vars" in source_data:
-        return source_data.pop("_vars")
-    return {}
+    default_app.render(source_yaml, destination_pdf, report_config_path, discover_config=False)

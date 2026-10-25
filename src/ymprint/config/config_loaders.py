@@ -213,3 +213,12 @@ def resolve_config_relative_backgrounds(doctemplate: dict, base_dir: pathlib.Pat
             continue
         background["filepath"] = str((base_dir / background["filepath"]).resolve())
         background["relative-to"] = None
+
+
+def locate_config_file(start_dir: pathlib.Path) -> Optional[pathlib.Path]:
+    """Return the nearest ``*.ymprint.yml`` at or above ``start_dir`` as a full path."""
+    for parent in [start_dir, *start_dir.parents]:
+        matches = sorted(parent.glob("*.ymprint.yml"))
+        if matches:
+            return matches[0]
+    return None
