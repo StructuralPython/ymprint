@@ -19,8 +19,7 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
             key,
             f"Block {key!r} needs an image path. Add a 'source:' field.",
         )
-    source_path = pathlib.Path(context['source_path']).parent
-    image_path = source_path / pathlib.Path(source)
+    image_path = pathlib.Path(context['base_dir']) / pathlib.Path(source)
     if not image_path.exists():
         raise FileNotFoundError(
             f"The image file for block '{key}' was not found: {str(image_path)}"

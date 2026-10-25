@@ -15,7 +15,16 @@ def build_context(
         destination_path: str | pathlib.Path,
         config_path: str | pathlib.Path,
         blocks: Optional[BlockRegistry] = None,
+        base_dir: Optional[str | pathlib.Path] = None,
     ) -> dict:
+    """
+    Returns the render context. 'base_dir' is the directory that relative paths in
+    the document (images, JSON, `relative-to: source` backgrounds) resolve against;
+    it defaults to the source file's directory. 'source_path' is None when the
+    document was supplied as data rather than read from a file.
+    """
+    if base_dir is None:
+        base_dir = pathlib.Path(source_path).parent if source_path is not None else pathlib.Path.cwd()
     # inline_styles = {} if "_style" not in content_yaml else content_yaml.pop("_style")
     report_styles = ReportStyles.model_validate(text_styles_yaml['_style'])
     families = report_styles.build_families()
@@ -76,6 +85,7 @@ def build_context(
         "source_path": source_path,
         "config_path": config_path,
         "destination_path": destination_path,
+        "base_dir": pathlib.Path(base_dir),
         "blocks": blocks if blocks is not None else _builtin_blocks(),
     }
     return context

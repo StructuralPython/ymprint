@@ -95,11 +95,10 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
     """
     Returns a dict mapping each page template name to its background PDF as a
     BytesIO stream (or None when the template has no background). Relative
-    background paths are resolved against the source or config directory according
+    background paths are resolved against the base (source) or config directory according
     to each background's 'relative-to' setting.
     """
-    source_path = pathlib.Path(context['source_path'])
-    source_parent = source_path.parent
+    source_parent = pathlib.Path(context['base_dir'])
 
     # Backgrounds defined in a config layer were already made absolute when that
     # layer was loaded; this only resolves `relative-to: config` written in the
