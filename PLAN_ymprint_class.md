@@ -366,5 +366,5 @@ calls `app.render(..., trigger=changed_path, mode="live")`, catches
 
 - Should unregistered `_xxx` keys become an "Unknown block" error instead of a
   heading (catches typos)? It's a behaviour change, so it's not in the plan by default.
-- `on_context` changing styles: document as unsupported for now, or rebuild
-  style families after the hooks run?
+- ~~`on_context` changing styles~~ → decided: changes to the style models take
+  effect (styles are rebuilt after the hooks).

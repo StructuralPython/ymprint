@@ -101,7 +101,7 @@ order.
 | Hook | Signature | Runs | If it raises |
 | --- | --- | --- | --- |
 | `@app.before_render` | `fn(event)` | Before the document is read | The render is skipped |
-| `@app.on_context` | `fn(event, context)` | After config is loaded and the context built, before content is rendered | The render is skipped |
+| `@app.on_context` | `fn(event, context)` | After config is loaded and the context built, before content is rendered. Style changes made here take effect | The render is skipped |
 | `@app.after_render` | `fn(event)` | After the PDF is written | — (the PDF already exists) |
 
 `after_render` only runs when the PDF was written. If the document has an error, it
@@ -142,16 +142,44 @@ mode, changes that hooks make to watched files don't trigger another refresh.
 
 - `context["vars"]`: the merged variables (the document's `_vars` plus `event.vars`). `_py` and `_loadjson` blocks add to them as the content renders;
 - `context["content"]`: the document content that is about to be rendered;
-- `context["frames"]`: the content boxes that blocks size themselves against.
-
-Text and table styles are already built into ReportLab objects at this point, so changing
-`context["styles"]` has no effect. Put styling in your application's config instead.
+- `context["frames"]`: the content boxes that blocks size themselves against;
+- `context["styles"]["ymprint"]` and `context["tablestyles"]["ymprint"]`: the text and
+  table style models, after all config layers have been merged.
 
 ```python
 @app.on_context
 def stamp_revision(event, context):
     context["vars"]["revision"] = git_describe(event.base_dir)
 ```
+
+#### Changing styles
+
+Change the style **models**, either by setting attributes or by replacing a model.
+YMPrint rebuilds the ReportLab styles from them after your `on_context` hooks run, so the
+changes apply to the whole document. Headings scale with the body size, as they do in
+config:
+
+```python
+@app.on_context
+def draft_styles(event, context):
+    styles = context["styles"]["ymprint"]
+    styles.body.size = 11
+    styles.headings.color = "#888888"
+    styles.styles["note"] = {"body": {"size": 8}}        # named style, sparse like in config
+    context["tablestyles"]["ymprint"].headers.text.color = "#ff0000"
+```
+
+To replace a model, validate a new one:
+`context["styles"]["ymprint"] = ReportStyles.model_validate(data)`, where `ReportStyles`
+is imported from `ymprint.config`. Attribute assignments are not validated, so a wrong
+type only fails later, when the styles are rebuilt.
+
+`context["styles"]["yaml"]` and `context["tablestyles"]["yaml"]` hold the config as it was
+loaded. They are not read back, so editing them has no effect.
+
+For a fixed house style, prefer the [application config](#house-style-the-application-config).
+`on_context` is for styling that depends on the render, such as a "DRAFT" look from a
+flag in `event.vars`.
 
 ### Errors in hooks
 

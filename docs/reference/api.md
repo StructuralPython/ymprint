@@ -37,7 +37,7 @@ Ymprint(
 | `register_block(code, convert, *, override=False)` | Adds a block. |
 | `@block(code, *, override=False)` | Decorator form of `register_block`. |
 | `@before_render` | Registers `fn(event)` to run before every render. |
-| `@on_context` | Registers `fn(event, context)` to run after the context is built, before content is rendered. |
+| `@on_context` | Registers `fn(event, context)` to run after the context is built, before content is rendered. Changes to the style models in `context` take effect. |
 | `@after_render` | Registers `fn(event)` to run after every render that wrote the PDF. |
 | `render(source, destination=None, config_path=None, *, base_dir=None, discover_config=True, trigger=None, mode="api")` | Renders a path or dict to a PDF; returns the `RenderEvent`. |
 | `live(source, destination=None, config_path=None, *, watch=())` | Runs live mode; blocks until Ctrl+C and returns an exit code. |

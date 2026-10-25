@@ -96,8 +96,10 @@ class Ymprint:
         """
         Registers fn(event, context) to run once the config is loaded and the
         render context is built, before the document content is rendered. It may
-        change context['vars'], context['content'] and context['frames'] in place.
-        Styles are already built at this point, so changing them has no effect.
+        change context['vars'], context['content'] and context['frames'] in place,
+        and change or replace the style models context['styles']['ymprint'] and
+        context['tablestyles']['ymprint']; the ReportLab styles are rebuilt from
+        them after the hooks run.
         """
         self.hooks.on_context.append(fn)
         return fn

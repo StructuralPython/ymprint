@@ -16,7 +16,7 @@ from .config import DocConfig
 from .config.config_loaders import load_report_config
 from .config.font_registry import register_fonts
 from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake, overlay_pdf_background
-from .context_builder import build_context
+from .context_builder import build_context, rebuild_styles
 from .errors import YmprintAuthoringError
 from .exceptions import YMPrintSyntaxException
 from .story_builder import build_story
@@ -148,7 +148,10 @@ def render_document(
         base_dir=event.base_dir,
     )
 
-    run_hooks("on_context", hooks.on_context, event, context)
+    if hooks.on_context:
+        run_hooks("on_context", hooks.on_context, event, context)
+        # Hooks may have changed the style models; rebuild what is derived from them.
+        rebuild_styles(context)
 
     story = build_story(context["content"], context)
     rl_doc, page_template_map = doctemplate.build(event.destination)

@@ -260,3 +260,86 @@ def test_app_config_is_layered_under_local_config(tmp_path):
     assert len(event.config_paths) == 2
     width, height = mu.open(src.with_suffix(".pdf"))[0].rect[2:]
     assert round(width) == 420 and round(height) == 595   # A5 from the app layer
+
+
+# --- on_context style changes ----------------------------------------------------
+
+def span_sizes(path) -> dict[str, float]:
+    sizes = {}
+    for block in mu.open(path)[0].get_text("dict")["blocks"]:
+        for line in block.get("lines", []):
+            for span in line["spans"]:
+                sizes[span["text"].strip()] = round(span["size"], 1)
+    return sizes
+
+
+def test_on_context_style_changes_take_effect(doc):
+    app = Ymprint()
+
+    @app.on_context
+    def bigger_text(event, context):
+        context["styles"]["ymprint"].body.size = 16
+        context["vars"]["who"] = "world"
+
+    app.render(doc)
+    sizes = span_sizes(doc.with_suffix(".pdf"))
+    assert sizes["Hello world."] == 16
+    # Headings derive from the body size, so they scale too.
+    assert sizes["Report"] > 16
+
+
+def test_on_context_can_replace_the_style_model(doc):
+    from ymprint.config import ReportStyles
+    app = Ymprint()
+
+    @app.on_context
+    def swap(event, context):
+        current = context["styles"]["ymprint"].model_dump(by_alias=True)
+        current["body"]["size"] = 7
+        context["styles"]["ymprint"] = ReportStyles.model_validate(current)
+        context["vars"]["who"] = "small"
+
+    app.render(doc)
+    assert span_sizes(doc.with_suffix(".pdf"))["Hello small."] == 7
+
+
+def test_on_context_named_style_changes_take_effect(tmp_path):
+    src = write(tmp_path / "r.yml", """
+        _style:
+          styles:
+            note:
+              body:
+                size: 8
+        Report:
+          - _textstyle: note
+          - A note.
+    """)
+    app = Ymprint()
+    app.on_context(lambda e, ctx: ctx["styles"]["ymprint"].styles["note"]["body"].update(size=12))
+    app.render(src)
+    assert span_sizes(src.with_suffix(".pdf"))["A note."] == 12
+
+
+def test_on_context_table_style_changes_take_effect(tmp_path):
+    src = write(tmp_path / "r.yml", """
+        Report:
+          - Item: one
+            Qty: 1
+          - Item: two
+            Qty: 2
+    """)
+    app = Ymprint()
+
+    @app.on_context
+    def red_headers(event, context):
+        context["tablestyles"]["ymprint"].headers.text.color = "#ff0000"
+
+    app.render(src)
+    page = mu.open(src.with_suffix(".pdf"))[0]
+    colors = {
+        span["text"]: span["color"]
+        for block in page.get_text("dict")["blocks"]
+        for line in block.get("lines", [])
+        for span in line["spans"]
+    }
+    assert colors["Item"] == 0xFF0000
