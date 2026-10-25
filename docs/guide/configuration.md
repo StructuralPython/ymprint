@@ -1,6 +1,6 @@
 # Configuration
 
-YMPrint has **three categories** of configuration, applied across **three priority levels**.
+YMPrint has **three categories** of configuration, applied across a stack of **priority levels**.
 A minimal amount of configuration goes a long way because every level inherits from the one
 above it.
 
@@ -12,20 +12,22 @@ above it.
 | `_style` | Text styles | Body and heading fonts, colours, size, line spacing, bullet styling. |
 | `_tablestyle` | Table styles | Cell padding, header text, row colours and rule lines. |
 
-## The three priority levels
+## The priority levels
 
-Configuration is resolved from three sources, each overriding the previous:
+Configuration is resolved from these sources, each overriding the previous:
 
 1. **Internal defaults** (lowest priority) — bundled with YMPrint.
-2. **Project config** — a shared config file discovered in a parent directory.
-3. **Document config** (highest priority) — front matter written directly in the report.
+2. **Application config** — the house style of a [custom application](custom-applications.md), if you are using one. Plain `ym` has none.
+3. **Project config** — a shared `*.ymprint.yml` discovered in the document's directory or a parent directory.
+4. **Explicit config** — a config directory passed with `--config-dir` (or `--config-file` for `ym live`).
+5. **Document config** (highest priority) — front matter written directly in the report.
 
 Each level **inherits** from the level above it, so you only need to specify what you want
 to change. Setting just the body font in your document leaves every other default intact.
 
 ```text
-internal defaults  ─►  project config  ─►  document front matter
-   (lowest)                                    (highest, wins)
+internal defaults  ─►  app config  ─►  project config  ─►  --config-dir  ─►  document front matter
+   (lowest)                                                                   (highest, wins)
 ```
 
 :::{note}
@@ -56,8 +58,9 @@ Customizing your document:
 ## Project configuration
 
 To make several documents share a look, place a config file named `*.ymprint.yml` in a
-parent directory. YMPrint walks up from the current working directory and uses the nearest
-one it finds. You can also point at a specific directory with `--config-dir`.
+parent directory. YMPrint walks up from the document's directory and uses the nearest
+one it finds. You can also point at a specific directory with `--config-dir`; it is
+layered over the discovered project config, so it only needs the settings that differ.
 
 ```bash
 ym convert report.yml --config-dir ../shared-config

@@ -54,7 +54,7 @@ By default the PDF is written next to the source file with a `.pdf` extension. T
 destination:
 
 ```bash
-ym convert report.yml output/inspection.pdf
+ym convert report.yml --dest output/inspection.pdf
 ```
 
 The output directory(ies) will be created if the do not already exist.

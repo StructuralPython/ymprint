@@ -104,6 +104,13 @@ Define `_vars`, render them with Jinja, and pass Python objects into blocks.
 `ym convert` and `ym live` — one-shot rendering and hot-reload preview.
 :::
 
+:::{grid-item-card} 🛠️ Custom applications
+:link: guide/custom-applications
+:link-type: doc
+
+Build your own document tool on YMPrint: custom blocks, render hooks and a house style.
+:::
+
 ::::
 
 ## Why YMPrint?
@@ -137,6 +144,7 @@ guide/configuration
 guide/variables
 guide/pdf-backgrounds
 guide/slides
+guide/custom-applications
 ```
 
 ```{toctree}
@@ -146,4 +154,5 @@ guide/slides
 reference/blocks
 reference/cli
 reference/fonts
+reference/api
 ```

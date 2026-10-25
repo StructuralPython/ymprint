@@ -21,11 +21,18 @@ Report:
   - _pagebreak:
 ```
 
-All block codes accept an optional, user-defined **suffix** after the underscore code, e.g. `_hrule_red` and
-`_hrule_blue` are both handled by the `_hrule` block — the suffix simply keeps the YAML keys
+All block codes accept an optional, user-defined **id** after a second underscore, e.g. `_hrule_red` and
+`_hrule_blue` are both handled by the `_hrule` block — the id simply keeps the YAML keys
 unique when you use several in one list and allows you to meaningfully identify them if you are using several in a row.
 
-The suffix does not affect how the block is executed. It is simply an optional identifier.
+The id does not affect how the block is executed. It is simply an optional identifier.
+
+The block code runs up to the **second** underscore. A key is only a block if that
+code is registered, so `_py_setup` is a `_py` block (id `setup`), but `_pysetup` is not:
+its code would be `_pysetup`. An unregistered key like that is rendered as an ordinary
+heading.
+
+You can add your own blocks by building a [custom application](../guide/custom-applications.md).
 
 ## Block catalogue
 

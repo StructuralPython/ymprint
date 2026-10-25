@@ -16,14 +16,14 @@ ym --help
 Render a single YAML file to a PDF.
 
 ```bash
-ym convert SRC [DEST] [--config-dir DIR]
+ym convert SRC [--dest DEST] [--config-dir DIR]
 ```
 
 | Argument | Required | Meaning |
 | --- | --- | --- |
 | `SRC` | ✅ | Path to the source YAML report. |
-| `DEST` | | Output PDF path. Defaults to the source path with a `.pdf` extension, written next to the source file. |
-| `--config-dir` | | Directory holding a project config file. If omitted, YMPrint searches parent directories for one. If a config file is not found in the parent directories, the internal default configuration will take priority. |
+| `--dest` | | Output PDF path. Defaults to the source path with a `.pdf` extension, written next to the source file. |
+| `--config-dir` | | Directory holding a config file. It is layered over any project config found by searching the source file's parent directories, which in turn is layered over the internal defaults. |
 
 **Examples**
 
@@ -32,7 +32,7 @@ ym convert SRC [DEST] [--config-dir DIR]
 ym convert report.yml
 
 # Choose an explicit output path
-ym convert report.yml output/inspection.pdf
+ym convert report.yml --dest output/inspection.pdf
 
 # Use a shared project config directory
 ym convert report.yml --config-dir ../shared-config
@@ -52,18 +52,18 @@ automatically whenever the source (or the non-default config file) changes.
 Ideal for live authoring.
 
 ```bash
-ym live SRC [DEST] [--config-dir DIR]
+ym live SRC [--dest DEST] [--config-file FILE]
 ```
 
 | Argument | Required | Meaning |
 | --- | --- | --- |
 | `SRC` | ✅ | YAML file to render and watch. |
-| `DEST` | | Output PDF path. Defaults to the source path with a `.pdf` extension. |
-| `--config-dir` | | Directory of config files to also watch for changes. |
+| `--dest` | | Output PDF path. Defaults to the source path with a `.pdf` extension. |
+| `--config-file` | | A config file layered over any discovered project config. |
 
-**What it watches.** Live mode watches the source file and, if a config directory is in
-play, the config files within it (`config.ymprint.yml`.
-When any of them changes, the PDF is re-rendered and Okular refreshes.
+**What it watches.** Live mode watches the source file and every config file in play
+(the discovered project config, the `--config-file`, and a custom application's own
+config). When any of them changes, the PDF is re-rendered and Okular refreshes.
 
 **Starting from scratch.** If `SRC` does not exist yet, live mode offers to create a
 minimal starter document at that path (after a confirming prompt) so you can begin
@@ -87,8 +87,15 @@ example `sudo apt install okular` on Debian/Ubuntu). See
 
 ## Config discovery
 
-When you don't pass `--config-dir`, YMPrint walks **up** from the current working directory
-looking for a config file (a `*.ymprint.yml` project config). The nearest match is used.
+YMPrint walks **up** from the source file's directory looking for a config file (a
+`*.ymprint.yml` project config). The nearest match is used. A `--config-dir` (or
+`--config-file`) is layered on top of it.
 
 This enables a whole tree of documents to share one project style. See
 [Configuration](../guide/configuration.md).
+
+## Your own CLI
+
+The `convert` and `live` commands can be served by your own application, with its own
+blocks, render hooks and house style. For example, `calcsheet convert beam.yml`. See
+[Custom applications](../guide/custom-applications.md).

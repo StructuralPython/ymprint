@@ -75,7 +75,7 @@ YMPrint installs a single command, `ym`, with two subcommands.
 
 ```bash
 ym convert report.yml               # writes report.pdf next to the source
-ym convert report.yml out/doc.pdf   # choose an output path
+ym convert report.yml --dest out/doc.pdf   # choose an output path
 ```
 
 ### `ym live` — hot-reload preview
