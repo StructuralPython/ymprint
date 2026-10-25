@@ -21,6 +21,6 @@ def convert_loadjson_block(block_key: str, block_value: dict, context: dict) -> 
     if namespace is not None:
         context['vars'][namespace] = data
     else:
-        context['vars'] = context['vars'].update(**data)
+        context['vars'].update(data)
         
     return []
