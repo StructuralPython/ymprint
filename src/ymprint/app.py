@@ -30,6 +30,16 @@ from .render import ContextHook, RenderEvent, RenderHook, RenderHooks, RenderMod
 PathLike = str | pathlib.Path
 ConfigPaths = PathLike | Sequence[PathLike]
 
+# A minimal, valid starter document written when the user opts to initialize a new
+# file in live mode. It renders to a one-heading, one-paragraph PDF. `{title}` is
+# replaced with the file's stem.
+STARTER_DOCUMENT = """\
+{title}:
+  - >
+    Start writing your report here. This paragraph sits under the heading above.
+    Edit this file and save — live mode will hot-reload the PDF.
+"""
+
 
 class Ymprint:
     """
@@ -41,6 +51,8 @@ class Ymprint:
         to the document or passed explicitly.
     'builtin_blocks': start from a copy of ymprint's built-in blocks (True) or
         from an empty registry (False).
+    'starter_document': the document live mode offers to create when the source
+        does not exist; `{title}` is replaced with the file's stem.
     """
 
     def __init__(
@@ -49,8 +61,10 @@ class Ymprint:
         *,
         config_path: Optional[PathLike] = None,
         builtin_blocks: bool = True,
+        starter_document: str = STARTER_DOCUMENT,
     ):
         self.name = name
+        self.starter_document = starter_document
         self.config_path = pathlib.Path(config_path) if config_path is not None else None
         self.blocks: BlockRegistry = BUILTIN_BLOCKS.copy() if builtin_blocks else BlockRegistry()
         self.hooks = RenderHooks()
@@ -172,6 +186,34 @@ class Ymprint:
         )
         render_document(event, data, self.blocks, self.hooks)
         return event
+
+    def live(
+        self,
+        source: PathLike,
+        destination: Optional[PathLike] = None,
+        config_path: Optional[ConfigPaths] = None,
+        *,
+        watch: Sequence[PathLike] = (),
+    ) -> int:
+        """
+        Renders 'source', opens it in Okular and re-renders on every change to it,
+        its config or the 'watch' files. Blocks until Ctrl+C; returns an exit code.
+        """
+        if isinstance(source, dict):
+            raise TypeError("Live mode watches a document file; it cannot render a dict source.")
+        from .cli.live import run_live
+        return run_live(self, source, destination, config_path, watch=watch)
+
+    def cli(self):
+        """
+        Returns a new Typer app with `convert` and `live` commands for this
+        application. Point a console script at it, e.g. in pyproject.toml:
+
+            [project.scripts]
+            calcsheet = "calcsheet:cli"     # where cli = app.cli()
+        """
+        from .cli.main import build_cli
+        return build_cli(self)
 
 
 # The application behind `ym` and the module-level helpers like load_report.
