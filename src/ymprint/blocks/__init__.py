@@ -1,4 +1,3 @@
-import re
 
 from typing import Callable, Optional, Union, TypeAlias, Any
 
@@ -14,6 +13,7 @@ from reportlab.lib.units import mm
 from ymprint.config.docstyles import ReportStyles
 from ..content_checks import check_for_variable
 from ..errors import BlockError, YmprintAuthoringError
+from .registry import parse_block_key
 
 RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 
@@ -77,12 +77,10 @@ def content_box(context: dict) -> dict:
 
 
 def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> list[RLFlowables]:
-    block_code_pattern = re.compile(r"(^_[a-zA-Z0-9]+)")
-    matches = block_code_pattern.match(block_key)
-    if matches is not None:
-        block_code = matches.groups()[0]
-    else:
+    parsed = parse_block_key(block_key)
+    if parsed is None:
         raise ValueError(f"Block code not found within block key: {block_key=}")
+    block_code, _block_id = parsed
     block_converter = get_block_callable(block_code)
     if block_converter is None:
         raise BlockError(
