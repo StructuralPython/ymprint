@@ -2,6 +2,17 @@
 
 Branch: `features/ymprint-class` (off `main` @ `1e2430d`, v0.5.0)
 
+## Status (2026-10-25)
+
+Steps 1–10 are implemented on this branch. Step 11 is partly done:
+
+- Not done yet: dropping `stash@{0}` and the `features/live_callback` branch
+  (everything in them has been ported), release notes, and the version bump.
+- Breaking for release notes: `ymprint.blocks.register_block` / `list_blocks` /
+  `get_block_callable` are removed; `ym convert --config-dir` is now layered
+  over a discovered `*.ymprint.yml` instead of replacing it; `_xxx` keys that
+  only *start with* a registered code are no longer dispatched as that block.
+
 ## Goal
 
 Make ymprint a base you can build document-type-specific applications on
