@@ -1,5 +1,4 @@
 from reportlab.platypus import HRFlowable
-from . import register_block
 from ..config.helpers import parse_width
 from typing import Any
 
@@ -22,5 +21,3 @@ def convert_hrule(block_keyy: str, block_value: dict, context: dict) -> list[HRF
         spaceAfter=space_around
 
     )]
-
-register_block("_hrule", convert_hrule)

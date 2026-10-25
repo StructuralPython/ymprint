@@ -1,5 +1,5 @@
 from reportlab.platypus import Table, Paragraph
-from . import register_block, content_box
+from . import content_box
 from typing import Callable
 from . import blockstyles
 
@@ -22,5 +22,3 @@ def convert_quote_block(block_key: str, block_value: dict, context: dict) -> lis
  
     tbl = Table(rows, colWidths=[block_width], style=blockstyles.get_table_style("blockquote", scale))
     return [tbl]
-
-register_block("_blockquote", convert_quote_block)

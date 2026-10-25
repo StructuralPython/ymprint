@@ -11,7 +11,7 @@ from .content_converters import (
     convert_ol,
 )
 from .exceptions import YMPrintSyntaxException
-from .blocks import get_block_callable, list_blocks, convert_blocks
+from .blocks import convert_blocks
 from .blocks.registry import parse_block_key
 from .slides import build_slide, _extract_slide_directive, _misplaced_directive_message
 
@@ -111,7 +111,7 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
         source_iter = source_data.items()
     elif isinstance(source_data, list):
         source_iter = iter(source_data)
-    registered_blocks = list_blocks()
+    registered_blocks = context["blocks"]
     # In slide mode each top-level heading is one slide on its own page.
     slides_at_this_level = level == 0 and _slide_mode(context)
     slide_count = 0

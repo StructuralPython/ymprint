@@ -1,7 +1,7 @@
 import pathlib
 from PIL import Image as PillowImg
 from reportlab.platypus import Image, Table, Paragraph
-from . import register_block, content_box
+from . import content_box
 from . import blockstyles
 from ..errors import BlockError
 
@@ -66,6 +66,3 @@ def get_photo_dpi(file_path: str | pathlib.Path) -> tuple:
     """
     img = PillowImg.open(file_path)
     return img.info.get('dpi', (150.**0.5, 150.**0.5))
-
-
-register_block('_img', convert_image_block)

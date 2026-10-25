@@ -1,5 +1,4 @@
 from reportlab.platypus import HRFlowable
-from . import register_block
 from ..config.helpers import parse_width, YMPrintValueError
 from typing import Any
 import pathlib
@@ -26,6 +25,3 @@ def convert_loadjson_block(block_key: str, block_value: dict, context: dict) -> 
         context['vars'] = context['vars'].update(**data)
         
     return []
-
-
-register_block("_loadjson", convert_loadjson_block)

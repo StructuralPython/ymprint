@@ -1,7 +1,9 @@
 from collections import ChainMap
 import pathlib
 from reportlab.lib import pagesizes
+from typing import Optional
 from .config import ReportStyles, TableStyle, DocConfig
+from .blocks.registry import BlockRegistry
 
 def build_context(
         content_yaml: dict,
@@ -11,7 +13,8 @@ def build_context(
         document_vars: dict, 
         source_path: str | pathlib.Path, 
         destination_path: str | pathlib.Path,
-        config_path: str | pathlib.Path
+        config_path: str | pathlib.Path,
+        blocks: Optional[BlockRegistry] = None,
     ) -> dict:
     # inline_styles = {} if "_style" not in content_yaml else content_yaml.pop("_style")
     report_styles = ReportStyles.model_validate(text_styles_yaml['_style'])
@@ -73,5 +76,13 @@ def build_context(
         "source_path": source_path,
         "config_path": config_path,
         "destination_path": destination_path,
+        "blocks": blocks if blocks is not None else _builtin_blocks(),
     }
     return context
+
+
+def _builtin_blocks() -> BlockRegistry:
+    # Imported lazily: the block modules import from ymprint.blocks, which must
+    # finish initializing first.
+    from .blocks.builtin import BUILTIN_BLOCKS
+    return BUILTIN_BLOCKS
