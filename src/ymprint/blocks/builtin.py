@@ -1,4 +1,11 @@
-"""The blocks that ship with ymprint. Every Ymprint app starts from a copy of these."""
+"""
+The blocks that ship with ymprint. Every Ymprint app starts from a copy of these.
+
+Blocks from optional packages are included when the package is installed:
+`_hc` from ym-handcalcs (`pip install ymprint[hc]`).
+"""
+from importlib.util import find_spec
+
 from .registry import BlockRegistry
 from .admonition_block import generate_admonition_block
 from .code_block import convert_code_block
@@ -31,3 +38,14 @@ BUILTIN_BLOCKS = BlockRegistry({
     "_blockquote": convert_quote_block,
     "_spacer": convert_spacer,
 })
+
+
+def convert_hc_block(block_key, block_value, context):
+    # Imported on first use, so documents without _hc don't pay for importing handcalcs.
+    from ym_handcalcs import convert_hc_block as convert
+
+    return convert(block_key, block_value, context)
+
+
+if find_spec("ym_handcalcs") is not None:
+    BUILTIN_BLOCKS.register("_hc", convert_hc_block)

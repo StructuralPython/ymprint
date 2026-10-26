@@ -44,6 +44,7 @@ You can add your own blocks by building a [custom application](../guide/custom-a
 | [`_blockquote`](#block-blockquote) | A quotation with attribution. |
 | [`_code`](#block-code) | A non-executable code block. |
 | [`_py`](#block-py) | Execute Python and optionally show the syntax-highlighted source. |
+| [`_hc`](#block-hc) | Run Python and typeset it as handcalcs calculations. Needs `ymprint[hc]`. |
 | [`_loadjson`](#block-loadjson) | Load variables into the document from a JSON file. |
 | [`_p`](#block-p) | A standalone paragraph, with a selectable text style. |
 | [`_ul`](#block-ul) | An unordered (bulleted) list. |
@@ -238,6 +239,55 @@ After execution the variables are usable everywhere:
 ```
 
 See [Variables → Computing variables in Python](#vars-computing-python).
+
+---
+
+(block-hc)=
+## `_hc` — Handcalcs calculations
+
+Run Python and typeset it with [handcalcs](https://github.com/connorferster/handcalcs):
+each line shows the symbolic expression, the values substituted in, and the result.
+`_hc` is available when [ym-handcalcs](../installation.md#handcalcs-optional) is
+installed (`pip install "ymprint[hc]"`).
+
+```yaml
+_vars:
+  w_DL: 2.5
+  w_LL: 4.0
+
+Beam design:
+  - _hc: |
+      ## Factored load
+      L = 6.0  # span, m
+      w_f = 1.25 * w_DL + 1.5 * w_LL
+      M_f = w_f * L**2 / 8
+  - The factored moment is {{ M_f }} kN·m.
+```
+
+Like `_py`, the source runs in the document's variables: it can use `_vars` and the
+results of earlier blocks, and anything it creates is available to the rest of the
+document. As in handcalcs, `## ...` comments are headings, `# ...` comments are prose,
+inline comments annotate their line, and `# hc:` commands work as usual.
+
+The value is the source itself, as above, or a mapping:
+
+```yaml
+_hc_moment:
+  source: |
+    M_f = w_f * L**2 / 8
+  theme_color: "#7A1F1F"
+```
+
+| Parameter | Required | Default | Meaning |
+| --- | --- | --- | --- |
+| `source` | ✅ | — | Python source to run and render. |
+| `theme_color` | | `"#0B5F66"` | A dark `#RRGGBB` colour; the calculation's whole palette is derived from it. |
+| `base_size` | | the body text size | Font size, in points, that every calculation style scales from. |
+
+:::{warning}
+Like `_py`, `_hc` runs its source in the same Python environment as YMPrint. Only render
+documents you trust.
+:::
 
 ---
 

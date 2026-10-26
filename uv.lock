@@ -138,12 +138,36 @@ wheels = [
 ]
 
 [[package]]
+name = "handcalcs"
+version = "2.0.0rc1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "innerscope" },
+    { name = "jinja2" },
+    { name = "pfst" },
+    { name = "platformdirs" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4b/2b/0d2cde47b2ecd7dfc328bdedcbbaf661ec8a7994547063d7d67d0d90f22c/handcalcs-2.0.0rc1.tar.gz", hash = "sha256:9beb2ea9ba2bdb97bc98c0c57b3b3a4c7c2fa570a9048e61feb39bc9b0a049cc", size = 152803, upload-time = "2026-10-24T07:18:24.301Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/bb/0df3e032c1fdeb50160bb71151ffd78fa34d0c4a4447e5bd9934d6d7d5e0/handcalcs-2.0.0rc1-py3-none-any.whl", hash = "sha256:30b9f8b24d1aa090f5ea4439b7a66f9b8b0e722b98751d944c00f35128cde4cf", size = 173427, upload-time = "2026-10-24T07:18:22.72Z" },
+]
+
+[[package]]
 name = "iniconfig"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz", hash = "sha256:c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730", size = 20503, upload-time = "2025-10-18T21:55:43.219Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12", size = 7484, upload-time = "2025-10-18T21:55:41.639Z" },
+]
+
+[[package]]
+name = "innerscope"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/98/c7f709d335063a8bc456cdf9a2b53881b96841eac0062d35c81a06d1d769/innerscope-0.8.0.tar.gz", hash = "sha256:e5d75cedbe945ed7049ed03ae649167dd90f41081a8bf86279c65efbb08b65e7", size = 37760, upload-time = "2026-10-14T18:01:54.683Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/58/3b98fcb0fc40dff6d9930f31e568978b7a4424723119574af20126968306/innerscope-0.8.0-py3-none-any.whl", hash = "sha256:7b59c566b5523ee02588ea066487c3ca3f646c734eab467d9dec55d84f76cbe4", size = 35581, upload-time = "2026-10-14T18:01:53.368Z" },
 ]
 
 [[package]]
@@ -319,6 +343,14 @@ wheels = [
 ]
 
 [[package]]
+name = "pfst"
+version = "0.3.2"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/a1/bfe95482537b09ac95b6f75c274605f6f37682808e78d3a676a814cf19ee/pfst-0.3.2-py3-none-any.whl", hash = "sha256:f3e84c812cf81312825ede1f80bb02485350fb82d905e07be0a5b1c0f709997d", size = 554323, upload-time = "2026-03-27T15:29:45.638Z" },
+]
+
+[[package]]
 name = "pillow"
 version = "12.2.0"
 source = { registry = "https://pypi.org/simple" }
@@ -349,6 +381,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c9/e4/4b64a97d71b2a83158134abbb2f5bd3f8a2ea691361282f010998f339ec7/pillow-12.2.0-cp314-cp314t-win32.whl", hash = "sha256:6bb77b2dcb06b20f9f4b4a8454caa581cd4dd0643a08bacf821216a16d9c8354", size = 6482084, upload-time = "2026-04-01T14:45:47.568Z" },
     { url = "https://files.pythonhosted.org/packages/ba/13/306d275efd3a3453f72114b7431c877d10b1154014c1ebbedd067770d629/pillow-12.2.0-cp314-cp314t-win_amd64.whl", hash = "sha256:6562ace0d3fb5f20ed7290f1f929cae41b25ae29528f2af1722966a0a02e2aa1", size = 7225152, upload-time = "2026-04-01T14:45:50.032Z" },
     { url = "https://files.pythonhosted.org/packages/ff/6e/cf826fae916b8658848d7b9f38d88da6396895c676e8086fc0988073aaf8/pillow-12.2.0-cp314-cp314t-win_arm64.whl", hash = "sha256:aa88ccfe4e32d362816319ed727a004423aab09c5cea43c01a4b435643fa34eb", size = 2556579, upload-time = "2026-04-01T14:45:52.529Z" },
+]
+
+[[package]]
+name = "platformdirs"
+version = "4.13.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/58/e6/d0abbb256b44e6a05748c6942511ff67db8dbb068de0c35b24bf1b395b09/platformdirs-4.13.5.tar.gz", hash = "sha256:05831adf87d392760f4b5c3a0a95579ab5a10b18b9b9bd43680dcb47544788a0", size = 62362, upload-time = "2026-10-19T01:02:11.778Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6c/8a/1d8cb3842909dc193a73835adedf412e32e18f8ffd59f43983949622fe6f/platformdirs-4.13.5-py3-none-any.whl", hash = "sha256:53d3ec4280b815c1e0b02edad7f9ee8fda1ba9c0865dd9c2e6e63849ce82fc1e", size = 32779, upload-time = "2026-10-19T01:02:10.17Z" },
 ]
 
 [[package]]
@@ -586,6 +627,19 @@ wheels = [
 ]
 
 [[package]]
+name = "ym-handcalcs"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "handcalcs" },
+    { name = "reportlab" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/46/95/eb73604b3cb8516f3050b9b9412839e56e8a928bfe0943f69e5de08b72cb/ym_handcalcs-0.1.0.tar.gz", hash = "sha256:16fc712e254a2aac45db5c582852ba14f8b8af9ecdf8ad38c1f71f239be63141", size = 34334, upload-time = "2026-10-26T20:22:48.574Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/28/5553c4477d6889d959fe50c6b4b818efd9b8b9ff22953fa678204442015c/ym_handcalcs-0.1.0-py3-none-any.whl", hash = "sha256:5b79f85d6608107db133eabb63514efbb25620dddd4e30acba7f94f265e6d4d8", size = 37733, upload-time = "2026-10-26T20:22:47.107Z" },
+]
+
+[[package]]
 name = "ymprint"
 source = { editable = "." }
 dependencies = [
@@ -600,11 +654,18 @@ dependencies = [
     { name = "wenmode" },
 ]
 
+[package.optional-dependencies]
+hc = [
+    { name = "ym-handcalcs" },
+]
+
 [package.dev-dependencies]
 dev = [
+    { name = "handcalcs" },
     { name = "matplotlib" },
     { name = "pytest" },
     { name = "rich" },
+    { name = "ym-handcalcs" },
 ]
 
 [package.metadata]
@@ -618,11 +679,15 @@ requires-dist = [
     { name = "ruamel-yaml", specifier = ">=0.19.1" },
     { name = "typer", specifier = ">=0.26.7" },
     { name = "wenmode", specifier = ">=0.8.0" },
+    { name = "ym-handcalcs", marker = "extra == 'hc'", specifier = ">=0.1.0" },
 ]
+provides-extras = ["hc"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "handcalcs", specifier = ">=2.0.0rc1" },
     { name = "matplotlib", specifier = ">=3.11.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "rich", specifier = ">=15.0.0" },
+    { name = "ym-handcalcs", specifier = ">=0.1.0" },
 ]
