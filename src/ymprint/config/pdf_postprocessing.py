@@ -2,6 +2,8 @@ import io
 import pathlib
 
 import pymupdf as mu
+from .config_loaders import config_base_dir, config_layer_paths
+
 
 def overlay_pdf_background(
     document_path: pathlib.Path | io.BytesIO,
@@ -93,14 +95,17 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
     """
     Returns a dict mapping each page template name to its background PDF as a
     BytesIO stream (or None when the template has no background). Relative
-    background paths are resolved against the source or config directory according
+    background paths are resolved against the base (source) or config directory according
     to each background's 'relative-to' setting.
     """
-    source_path = pathlib.Path(context['source_path'])
-    source_parent = source_path.parent
+    source_parent = pathlib.Path(context['base_dir'])
 
-    if context['config_path'] is not None:
-        config_parent = pathlib.Path(context['config_path']).parent
+    # Backgrounds defined in a config layer were already made absolute when that
+    # layer was loaded; this only resolves `relative-to: config` written in the
+    # document itself, against the highest-priority config layer.
+    config_layers = config_layer_paths(context['config_path'])
+    if config_layers:
+        config_parent = config_base_dir(config_layers[-1])
     else:
         config_parent = source_parent
 

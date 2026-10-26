@@ -1,5 +1,4 @@
 from reportlab.platypus import Paragraph, Spacer
-from . import register_block
 from ..content_converters import convert_paragraph
 from ..exceptions import YMPrintSyntaxException
 
@@ -49,6 +48,3 @@ def convert_p_block(block_key: str, block_value, context: dict) -> list[Paragrap
 
     family = _resolve_family(style_name, context)
     return convert_paragraph(str(text), context, "body", family)
-
-
-register_block("_p", convert_p_block)

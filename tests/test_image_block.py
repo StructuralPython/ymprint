@@ -61,3 +61,19 @@ def test_missing_source_raises_block_error(ctx):
     from ymprint.errors import BlockError
     with pytest.raises(BlockError):
         convert_blocks("_img", {"caption": "no image"}, ctx)
+
+
+def test_relative_image_resolves_against_base_dir(tmp_path):
+    styles, tbl, doc = load_report_config()
+    # The document lives elsewhere (or nowhere): base_dir decides resolution.
+    ctx = build_context(
+        {}, styles, doc, tbl, {},
+        None, tmp_path / "report.pdf", None,
+        base_dir=REPO_ROOT,
+    )
+    assert ctx["base_dir"] == REPO_ROOT
+    assert convert_blocks("_img", {"source": IMAGE.name}, ctx)
+
+
+def test_base_dir_defaults_to_source_directory(ctx):
+    assert ctx["base_dir"] == REPO_ROOT

@@ -1,5 +1,5 @@
 from reportlab.platypus import Table, Paragraph, Spacer, KeepTogether
-from . import register_block, content_box
+from . import content_box
 from typing import Callable, Any
 from . import blockstyles
 
@@ -35,10 +35,3 @@ def generate_admonition_block(kind: str) -> Callable:
         return [KeepTogether(table), Spacer(1, 10 * scale)]
     
     return convert_admonition_block
-
-
-register_block("_info", generate_admonition_block("info"))
-register_block("_warning", generate_admonition_block("warning"))
-register_block("_danger", generate_admonition_block("danger"))
-register_block("_tip", generate_admonition_block("tip"))
-register_block("_note", generate_admonition_block("note"))

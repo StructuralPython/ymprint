@@ -1,7 +1,9 @@
 from ..yaml_loader import load_yaml
 import collections
 import pathlib
-from typing import Optional
+from typing import Optional, Sequence
+
+ConfigPath = str | pathlib.Path
 
 class DeepChainMap(collections.ChainMap):
     """
@@ -22,34 +24,27 @@ class DeepChainMap(collections.ChainMap):
         return values[0]
     
 
-def load_report_config(source_data: Optional[dict] = None, report_config_path: Optional[str | pathlib.Path] = None) -> tuple[dict, dict, dict]:
+def load_report_config(
+    source_data: Optional[dict] = None,
+    report_config_path: Optional[ConfigPath | Sequence[Optional[ConfigPath]]] = None,
+) -> tuple[dict, dict, dict]:
     """
-    Returns a ChainMap of all the config data found in either the source_data or the 'report_config_path',
-    which can either be a directory of config files or a specific file that contains all config data.
+    Returns the merged config data from the ymprint defaults, the config layer(s)
+    given by 'report_config_path', and the config embedded in 'source_data'.
+
+    'report_config_path' is a directory of config files, a specific config file,
+    or a sequence of either, ordered from lowest to highest priority (None entries
+    are skipped). Each layer only overrides the keys it sets.
     """
-    if report_config_path is not None:
-        report_config_path = pathlib.Path(report_config_path)
     # First load defaults
     default_styles, default_tablestyles, default_doctemplate = load_config_directory(
         pathlib.Path(__file__).parent / 'defaults'
     )
-    # Next load supplied config
-    if report_config_path is not None and not report_config_path.exists():
-        raise FileNotFoundError(f"The supplied path for the report_config_path does not exist. Here is what you passed:\n\n{str(report_config_path.resolve())}")
-    
-    if report_config_path is not None and report_config_path.is_file():
-        # load_yaml returns None when the file exists but is empty; treat that as
-        # "no config here" rather than crashing on the .get() lookups below.
-        config_data = load_yaml(report_config_path) or {}
-        config_styles = config_data.get("_style", {})
-        config_tablestyles = config_data.get("_tablestyle", {})
-        config_doctemplate = config_data.get("_doc", {})
-    elif report_config_path is not None and report_config_path.is_dir():
-        config_styles, config_tablestyles, config_doctemplate = load_config_directory(report_config_path)
-    else:
-        config_styles = {}
-        config_tablestyles = {}
-        config_doctemplate = {}
+    # Next load supplied config layers, lowest priority first
+    config_layers = [load_config_layer(path) for path in config_layer_paths(report_config_path)]
+    config_styles = [layer[0] for layer in reversed(config_layers)]
+    config_tablestyles = [layer[1] for layer in reversed(config_layers)]
+    config_doctemplate = [layer[2] for layer in reversed(config_layers)]
 
     # Third, load content-level config
     if source_data is None:
@@ -64,7 +59,7 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
         default_styles,
         DeepChainMap(
             content_styles,
-            config_styles,
+            *config_styles,
             default_styles,
         )
     )
@@ -73,7 +68,7 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
         default_tablestyles,
         DeepChainMap(   
             content_tablestyles,
-            config_tablestyles,
+            *config_tablestyles,
             default_tablestyles
         )
     )
@@ -82,7 +77,7 @@ def load_report_config(source_data: Optional[dict] = None, report_config_path: O
         default_doctemplate,    
         DeepChainMap(
             content_doctemplate,
-            config_doctemplate,
+            *config_doctemplate,
             default_doctemplate
         )
     )
@@ -161,3 +156,69 @@ def load_config_directory(config_dir: str | pathlib.Path | None) -> tuple[dict, 
     return (
         style, tablestyle, doctemplate
     )
+
+
+def config_layer_paths(
+    report_config_path: Optional[ConfigPath | Sequence[Optional[ConfigPath]]],
+) -> list[pathlib.Path]:
+    """Returns 'report_config_path' as a list of config layer paths, lowest priority first."""
+    if report_config_path is None:
+        return []
+    if isinstance(report_config_path, (str, pathlib.Path)):
+        report_config_path = [report_config_path]
+    return [pathlib.Path(path) for path in report_config_path if path is not None]
+
+
+def config_base_dir(config_path: ConfigPath) -> pathlib.Path:
+    """The directory that `relative-to: config` paths in this config layer resolve against."""
+    config_path = pathlib.Path(config_path)
+    return config_path if config_path.is_dir() else config_path.parent
+
+
+def load_config_layer(report_config_path: pathlib.Path) -> tuple[dict, dict, dict]:
+    """
+    Returns the (styles, tablestyles, doctemplate) config data of one config layer:
+    a config file, or a directory containing a *.ymprint.yml file.
+    """
+    if not report_config_path.exists():
+        raise FileNotFoundError(f"The supplied path for the report_config_path does not exist. Here is what you passed:\n\n{str(report_config_path.resolve())}")
+
+    if report_config_path.is_file():
+        # load_yaml returns None when the file exists but is empty; treat that as
+        # "no config here" rather than crashing on the .get() lookups below.
+        config_data = load_yaml(report_config_path) or {}
+        layer = (
+            config_data.get("_style", {}),
+            config_data.get("_tablestyle", {}),
+            config_data.get("_doc", {}),
+        )
+    else:
+        styles, tablestyles, doctemplate = load_config_directory(report_config_path)
+        layer = (styles.get("_style", {}), tablestyles.get("_tablestyle", {}), doctemplate.get("_doc", {}))
+    styles, tablestyles, doctemplate = layer
+    resolve_config_relative_backgrounds(doctemplate, config_base_dir(report_config_path))
+    return {"_style": styles}, {"_tablestyle": tablestyles}, {"_doc": doctemplate}
+
+
+def resolve_config_relative_backgrounds(doctemplate: dict, base_dir: pathlib.Path) -> None:
+    """
+    Rewrites `relative-to: config` background paths in 'doctemplate' (in place) to
+    absolute paths against 'base_dir'. With several config layers, "config" means
+    the layer that defines the background, which is only known while loading it.
+    """
+    templates = (doctemplate or {}).get("templates") or {}
+    for template in templates.values():
+        background = (template or {}).get("background")
+        if not isinstance(background, dict) or background.get("relative-to") != "config":
+            continue
+        background["filepath"] = str((base_dir / background["filepath"]).resolve())
+        background["relative-to"] = None
+
+
+def locate_config_file(start_dir: pathlib.Path) -> Optional[pathlib.Path]:
+    """Return the nearest ``*.ymprint.yml`` at or above ``start_dir`` as a full path."""
+    for parent in [start_dir, *start_dir.parents]:
+        matches = sorted(parent.glob("*.ymprint.yml"))
+        if matches:
+            return matches[0]
+    return None

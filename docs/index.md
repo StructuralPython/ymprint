@@ -87,7 +87,7 @@ Images, admonitions, code, quotes, spacers, rules, figures, and Python.
 :link: guide/configuration
 :link-type: doc
 
-Control page templates, text styles, and table styles across three priority levels.
+Control page templates, text styles, and table styles across layered priority levels.
 :::
 
 :::{grid-item-card} 🔢 Variables
@@ -102,6 +102,13 @@ Define `_vars`, render them with Jinja, and pass Python objects into blocks.
 :link-type: doc
 
 `ym convert` and `ym live` — one-shot rendering and hot-reload preview.
+:::
+
+:::{grid-item-card} 🛠️ Custom applications
+:link: guide/custom-applications
+:link-type: doc
+
+Build your own document tool on YMPrint: custom blocks, render hooks and a house style.
 :::
 
 ::::
@@ -137,6 +144,7 @@ guide/configuration
 guide/variables
 guide/pdf-backgrounds
 guide/slides
+guide/custom-applications
 ```
 
 ```{toctree}
@@ -146,4 +154,5 @@ guide/slides
 reference/blocks
 reference/cli
 reference/fonts
+reference/api
 ```

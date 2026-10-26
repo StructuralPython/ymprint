@@ -2,7 +2,6 @@ from typing import Any
 
 from reportlab.platypus import PageBreak, NextPageTemplate
 
-from . import register_block
 from ..exceptions import YMPrintSyntaxException
 
 
@@ -19,6 +18,3 @@ def convert_page_break(block_key: str, block_value: Any, context: dict) -> list:
     except ValueError as exc:
         raise YMPrintSyntaxException(str(exc)) from exc
     return [NextPageTemplate(template_id), PageBreak()]
-
-
-register_block("_pagebreak", convert_page_break)

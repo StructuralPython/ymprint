@@ -1,5 +1,5 @@
 from reportlab.platypus import Table, KeepTogether
-from . import register_block, content_box
+from . import content_box
 from .code_block_styles import generic_code_block
 from typing import Callable
 
@@ -20,6 +20,3 @@ def convert_code_block(block_key: str, block_value: dict, context: dict) -> list
     code_block.spaceBefore = space_around
     code_block.spaceAfter = space_around
     return [KeepTogether(code_block)]
-
-
-register_block("_code", convert_code_block)

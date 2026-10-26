@@ -261,7 +261,7 @@ def _tokenise_to_lines(code: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def _code_line_style(context: dict) -> ParagraphStyle:
-    body_size = context['styles']['yaml']['_style']['body']['size']
+    body_size = context['styles']['ymprint'].body.size
     return ParagraphStyle(
         name="code_line",
         fontName=FONT_MONO,
@@ -279,7 +279,7 @@ def _code_line_style(context: dict) -> ParagraphStyle:
 
 
 def _line_number_style(context: dict) -> ParagraphStyle:
-    body_size = context['styles']['yaml']['_style']['body']['size']
+    body_size = context['styles']['ymprint'].body.size
     return ParagraphStyle(
         name="code_line_number",
         fontName=FONT_MONO,
@@ -303,8 +303,8 @@ def _gutter_width(last_line_number: int, lnum_style: ParagraphStyle) -> float:
 
 
 def _caption_style(context: dict) -> ParagraphStyle:
-    body_size = context['styles']['yaml']['_style']['body']['size']
-    body_font = context['styles']['yaml']['_style']['body']['font']
+    body_size = context['styles']['ymprint'].body.size
+    body_font = context['styles']['ymprint'].body.font
     return ParagraphStyle(
         name="code_caption",
         fontName=body_font,

@@ -1,4 +1,3 @@
-import re
 
 from .content_checks import (
     check_for_paragraph,
@@ -12,16 +11,22 @@ from .content_converters import (
     convert_ol,
 )
 from .exceptions import YMPrintSyntaxException
-from .blocks import get_block_callable, list_blocks, convert_blocks
+from .blocks import convert_blocks
+from .blocks.registry import parse_block_key
 from .slides import build_slide, _extract_slide_directive, _misplaced_directive_message
 
 TEXTSTYLE_BLOCK = "_textstyle"
 
 # Explicit list constructs. These are intercepted structurally in build_story
 # (not registered blocks): a bare YAML list is a sequence of content items, while
-# bullets/numbers are opt-in via these codes. A trailing `_suffix` is allowed for
+# bullets/numbers are opt-in via these codes. A trailing `_id` is allowed for
 # uniqueness within a mapping, consistent with other block codes.
-LIST_BLOCK_PATTERN = re.compile(r"^_(ul|ol)(?:_|$)")
+LIST_BLOCK_CODES = {"_ul": "ul", "_ol": "ol"}
+
+
+def _list_kind(key):
+    parsed = parse_block_key(key)
+    return LIST_BLOCK_CODES.get(parsed[0]) if parsed is not None else None
 
 
 def _extract_textstyle(k, v):
@@ -52,17 +57,15 @@ def _extract_list_block(k, v):
     Handles both the heading-value form (`_ul: [...]`) and the single-key list-item
     form (`- _ul: [...]`).
     """
-    key = value = None
-    if isinstance(k, str) and LIST_BLOCK_PATTERN.match(k):
-        key, value = k, v
-    elif k is None and isinstance(v, dict) and len(v) == 1:
+    kind = _list_kind(k)
+    if kind is not None:
+        return kind, v
+    if k is None and isinstance(v, dict) and len(v) == 1:
         (only_key, only_value), = v.items()
-        if isinstance(only_key, str) and LIST_BLOCK_PATTERN.match(only_key):
-            key, value = only_key, only_value
-    if key is None:
-        return None
-    kind = LIST_BLOCK_PATTERN.match(key).group(1)
-    return kind, value
+        kind = _list_kind(only_key)
+        if kind is not None:
+            return kind, only_value
+    return None
 
 
 def _leading_textstyle(value, context: dict):
@@ -108,7 +111,7 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
         source_iter = source_data.items()
     elif isinstance(source_data, list):
         source_iter = iter(source_data)
-    registered_blocks = list_blocks()
+    registered_blocks = context["blocks"]
     # In slide mode each top-level heading is one slide on its own page.
     slides_at_this_level = level == 0 and _slide_mode(context)
     slide_count = 0
@@ -147,7 +150,8 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
 
         if k is not None:
             heading_level = level
-            if str(k).startswith(tuple(registered_blocks)):
+            parsed = parse_block_key(k)
+            if parsed is not None and parsed[0] in registered_blocks:
                 story.extend(convert_blocks(k, v, context))
                 continue
             else:

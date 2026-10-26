@@ -1,7 +1,7 @@
 import pathlib
 from PIL import Image as PillowImg
 from reportlab.platypus import Image, Table, Paragraph
-from . import register_block, content_box
+from . import content_box
 from . import blockstyles
 from ..errors import BlockError
 
@@ -19,8 +19,7 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
             key,
             f"Block {key!r} needs an image path. Add a 'source:' field.",
         )
-    source_path = pathlib.Path(context['source_path']).parent
-    image_path = source_path / pathlib.Path(source)
+    image_path = pathlib.Path(context['base_dir']) / pathlib.Path(source)
     if not image_path.exists():
         raise FileNotFoundError(
             f"The image file for block '{key}' was not found: {str(image_path)}"
@@ -66,6 +65,3 @@ def get_photo_dpi(file_path: str | pathlib.Path) -> tuple:
     """
     img = PillowImg.open(file_path)
     return img.info.get('dpi', (150.**0.5, 150.**0.5))
-
-
-register_block('_img', convert_image_block)
