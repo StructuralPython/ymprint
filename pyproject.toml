@@ -18,6 +18,10 @@ dependencies = [
     "wenmode>=0.8.0",
 ]
 
+[project.optional-dependencies]
+# The _hc block (handcalcs calculations); see docs/installation.md.
+hc = ["ym-handcalcs>=0.1.0"]
+
 [project.scripts]
 ym = "ymprint.cli.main:app"
 
@@ -30,7 +34,10 @@ name = "ymprint"
 
 [dependency-groups]
 dev = [
+    # Named here so uv accepts the handcalcs pre-release ym-handcalcs needs.
+    "handcalcs>=2.0.0rc1",
     "matplotlib>=3.11.0",
     "pytest>=9.0.3",
     "rich>=15.0.0",
+    "ym-handcalcs>=0.1.0",
 ]
