@@ -143,10 +143,11 @@ Fine print:
 - You no longer need `_pagebreak` between slides. One inside a slide's content is
   ignored, but a leftover top-level `_pagebreak` adds a blank page. To change a slide's
   page template, use `_slide: {template: ...}`, not `_pagebreak: <template>`.
-- In a mapping-style slide, give repeated `_frame` keys a suffix to keep them unique:
+- In a mapping-style slide, give repeated `_frame` keys an id after a second underscore to keep them unique:
   `_frame_a: left`, `_frame_b: right`.
-- A slide title that starts with an underscore is read as a block, so write
-  `` Run it with `_py` `` rather than `_py: run it`.
+- A slide title that is a block key (a registered code such as `_py`, optionally
+  followed by `_id`) is read as a block, so write `` Run it with `_py` `` rather than
+  `_py: run it`.
 
 ## Example deck
 

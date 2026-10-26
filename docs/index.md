@@ -87,7 +87,7 @@ Images, admonitions, code, quotes, spacers, rules, figures, and Python.
 :link: guide/configuration
 :link-type: doc
 
-Control page templates, text styles, and table styles across three priority levels.
+Control page templates, text styles, and table styles across layered priority levels.
 :::
 
 :::{grid-item-card} 🔢 Variables

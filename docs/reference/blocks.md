@@ -436,7 +436,7 @@ See [Slide presentations](#slides) for layouts, frames and overflow.
 ## `_hrule` — Horizontal rules
 
 Unlike a markdown rule, `_hrule` is configurable — width, thickness, colour, and line cap.
-Use suffixes to keep multiple rules unique in one list.
+Use ids (`_hrule_red`, `_hrule_blue`) to keep multiple rules unique in one list.
 
 ```yaml
 - _hrule_default: null

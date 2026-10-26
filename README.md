@@ -92,8 +92,9 @@ ym live report.yml
 - **Keys are headings.** A mapping key whose value is content becomes a heading; the value
   is laid out underneath it. Lists render in order, lists of mappings render as tables.
 - **Configuration** lives in underscore-prefixed front matter — `_doc` (page template),
-  `_style` (text styles), and `_tablestyle` (table styles) — resolved across three
-  inheriting priority levels: internal defaults → project config → document front matter.
+  `_style` (text styles), and `_tablestyle` (table styles) — resolved across layered,
+  inheriting priority levels: internal defaults → project config → `--config-dir` →
+  document front matter.
 - **Variables** are defined in `_vars`, interpolated into text with Jinja (`{{name}}`), and
   passed as real Python objects into blocks with the `$name` syntax.
 - **Blocks** are underscore-prefixed keys that expand into custom content:
@@ -117,6 +118,26 @@ ym live report.yml
 The [`Examples/`](Examples) directory contains a runnable report for each major feature —
 a simple document, document configuration, variables, PDF backgrounds, Python execution,
 the full set of blocks, and a 1080p slide deck with custom backgrounds. Render any of them with `ym convert`.
+
+## Building your own application
+
+YMPrint can be the engine for your own document tool. A `Ymprint` instance bundles your
+custom blocks, render hooks (`before_render`, `on_context`, `after_render`) and a house
+style, and serves its own `convert` and `live` commands:
+
+```python
+from ymprint import Ymprint
+
+app = Ymprint(name="calcsheet", config_path="config/")
+
+@app.block("_beam")
+def beam_block(block_key, block_value, context):
+    ...  # return a list of ReportLab flowables
+
+cli = app.cli()   # calcsheet convert report.yml
+```
+
+See [Custom applications](docs/guide/custom-applications.md) for the full guide.
 
 ## Documentation
 
