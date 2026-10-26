@@ -281,7 +281,7 @@ Report:
 ```
 
 Use the mapping form to pick a **text style** — any family defined in
-[`_style.styles`](configuration.md#cfg-style):
+[`_style.styles`](../guide/configuration.md#named-text-styles):
 
 ```yaml
 Report:
