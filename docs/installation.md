@@ -66,6 +66,27 @@ without needing to rely on system fonts (which may or may not load easily into R
 plan to use the [`_matplotfig`](#block-matplotfig) block.
 :::
 
+## Handcalcs (optional)
+
+The [`_hc`](#block-hc) block renders [handcalcs](https://github.com/connorferster/handcalcs)
+calculations. It comes from the separate
+[ym-handcalcs](https://github.com/StructuralPython/ym-handcalcs) package, installed with the
+`hc` extra:
+
+```bash
+pip install "ymprint[hc]"
+```
+
+ym-handcalcs needs handcalcs 2.0, which is currently a pre-release. pip installs it
+automatically. uv only installs a pre-release when you ask for it by name, so add it with
+`--with`:
+
+```bash
+uv tool install "ymprint[hc]" --with "handcalcs>=2.0.0rc1"
+```
+
+YMPrint registers `_hc` automatically when ym-handcalcs is installed.
+
 ## Live preview (optional)
 
 The [`ym live`](reference/cli.md#ym-live) command opens the rendered PDF in the
