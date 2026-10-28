@@ -1,8 +1,47 @@
 import io
+import os
 import pathlib
+import time
 
 import pymupdf as mu
 from .config_loaders import config_base_dir, config_layer_paths
+
+# Seconds to keep retrying when the destination PDF is locked. A sync client such
+# as the Egnyte Drive client can hold a freshly written file open while it uploads.
+LOCK_TIMEOUT = 2.0
+LOCK_RETRY_DELAY = 0.25
+
+
+class DestinationLockedError(PermissionError):
+    """The destination PDF is held open by another program and cannot be replaced."""
+
+    def __init__(self, path: pathlib.Path, original: OSError):
+        super().__init__(f"{path} is locked by another program: {original}")
+        self.path = path
+        self.original = original
+
+
+def staging_path(destination: pathlib.Path) -> pathlib.Path:
+    """The temporary file written next to 'destination' before it is swapped in."""
+    return destination.with_name(f"{destination.stem}.tmp{destination.suffix}")
+
+
+def replace_destination(staged: pathlib.Path, destination: pathlib.Path, timeout: float | None = None) -> None:
+    """
+    Moves 'staged' over 'destination', retrying for 'timeout' seconds (default
+    LOCK_TIMEOUT) while the destination is locked. Raises DestinationLockedError,
+    after removing 'staged', if it is still locked.
+    """
+    deadline = time.monotonic() + (LOCK_TIMEOUT if timeout is None else timeout)
+    while True:
+        try:
+            os.replace(staged, destination)
+            return
+        except PermissionError as exc:
+            if time.monotonic() >= deadline:
+                staged.unlink(missing_ok=True)
+                raise DestinationLockedError(destination, exc) from exc
+            time.sleep(LOCK_RETRY_DELAY)
 
 
 def overlay_pdf_background(
@@ -57,7 +96,16 @@ def overlay_pdf_background(
                 out_page.show_pdf_page(background_page.rect, background, pno=background_page_num)
 
         out_page.show_pdf_page(document_page.rect, document, pno=i)
-    output.save(destination_path)
+
+    if isinstance(destination_path, io.BytesIO):
+        output.save(destination_path)
+        return
+    # Write beside the destination and swap it in, so a locked destination fails
+    # cleanly (and can be retried) instead of partway through the write.
+    destination_path = pathlib.Path(destination_path)
+    staged = staging_path(destination_path)
+    output.save(str(staged))
+    replace_destination(staged, destination_path)
 
 
 def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO | None]:

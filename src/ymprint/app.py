@@ -149,6 +149,7 @@ class Ymprint:
         discover_config: bool = True,
         trigger: Optional[PathLike] = None,
         mode: RenderMode = "api",
+        output: Optional[PathLike] = None,
     ) -> RenderEvent:
         """
         Renders 'source' to a PDF and returns the RenderEvent describing it.
@@ -162,6 +163,8 @@ class Ymprint:
             source file's directory, or the current directory for a dict.
         'discover_config': look for a *.ymprint.yml at or above 'base_dir'.
         'trigger', 'mode': passed through to the hooks on the RenderEvent.
+        'output': write the PDF here instead of 'destination'; hooks still see
+            'destination' as the document's target.
         """
         if isinstance(source, dict):
             data = source
@@ -185,6 +188,7 @@ class Ymprint:
             config_paths=self.config_layers(base_dir, config_path, discover_config),
             trigger=pathlib.Path(trigger) if trigger is not None else None,
             mode=mode,
+            output=pathlib.Path(output) if output is not None else None,
         )
         render_document(event, data, self.blocks, self.hooks)
         return event

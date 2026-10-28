@@ -113,7 +113,8 @@ does not run.
 | --- | --- |
 | `app` | The `Ymprint` application doing the render. |
 | `source` | The document file, or `None` when the document was passed as a dict. |
-| `destination` | The PDF being written. |
+| `destination` | The document's target PDF. |
+| `output` | Where the PDF is actually written when not `destination` (live mode's local preview when the destination is locked); otherwise `None`. `output_path` gives whichever applies. |
 | `base_dir` | Where relative paths in the document resolve (images, `_loadjson`, backgrounds). |
 | `config_paths` | The config layers in effect, lowest priority first. |
 | `trigger` | In live mode, the watched file whose change caused this render; otherwise `None`. |

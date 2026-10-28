@@ -6,12 +6,15 @@ apply in live mode exactly as they do for ``convert``.
 """
 from __future__ import annotations
 
+import hashlib
+import shutil
 import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Optional
 
+import platformdirs
 import typer
 from rich import box
 from rich.console import Console, Group, RenderableType
@@ -21,6 +24,7 @@ from rich.rule import Rule
 from rich.text import Text
 from rich.traceback import Traceback
 
+from ..config.pdf_postprocessing import DestinationLockedError, replace_destination, staging_path
 from ..errors import YmprintAuthoringError
 from ..render import RenderCallbackError
 from .error_display import format_authoring_error
@@ -67,6 +71,43 @@ def format_callback_error(exc: RenderCallbackError) -> RenderableType:
         type(original), original, original.__traceback__, max_frames=3
     )
     return Group(headline, Text(), trace)
+
+
+def format_render_error(exc: Exception) -> RenderableType:
+    headline = Text()
+    headline.append("✗ Render failed\n", style="bold red")
+    headline.append(f"{type(exc).__name__}: {exc}", style="red")
+    trace = Traceback.from_exception(type(exc), exc, exc.__traceback__, max_frames=3)
+    return Group(headline, Text(), trace)
+
+
+# Seconds to keep retrying when saving the preview to a locked destination on exit.
+PUBLISH_LOCK_TIMEOUT = 10.0
+
+
+def preview_path(destination: Path) -> Path:
+    """
+    The local copy live mode renders to once `destination` is found locked. It is
+    keyed by the destination's full path and keeps its file name for the viewer.
+    """
+    digest = hashlib.sha1(str(destination.resolve()).encode()).hexdigest()[:12]
+    return Path(platformdirs.user_cache_dir("ymprint")) / "live" / digest / destination.name
+
+
+def publish_preview(preview: Path, destination: Path, console: Console) -> bool:
+    """Copy the local preview over `destination`; return True if it was saved."""
+    staged = staging_path(destination)
+    try:
+        shutil.copyfile(preview, staged)
+        replace_destination(staged, destination, timeout=PUBLISH_LOCK_TIMEOUT)
+    except OSError as exc:
+        console.print(
+            f"[red]Could not save {destination}: {exc}[/red]\n"
+            f"The latest PDF is at [bold]{preview}[/bold]; copy it there by hand."
+        )
+        return False
+    console.print(f"[green]Saved {destination}.[/green]")
+    return True
 
 
 def build_live_panel(
@@ -150,6 +191,10 @@ def run_live(
 
     Files changed by the hooks themselves (for instance, a ``before_render``
     that regenerates the source document) do not trigger another render.
+
+    If `destination` stays locked by another program (e.g. a sync client on a
+    shared drive), live mode switches to rendering a local preview copy, opens
+    it in a new viewer, and saves it over `destination` when the session ends.
     """
     source = Path(source)
     if destination is None:
@@ -178,17 +223,50 @@ def run_live(
 
     state = ThrobberState()
     frame_time = 1.0 / FPS
+    # Set once the destination is found locked; every later render goes here.
+    preview: Optional[Path] = None
+    preview_rendered = False
+    viewer_opened = False
+
+    def open_viewer(path: Path) -> None:
+        nonlocal viewer_opened
+        subprocess.Popen(
+            [*okular_cmd, str(path)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        viewer_opened = True
+
+    def render_once(trigger: Optional[Path]) -> None:
+        nonlocal preview, preview_rendered
+        try:
+            app.render(source, destination, config_path, trigger=trigger, mode="live", output=preview)
+        except DestinationLockedError:
+            if preview is not None:
+                raise
+            preview = preview_path(destination)
+            preview.parent.mkdir(parents=True, exist_ok=True)
+            app.render(source, destination, config_path, trigger=trigger, mode="live", output=preview)
+            if viewer_opened:
+                open_viewer(preview)
+        if preview is not None:
+            preview_rendered = True
 
     def render(trigger: Optional[Path] = None) -> tuple[RenderableType, str]:
         """Attempt a render; return the (lower panel, border colour) to show."""
         try:
-            app.render(source, destination, config_path, trigger=trigger, mode="live")
+            render_once(trigger)
         except YmprintAuthoringError as exc:
             state.trigger_error_explosion()
             return format_authoring_error(exc), "red"
         except RenderCallbackError as exc:
             state.trigger_error_explosion()
             return format_callback_error(exc), "red"
+        except Exception as exc:
+            # Anything else (e.g. an unwritable destination) is shown, not fatal:
+            # the next save tries again.
+            state.trigger_error_explosion()
+            return format_render_error(exc), "red"
         finally:
             # Ignore changes the hooks made to watched files so they do not
             # retrigger a render in an endless loop.
@@ -196,42 +274,52 @@ def run_live(
                 watcher.sync()
         names = ", ".join(w.path.name for w in file_watchers)
         stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        return Text(f"✓ Reloaded {names} at {stamp}", style="green"), "green"
+        status = Text(f"✓ Reloaded {names} at {stamp}", style="green")
+        if preview is not None:
+            status.append(
+                f"\n⚠ {destination.name} is locked by another program (e.g. a sync client).\n"
+                f"  Previewing a local copy; it is saved to the destination when live mode ends.",
+                style="yellow",
+            )
+        return status, "green"
 
-    # Initial render before opening the viewer.
-    lower, border = render()
-    subprocess.Popen(
-        [*okular_cmd, str(destination)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    exit_code = 0
+    try:
+        # Initial render before opening the viewer.
+        lower, border = render()
+        open_viewer(preview or destination)
 
-    with Live(
-        build_live_panel(state, file_watchers, lower, border),
-        console=console,
-        refresh_per_second=FPS,
-        transient=False,
-    ) as live:
-        try:
-            while True:
-                t0 = time.monotonic()
+        with Live(
+            build_live_panel(state, file_watchers, lower, border),
+            console=console,
+            refresh_per_second=FPS,
+            transient=False,
+        ) as live:
+            try:
+                while True:
+                    t0 = time.monotonic()
 
-                changed = next((w for w in file_watchers if w.changed()), None)
-                if changed is not None:
-                    # A save clears any prior error immediately and shows the
-                    # reload in progress before we attempt it.
-                    state.trigger_explosion()
-                    lower = Text(f"⟳ reloading ({changed.path.name}) …", style="yellow")
-                    border = "yellow"
+                    changed = next((w for w in file_watchers if w.changed()), None)
+                    if changed is not None:
+                        # A save clears any prior error immediately and shows the
+                        # reload in progress before we attempt it.
+                        state.trigger_explosion()
+                        lower = Text(f"⟳ reloading ({changed.path.name}) …", style="yellow")
+                        border = "yellow"
+                        live.update(build_live_panel(state, file_watchers, lower, border))
+                        lower, border = render(changed.path)
+
+                    state.advance()
                     live.update(build_live_panel(state, file_watchers, lower, border))
-                    lower, border = render(changed.path)
 
-                state.advance()
-                live.update(build_live_panel(state, file_watchers, lower, border))
+                    elapsed = time.monotonic() - t0
+                    time.sleep(max(0.0, frame_time - elapsed))
 
-                elapsed = time.monotonic() - t0
-                time.sleep(max(0.0, frame_time - elapsed))
-
-        except KeyboardInterrupt:
-            console.print("\n[dim]Live mode ended.[/dim]\n")
-    return 0
+            except KeyboardInterrupt:
+                console.print("\n[dim]Live mode ended.[/dim]\n")
+    finally:
+        # Also runs if the session crashes, so the latest render is not stranded
+        # in the local preview.
+        if preview_rendered and not publish_preview(preview, destination, console):
+            exit_code = 1
+    return exit_code
