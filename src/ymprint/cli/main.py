@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, Optional, Annotated
 from pathlib import Path
 from .error_display import format_authoring_error
+from ..config.pdf_postprocessing import DestinationLockedError
 from ..errors import YmprintAuthoringError
 from ..render import RenderCallbackError
 from rich import box
@@ -76,6 +77,12 @@ def build_cli(ym_app: "Ymprint") -> Typer:
                     box=box.ROUNDED,
                     padding=(1, 2),
                 )
+            )
+            raise typer.Exit(code=1)
+        except DestinationLockedError as exc:
+            console.print(
+                f"[red]Could not write {exc.path}: it is open in another program "
+                f"(e.g. a PDF viewer or sync client). Close it or wait, then try again.[/red]"
             )
             raise typer.Exit(code=1)
 

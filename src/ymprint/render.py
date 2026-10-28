@@ -47,10 +47,17 @@ class RenderEvent:
     # Variables merged over the document's own `_vars`. A before_render hook can
     # fill this to feed data into the document without writing it to disk.
     vars: dict = field(default_factory=dict)
+    # Where the PDF is actually written, when not 'destination'. Live mode sets
+    # this to a local preview copy when the destination is locked.
+    output: Optional[pathlib.Path] = None
 
     @property
     def initial(self) -> bool:
         return self.trigger is None
+
+    @property
+    def output_path(self) -> pathlib.Path:
+        return self.output if self.output is not None else self.destination
 
 
 RenderHook = Callable[[RenderEvent], None]
@@ -164,7 +171,7 @@ def render_document(
     overlay_pdf_background(
         rl_report_buffer,
         populated_backgrounds,
-        event.destination,
+        event.output_path,
         context,
         page_template_map,
     )

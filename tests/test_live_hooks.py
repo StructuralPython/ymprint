@@ -152,3 +152,137 @@ def test_cli_convert_reports_hook_failure(tmp_path):
 
 def test_cli_is_named_after_the_app():
     assert Ymprint(name="calcsheet").cli().info.name == "calcsheet"
+
+
+# --- locked destination ----------------------------------------------------------
+
+from pathlib import Path
+
+from ymprint.config import pdf_postprocessing
+
+
+@pytest.fixture
+def lockable(monkeypatch, tmp_path):
+    """Make a destination 'locked' (os.replace onto it fails) while lock['on'] is set."""
+    monkeypatch.setattr(pdf_postprocessing, "LOCK_TIMEOUT", 0)
+    monkeypatch.setattr(cli_live, "PUBLISH_LOCK_TIMEOUT", 0)
+    monkeypatch.setattr(cli_live.platformdirs, "user_cache_dir", lambda name: str(tmp_path / "cache"))
+    lock = {"on": False, "path": None}
+    real_replace = os.replace
+
+    def fake_replace(src, dst):
+        if lock["on"] and Path(dst) == lock["path"]:
+            raise PermissionError(13, "Permission denied")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(pdf_postprocessing.os, "replace", fake_replace)
+    return lock
+
+
+@pytest.fixture
+def viewers(monkeypatch):
+    opened = []
+    monkeypatch.setattr(cli_live.subprocess, "Popen", lambda cmd, **k: opened.append(cmd[-1]))
+    return opened
+
+
+def test_unlocked_destination_needs_no_preview(doc, tmp_path, headless_live, lockable, viewers):
+    assert run_live(Ymprint(), doc, console=Console(quiet=True)) == 0
+    dest = doc.with_suffix(".pdf")
+    assert dest.exists()
+    assert viewers == [str(dest)]
+    assert not (tmp_path / "cache").exists()
+    assert not pdf_postprocessing.staging_path(dest).exists()
+
+
+def test_locked_destination_falls_back_to_preview(doc, headless_live, lockable, viewers):
+    dest = doc.with_suffix(".pdf")
+    lockable["path"] = dest
+    events = []
+    app = Ymprint()
+    app.after_render(lambda e: events.append((e.destination, e.output)))
+
+    def lock_and_save():
+        lockable["on"] = True
+        _bump_mtime(doc)
+
+    def save_again():
+        _bump_mtime(doc)
+
+    def unlock():
+        lockable["on"] = False
+
+    headless_live.extend([lock_and_save, save_again, unlock])
+    console = Console(record=True, width=200)
+
+    assert run_live(app, doc, console=console) == 0
+    preview = cli_live.preview_path(dest)
+    # The original viewer, then one on the preview; the second save reuses it.
+    assert viewers == [str(dest), str(preview)]
+    # Hooks still see the real destination.
+    assert events == [(dest, None), (dest, preview), (dest, preview)]
+    # On exit the preview is saved over the destination.
+    assert dest.read_bytes() == preview.read_bytes()
+    output = console.export_text()
+    assert "locked by another program" in output and f"Saved {dest}" in output
+
+
+def test_destination_locked_from_the_start(doc, headless_live, lockable, viewers):
+    dest = doc.with_suffix(".pdf")
+    lockable.update(on=True, path=dest)
+    headless_live.append(lambda: lockable.update(on=False))
+    assert run_live(Ymprint(), doc, console=Console(quiet=True)) == 0
+    # Only one viewer, opened straight on the preview.
+    assert viewers == [str(cli_live.preview_path(dest))]
+    assert dest.exists()
+
+
+def test_destination_still_locked_on_exit(doc, headless_live, lockable, viewers):
+    dest = doc.with_suffix(".pdf")
+    lockable.update(on=True, path=dest)
+    console = Console(record=True, width=300)
+    assert run_live(Ymprint(), doc, console=console) == 1
+    preview = cli_live.preview_path(dest)
+    assert preview.exists() and not dest.exists()
+    assert not pdf_postprocessing.staging_path(dest).exists()
+    output = console.export_text()
+    assert f"Could not save {dest}" in output and str(preview) in output
+
+
+def test_crash_still_saves_the_preview(doc, headless_live, lockable, viewers):
+    dest = doc.with_suffix(".pdf")
+    lockable.update(on=True, path=dest)
+
+    def crash():
+        lockable["on"] = False
+        raise RuntimeError("crash")
+
+    headless_live.append(crash)
+    with pytest.raises(RuntimeError):
+        run_live(Ymprint(), doc, console=Console(quiet=True))
+    assert dest.read_bytes() == cli_live.preview_path(dest).read_bytes()
+
+
+def test_unexpected_render_error_is_shown_not_raised(doc, headless_live, monkeypatch):
+    from ymprint import render as render_module
+
+    def disk_full(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(render_module, "overlay_pdf_background", disk_full)
+    console = Console(record=True, width=120)
+    assert run_live(Ymprint(), doc, console=console) == 0
+    output = console.export_text()
+    assert "Render failed" in output and "disk full" in output
+
+
+def test_cli_convert_reports_locked_destination(tmp_path, lockable):
+    src = tmp_path / "doc.yml"
+    src.write_text("Heading:\n  - text\n")
+    dest = tmp_path / "doc.pdf"
+    dest.write_bytes(b"old")
+    lockable.update(on=True, path=dest)
+    result = CliRunner().invoke(Ymprint().cli(), ["convert", str(src)])
+    assert result.exit_code == 1
+    assert "open in another program" in result.output
+    assert dest.read_bytes() == b"old"
