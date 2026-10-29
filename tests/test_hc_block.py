@@ -45,6 +45,20 @@ def test_hc_block_renders_with_the_default_app(tmp_path):
 
 
 @needs_hc
+@pytest.mark.parametrize("w, flexure_shown", [(0, False), (3, True)])
+def test_hc_block_shows_a_section_on_a_condition(tmp_path, w, flexure_shown):
+    # '# hc: -s <condition>' needs handcalcs 2.0.0rc2; rc1 rejects the command.
+    source = "M = w * 6**2 / 8\n# hc: -s M > 0\nZ_req = M / 350\n# hc: -s\nR = w * 3\n"
+    destination = tmp_path / "beam.pdf"
+    default_app.render({"_vars": {"w": w}, "Beam": [{"_hc": source}]}, destination)
+    with pymupdf.open(destination) as pdf:
+        text = " ".join("".join(page.get_text() for page in pdf).split())
+    assert "M = w · 62 / 8" in text
+    assert ("Zreq" in text) == flexure_shown
+    assert "R = w · 3" in text
+
+
+@needs_hc
 def test_hc_block_can_be_left_out_of_an_app():
     app = Ymprint(builtin_blocks=False)
     assert "_hc" not in app.blocks
