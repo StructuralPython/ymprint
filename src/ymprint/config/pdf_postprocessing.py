@@ -1,6 +1,7 @@
 import io
 import os
 import pathlib
+import shutil
 import time
 
 import pymupdf as mu
@@ -8,6 +9,8 @@ from .config_loaders import config_base_dir, config_layer_paths
 
 # Seconds to keep retrying when the destination PDF is locked. A sync client such
 # as the Egnyte Drive client can hold a freshly written file open while it uploads.
+# (A viewer that only blocks replacing the file, such as Okular on Windows, is
+# handled by overwriting it in place.)
 LOCK_TIMEOUT = 2.0
 LOCK_RETRY_DELAY = 0.25
 
@@ -29,19 +32,27 @@ def staging_path(destination: pathlib.Path) -> pathlib.Path:
 def replace_destination(staged: pathlib.Path, destination: pathlib.Path, timeout: float | None = None) -> None:
     """
     Moves 'staged' over 'destination', retrying for 'timeout' seconds (default
-    LOCK_TIMEOUT) while the destination is locked. Raises DestinationLockedError,
-    after removing 'staged', if it is still locked.
+    LOCK_TIMEOUT) while the destination is locked. If the destination can be
+    written but not replaced, its contents are overwritten in place instead.
+    Raises DestinationLockedError, after removing 'staged', if it is still locked.
     """
     deadline = time.monotonic() + (LOCK_TIMEOUT if timeout is None else timeout)
     while True:
         try:
             os.replace(staged, destination)
             return
-        except PermissionError as exc:
-            if time.monotonic() >= deadline:
+        except PermissionError:
+            # A viewer such as Okular on Windows keeps the PDF open and allows
+            # writes but not replacing it, so overwrite its contents instead.
+            try:
+                shutil.copyfile(staged, destination)
                 staged.unlink(missing_ok=True)
-                raise DestinationLockedError(destination, exc) from exc
-            time.sleep(LOCK_RETRY_DELAY)
+                return
+            except PermissionError as exc:
+                if time.monotonic() >= deadline:
+                    staged.unlink(missing_ok=True)
+                    raise DestinationLockedError(destination, exc) from exc
+                time.sleep(LOCK_RETRY_DELAY)
 
 
 def overlay_pdf_background(

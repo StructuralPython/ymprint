@@ -69,11 +69,12 @@ config). When any of them changes, the PDF is re-rendered and Okular refreshes.
 minimal starter document at that path (after a confirming prompt) so you can begin
 authoring immediately. Decline the prompt to exit without creating anything.
 
-**Locked PDFs on shared drives.** A sync client (such as the Egnyte Drive client) can
-hold the PDF open for a moment after it is written. Live mode retries briefly; if the
-PDF is still locked, it switches to rendering a local preview copy, opens it in a new
-Okular window, and saves it over `--dest` when you press `Ctrl+C` (or if live mode
-crashes). If the PDF is still locked at that point, live mode prints where the preview
+**Locked PDFs.** Some viewers (such as Okular on Windows) keep the PDF open and stop it
+being replaced; live mode then overwrites the PDF in place instead. A sync client (such
+as the Egnyte Drive client) can hold the PDF open for a moment after it is written. Live
+mode retries briefly; if the PDF is still locked, it switches to rendering a local
+preview copy, opens it in a new Okular window, and saves it over `--dest` when you press
+`Ctrl+C` (or if live mode crashes). If the PDF is still locked at that point, live mode prints where the preview
 is so you can copy it by hand.
 
 ```bash
