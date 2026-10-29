@@ -156,6 +156,7 @@ def test_cli_is_named_after_the_app():
 
 # --- locked destination ----------------------------------------------------------
 
+import shutil
 from pathlib import Path
 
 from ymprint.config import pdf_postprocessing
@@ -163,7 +164,7 @@ from ymprint.config import pdf_postprocessing
 
 @pytest.fixture
 def lockable(monkeypatch, tmp_path):
-    """Make a destination 'locked' (os.replace onto it fails) while lock['on'] is set."""
+    """Make a destination 'locked' (it can't be replaced or written) while lock['on'] is set."""
     monkeypatch.setattr(pdf_postprocessing, "LOCK_TIMEOUT", 0)
     monkeypatch.setattr(cli_live, "PUBLISH_LOCK_TIMEOUT", 0)
     monkeypatch.setattr(cli_live.platformdirs, "user_cache_dir", lambda name: str(tmp_path / "cache"))
@@ -175,7 +176,15 @@ def lockable(monkeypatch, tmp_path):
             raise PermissionError(13, "Permission denied")
         real_replace(src, dst)
 
+    real_copyfile = shutil.copyfile
+
+    def fake_copyfile(src, dst):
+        if lock["on"] and Path(dst) == lock["path"]:
+            raise PermissionError(13, "Permission denied")
+        return real_copyfile(src, dst)
+
     monkeypatch.setattr(pdf_postprocessing.os, "replace", fake_replace)
+    monkeypatch.setattr(pdf_postprocessing.shutil, "copyfile", fake_copyfile)
     return lock
 
 
@@ -189,6 +198,24 @@ def viewers(monkeypatch):
 def test_unlocked_destination_needs_no_preview(doc, tmp_path, headless_live, lockable, viewers):
     assert run_live(Ymprint(), doc, console=Console(quiet=True)) == 0
     dest = doc.with_suffix(".pdf")
+    assert dest.exists()
+    assert viewers == [str(dest)]
+    assert not (tmp_path / "cache").exists()
+    assert not pdf_postprocessing.staging_path(dest).exists()
+
+
+def test_viewer_blocking_replace_needs_no_preview(doc, tmp_path, monkeypatch, headless_live, lockable, viewers):
+    # Okular on Windows: the open PDF can be overwritten but not replaced.
+    dest = doc.with_suffix(".pdf")
+    real_replace = os.replace
+
+    def refuse_replace(src, dst):
+        if Path(dst) == dest:
+            raise PermissionError(13, "Access is denied")
+        real_replace(src, dst)
+
+    monkeypatch.setattr(pdf_postprocessing.os, "replace", refuse_replace)
+    assert run_live(Ymprint(), doc, console=Console(quiet=True)) == 0
     assert dest.exists()
     assert viewers == [str(dest)]
     assert not (tmp_path / "cache").exists()
