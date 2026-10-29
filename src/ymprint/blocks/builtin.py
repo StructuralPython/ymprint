@@ -19,6 +19,7 @@ from .page_break_block import convert_page_break
 from .python_block import convert_python_block
 from .quote_block import convert_quote_block
 from .spacer_block import convert_spacer
+from .table_block import convert_table_block
 
 BUILTIN_BLOCKS = BlockRegistry({
     "_info": generate_admonition_block("info"),
@@ -37,6 +38,7 @@ BUILTIN_BLOCKS = BlockRegistry({
     "_py": convert_python_block,
     "_blockquote": convert_quote_block,
     "_spacer": convert_spacer,
+    "_table": convert_table_block,
 })
 
 

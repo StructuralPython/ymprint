@@ -139,6 +139,28 @@ Tables:
 Table appearance (padding, header style, row banding, rule lines) is controlled by
 `_tablestyle`. See [Configuration → Table styles](#cfg-tablestyle).
 
+(tables-from-data)=
+### Tables from data
+
+Data computed in a `_py` block, or read from a [`_data`](data-sources.md) source, renders as
+a table when you use it as content with `$name`. It must be a list of mappings: one per row,
+with the keys as the column headers.
+
+```yaml
+Utilization summary:
+  - _py:
+      echo: false
+      source: |
+        rows = [{"Member": k, "DCR": v["DCR"]} for k, v in utilizations.items()]
+  - $rows
+```
+
+The cells are shown as they are (`str(value)`), not run through Jinja, so a computed value
+containing `{{` is shown as written. A one-row list is still a table here.
+
+For column selection, headers, number formats, sorting and colour-coded rows, use the
+[`_table` block](#block-table).
+
 ## Inline formatting
 
 Text values support a small amount of inline markdown, converted to styled runs in the PDF:

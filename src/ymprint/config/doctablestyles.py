@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import Dict, List, Literal
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 from reportlab.platypus import TableStyle as RLTableStyle
 
@@ -39,9 +39,21 @@ class HeaderRow(BaseModel):
         return convert_color(self.color)
 
 
+# Row styles a table can apply to individual rows (see the `_table` block's
+# `row_style`). A config's `styles` are added to these.
+DEFAULT_ROW_STYLES = {"danger": "#f8d7da", "warning": "#fff3cd"}
+
+
 class BodyRows(BaseModel):
     color: str | RowColors
     lines: List[Literal["above", "below", "between"]]
+    # Named row background colours, e.g. {"danger": "#f8d7da"}.
+    styles: Dict[str, str] = Field(default_factory=lambda: dict(DEFAULT_ROW_STYLES))
+
+    @field_validator("styles", mode="before")
+    @classmethod
+    def add_default_styles(cls, value):
+        return {**DEFAULT_ROW_STYLES, **(value or {})}
 
     @property
     def rl_color(self):

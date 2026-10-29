@@ -46,6 +46,7 @@ You can add your own blocks by building a [custom application](../guide/custom-a
 | [`_py`](#block-py) | Execute Python and optionally show the syntax-highlighted source. |
 | [`_hc`](#block-hc) | Run Python and typeset it as handcalcs calculations. Needs `ymprint[hc]`. |
 | [`_loadjson`](#block-loadjson) | Load variables into the document from a JSON file. |
+| [`_table`](#block-table) | A table from data, with column, format, sort and row-style options. |
 | [`_p`](#block-p) | A standalone paragraph, with a selectable text style. |
 | [`_ul`](#block-ul) | An unordered (bulleted) list. |
 | [`_ol`](#block-ol) | An ordered (numbered) list. |
@@ -316,6 +317,38 @@ _loadjson:
   - - bn = {{extra_vars.bn}}
     - dx = {{extra_vars.dx}}
 ```
+
+---
+
+(block-table)=
+## `_table` — Tables from data
+
+Render tabular data (a list of mappings) with presentation options. For a plain table of
+computed data, `- $rows` is enough; see [Tables from data](#tables-from-data).
+
+```yaml
+- _table:
+    data: $rows                 # or the name of a _data source: utilizations
+    columns: [Member, Check, DCR]
+    headers: {DCR: "D/C"}
+    format: {DCR: "{:.2f}"}
+    sort: [-DCR]
+    row_style: "{{ 'danger' if row.DCR > 1.0 else ('warning' if row.DCR > 0.9 else '') }}"
+    caption: "Table 1: Member utilizations"
+```
+
+| Parameter | Required | Meaning |
+| --- | --- | --- |
+| `data` | ✅ | The rows: a `$var`, a variable or data source name, or a literal list of mappings. |
+| `columns` | | The columns to show, in order. Default: every key, in order of first appearance. |
+| `headers` | | Header text per column. Default: the column name. |
+| `format` | | A Python format string per column, e.g. `"{:.2f}"`. Default: `str(value)`. |
+| `sort` | | Columns to sort the rows by, in priority order; prefix `-` for descending. |
+| `row_style` | | A Jinja template, with `row` the row's mapping, that gives each row a row style name (or nothing). Row styles are defined under [`_tablestyle.body.rows.styles`](#cfg-tablestyle); `danger` and `warning` are built in. |
+| `caption` | | Text shown below the table. |
+
+Cells are values, not Jinja templates. Format strings work on anything that supports
+Python's format specs, including units-aware quantities.
 
 ---
 

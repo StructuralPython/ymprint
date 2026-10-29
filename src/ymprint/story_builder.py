@@ -7,11 +7,12 @@ from .content_checks import (
 from .content_converters import (
     convert_paragraph,
     convert_table,
+    is_table_data,
     convert_ul,
     convert_ol,
 )
 from .exceptions import YMPrintSyntaxException
-from .blocks import convert_blocks
+from .blocks import convert_blocks, get_variable_name
 from .blocks.registry import parse_block_key
 from .slides import build_slide, _extract_slide_directive, _misplaced_directive_message
 
@@ -180,10 +181,7 @@ def build_content(value, context: dict, level: int = 0, current_style: str = "de
     or a single list item) found at 'level'.
     """
     if check_for_variable(value, context):
-        raise YMPrintSyntaxException(
-            f"The variable syntax of $VAR is intended to be used with in custom blocks only. "
-            "To evaluate a string representation of the variable use the {{VAR}} syntax instead."
-        )
+        return convert_variable(value, context)
     if check_for_paragraph(value, context):
         return convert_paragraph(value, context, "body", current_style)
     if check_for_tables(value, context):
@@ -193,3 +191,21 @@ def build_content(value, context: dict, level: int = 0, current_style: str = "de
         # paragraphs, mappings become subsections. Bullets/numbers require _ul/_ol.
         return build_story(value, context, level=level + 1, current_style=current_style)
     return []
+
+
+def convert_variable(value: str, context: dict) -> list:
+    """
+    Returns the flowables for a `$var` used as content. Tabular data (a list of
+    mappings) renders as a table; anything else is an error.
+    """
+    name = get_variable_name(value)
+    variables = context["vars"]
+    if name not in variables:
+        raise YMPrintSyntaxException(f"{value} is used as content but no variable {name!r} is defined.")
+    data = variables[name]
+    if is_table_data(data):
+        return convert_table(data, context, templated=False)
+    raise YMPrintSyntaxException(
+        f"{value} is a {type(data).__name__}, but a $VAR used as content must be a table: "
+        "a list of mappings (one per row). To show a value as text, use {{" + name + "}} instead."
+    )

@@ -1,6 +1,7 @@
 from collections import ChainMap
+from collections.abc import Mapping
 from itertools import cycle
-from typing import TypeAlias, Union
+from typing import Optional, TypeAlias, Union
 from reportlab.platypus import (
     Paragraph,
     Spacer,
@@ -145,15 +146,47 @@ def convert_ol(value: list | dict, context: dict, level: int = 0, current_style:
         number += 1
     return [ListFlowable(bullet_contents, start=0, bulletType='bullet')]
 
-# Test
-def convert_table(value: list[dict], context: dict) -> list[Table]:
+def is_table_data(value) -> bool:
+    """Whether 'value' is tabular data: a non-empty list of mappings (the rows)."""
+    return (
+        isinstance(value, list)
+        and len(value) > 0
+        and all(isinstance(row, Mapping) for row in value)
+    )
+
+
+def table_columns(rows: list[Mapping]) -> list:
+    """The column names of 'rows': every key, in order of first appearance."""
+    return list(dict.fromkeys(key for row in rows for key in row))
+
+
+def format_cell(value, spec: Optional[str] = None) -> str:
+    """Returns a cell value as text, with the format string 'spec' (e.g. "{:.2f}") if given."""
+    if value is None:
+        return ""
+    if spec is not None:
+        return spec.format(value)
+    return str(value)
+
+
+def convert_table(value: list[dict], context: dict, templated: bool = True) -> list[Table]:
+    """
+    Returns a Table of the rows in 'value', one column per key.
+
+    'templated': render each cell as a Jinja template. True for tables written
+    in the YAML; False for data computed at render time (a `$var`), whose cells
+    are values to show as they are, not templates.
+    """
     table_style = context['tablestyles']['rl']['_tablestyle']
-    column_headers = list(value[0].keys())
+    column_headers = table_columns(value)
     table_data = [column_headers]
     for row in value:
         inner = []
-        for cell in row.values():
-            rendered = render_template(str(cell), context['vars'])
-            inner.append(rendered)
+        for column in column_headers:
+            cell = row.get(column)
+            if templated:
+                inner.append(render_template(str(cell), context['vars']))
+            else:
+                inner.append(format_cell(cell))
         table_data.append(inner)
     return [Table(table_data, style=table_style)]
