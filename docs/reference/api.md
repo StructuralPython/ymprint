@@ -7,7 +7,7 @@ from ymprint import (
     Ymprint, default_app,
     RenderEvent, RenderCallbackError,
     BlockRegistry, BlockExistsError, parse_block_key,
-    register_loader, RenderRun,
+    register_loader, register_serializer, RenderRun,
 )
 ```
 
@@ -79,6 +79,10 @@ propagate as from `render()`.
 | `results` | The `RenderEvent` of each render that succeeded. |
 | `failures` | `RenderFailure(instance, error)` for each that failed; `describe()` gives a one-line summary. |
 | `inputs` | Every data file read, by `for_each` and by the renders. |
+| `keys` | The key of each result, in order. |
+| `exports` | The document's [exports](../guide/document-exports.md): its `_export` values, or `{key: values}` per parameter set. `None` without `_export`. |
+| `written` | The export files written to the `_data` entries that name the document in `from:`. |
+| `notes` | Why exports were not written, when they weren't. |
 | `ok` | `True` when nothing failed. |
 
 ## `default_app`
@@ -92,7 +96,9 @@ and returns the `RenderEvent`.
 A dataclass passed to every hook. Its fields are `app`, `source`, `destination`,
 `base_dir`, `config_paths`, `trigger`, `mode`, `vars`, `params` and `project_root`, plus the
 `initial` property. After the content is rendered, `inputs` holds the data files the
-document read (its [`_data`](../guide/data-sources.md) sources and `_loadjson` files).
+document read (its [`_data`](../guide/data-sources.md) sources and `_loadjson` files), and
+`exports` holds its [`_export`](../guide/document-exports.md) values (or `None`). `pdf` is
+the PDF written.
 See [The RenderEvent](../guide/custom-applications.md#the-renderevent).
 
 ## `RenderCallbackError`
@@ -121,7 +127,7 @@ A mapping of block codes to converter functions.
 A converter has the signature `convert(block_key, block_value, context) -> list[Flowable]`.
 
 Reserved codes, which are handled by YMPrint itself: `_ul`, `_ol`, `_textstyle`, `_slide`,
-`_frame`, `_vars`, `_style`, `_doc`, `_tablestyle`, `_data`.
+`_frame`, `_vars`, `_style`, `_doc`, `_tablestyle`, `_data`, `_export`.
 
 ## `parse_block_key(key)`
 
@@ -142,12 +148,18 @@ Registers `loader(path) -> data` for [`_data`](../guide/data-sources.md) entries
 `loader: <name>`. `extensions` (for example `[".toml"]`) makes it the default for files with
 those suffixes. The built-in loaders are `yaml` and `json`.
 
+### `register_serializer(type, serializer)`
+
+Registers `serializer(value) -> JSON-native data` for exported values of `type` (and its
+subclasses). Later registrations take precedence. Built in: JSON-native types, paths, sets,
+and anything with `__float__`.
+
 ### Installed plugins
 
 A package extends YMPrint when it is installed by naming a setup function in the
 `ymprint.plugins` entry-point group. YMPrint calls each setup function once, with no
-arguments, before it first needs a loader; the function registers what the package
-provides.
+arguments, before it first needs a loader or serializer; the function registers what the
+package provides.
 
 ```toml
 # the plugin's pyproject.toml

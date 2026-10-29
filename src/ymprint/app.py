@@ -30,6 +30,7 @@ from .fanout import (
     Instance, RenderFailure, RenderRun, RenderSpec, RenderUsageError,
     build_instances, matches, render_specs,
 )
+from .exports import write_exports
 from .render import (
     ContextHook, RenderEvent, RenderHook, RenderHooks, RenderMode,
     document_variables, load_source, render_document,
@@ -255,20 +256,21 @@ class Ymprint:
         config_path: Optional[ConfigPaths],
         discover_config: bool,
         mode: RenderMode,
-    ) -> tuple[Optional[RenderSpec], Optional[dict], list[Instance], set[pathlib.Path]]:
+    ) -> tuple[RenderEvent, Optional[RenderSpec], Optional[dict], list[Instance], set[pathlib.Path]]:
         """
-        Returns the document's `_render` entry, its data (read once, when it
-        fans out), its renders, and the data files read to work them out.
+        Returns a RenderEvent for the document (its config and project), its
+        `_render` entry, its data (read once, when it fans out), its renders,
+        and the data files read to work them out.
         """
         source_path = pathlib.Path(source).resolve()
         event, _ = self._event(source_path, None, config_path, discover_config=discover_config, mode=mode)
         spec = render_specs(event.config_paths).get(source_path)
         if spec is None or not spec.fans_out:
-            return spec, None, build_instances(spec, source_path, {}), set()
+            return event, spec, None, build_instances(spec, source_path, {}), set()
         data = load_source(source_path, None)
         variables = document_variables(event, copy.deepcopy(data))
         instances = build_instances(spec, source_path, variables)
-        return spec, data, instances, variables.catalog.inputs()
+        return event, spec, data, instances, variables.catalog.inputs()
 
     def instances(
         self,
@@ -283,7 +285,7 @@ class Ymprint:
         make: one per parameter set of its `_render` entry (those matching
         'only'), or a single one.
         """
-        spec, _, instances, _ = self._plan(source, config_path, discover_config, "api")
+        _, spec, _, instances, _ = self._plan(source, config_path, discover_config, "api")
         if only and (spec is None or not spec.fans_out):
             raise RenderUsageError(_not_parameterized(source))
         return [i for i in instances if matches(i.params, only)]
@@ -307,9 +309,14 @@ class Ymprint:
         (default: next to the source), and errors propagate as from render().
         With parameter sets, the data is read once, every set is rendered even
         if some fail, and the failures are returned on the RenderRun.
+
+        The document's `_export` values are written to every `_data` entry that
+        names it in `from:`: the whole mapping, or with parameter sets, one entry
+        per set under its key. They are only written when every set rendered;
+        after a failure the stale output is removed instead.
         """
         source_path = pathlib.Path(source).resolve()
-        spec, data, instances, inputs = self._plan(source_path, config_path, discover_config, mode)
+        plan_event, spec, data, instances, inputs = self._plan(source_path, config_path, discover_config, mode)
         if spec is None or not spec.fans_out:
             if only:
                 raise RenderUsageError(_not_parameterized(source_path))
@@ -320,7 +327,10 @@ class Ymprint:
             event = self.render(
                 source_path, instance.destination, config_path, discover_config=discover_config, mode=mode
             )
-            return RenderRun(source_path, spec, instances=[instance], results=[event], inputs=set(event.inputs))
+            run = RenderRun(source_path, spec, instances=[instance], results=[event], inputs=set(event.inputs))
+            run.exports = event.exports
+            write_exports(run, plan_event)
+            return run
         if destination is not None:
             raise RenderUsageError(
                 f"{source_path.name} is rendered once per parameter set; its PDFs go where the "
@@ -343,7 +353,11 @@ class Ymprint:
                 run.failures.append(RenderFailure(instance, exc))
             else:
                 run.results.append(event)
+                run.keys.append(instance.key)
             run.inputs |= event.inputs
+        if any(event.exports is not None for event in run.results):
+            run.exports = {key: event.exports for key, event in zip(run.keys, run.results)}
+        write_exports(run, plan_event, partial=bool(only))
         return run
 
     def live(

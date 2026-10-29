@@ -248,6 +248,14 @@ class RenderRun:
     failures: list[RenderFailure] = field(default_factory=list)
     # Every data file read: by `for_each` and by each render.
     inputs: set[pathlib.Path] = field(default_factory=set)
+    # The key of each result, in order.
+    keys: list[str] = field(default_factory=list)
+    # The document's exports: its `_export` values, or with parameter sets,
+    # {key: values} for every set. None when it has no `_export`.
+    exports: Optional[dict] = None
+    # The export files written, and notes on exports that were not.
+    written: list[pathlib.Path] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:

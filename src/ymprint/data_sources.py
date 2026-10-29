@@ -14,6 +14,15 @@ Documents then use `design` and `frame` as variables (in Jinja, `_py`, `_hc`
 and `$var`) without knowing where the files are. A relative path resolves
 against the directory of the file that declares it.
 
+A source can instead be produced by documents (their `_export`) or scripts:
+
+    _data:
+      capacities:
+        from: [5-validation/beams/calc.yml, 5-validation/columns/calc.yml]
+
+Each producer's output is stored whole, in its own file under the build
+directory, and readers see the union of the producers' mappings.
+
 Sources load lazily, on first use, and every read is recorded on the render's
 DataCatalog, so a build tool can tell which data a document actually used.
 Loaded files are cached for the life of the process by (path, mtime, size);
@@ -24,6 +33,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import pathlib
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Mapping, Optional
@@ -128,36 +138,97 @@ def clear_cache() -> None:
 
 # --- declarations --------------------------------------------------------------
 
-SOURCE_KEYS = {"path", "loader"}
+SOURCE_KEYS = {"path", "loader", "from"}
+
+DEFAULT_BUILD_DIR = "build"
 
 
 @dataclass(frozen=True)
 class DataSource:
-    """One `_data` entry, with its path made absolute."""
+    """One `_data` entry, with its paths made absolute."""
 
     name: str
     # The file whose `_data` declares this source.
     declared_in: Optional[pathlib.Path]
-    path: pathlib.Path
+    # The file it is read from. For a produced source, where its one producer
+    # writes; None when each producer's output is stored under 'store_dir'.
+    path: Optional[pathlib.Path] = None
     loader: Optional[str] = None
+    # The documents and scripts that produce it (`from:`).
+    producers: tuple[pathlib.Path, ...] = ()
+    store_dir: Optional[pathlib.Path] = None
+    project_root: Optional[pathlib.Path] = None
+
+    def output_for(self, producer: pathlib.Path) -> pathlib.Path:
+        """The file 'producer' writes its output for this source to."""
+        if self.path is not None:
+            return self.path
+        root = self.project_root or pathlib.Path.cwd()
+        relative = os.path.relpath(producer, root).replace("..", "_up_")
+        slug = "__".join(pathlib.PurePath(relative).parts)
+        return self.store_dir / f"{slug}.json"
 
     def files(self) -> tuple[pathlib.Path, ...]:
         """The files this source is read from."""
-        return (self.path,)
+        if not self.producers:
+            return (self.path,)
+        return tuple(dict.fromkeys(self.output_for(p) for p in self.producers))
 
     def load(self) -> Any:
-        return load_file(self.path, self.loader)
+        if not self.producers:
+            return load_file(self.path, self.loader)
+        parts = []
+        for producer in self.producers:
+            output = self.output_for(producer)
+            if not output.exists():
+                raise DataSourceError(
+                    f"Data source {self.name!r} has not been produced yet: {producer.name} has not "
+                    f"written it ({output}). Render {producer} first, or run `ym build`."
+                )
+            parts.append((producer, load_file(output, self.loader if self.path is not None else "json")))
+        if len(parts) == 1:
+            return parts[0][1]
+        return union_of_outputs(self.name, parts)
+
+
+def union_of_outputs(name: str, parts: list[tuple[pathlib.Path, Any]]) -> dict:
+    """
+    Returns the union of the producers' mappings. Two producers giving the same
+    key is an error: each key has exactly one author.
+    """
+    merged: dict = {}
+    owner: dict = {}
+    for producer, data in parts:
+        if not isinstance(data, Mapping):
+            raise DataSourceError(
+                f"Data source {name!r} has several producers, so each must produce a mapping; "
+                f"{producer.name} produced a {type(data).__name__}."
+            )
+        for key, value in data.items():
+            if key in merged:
+                raise DataSourceError(
+                    f"Data source {name!r}: key {key!r} is produced by both "
+                    f"{owner[key].name} and {producer.name}."
+                )
+            merged[key] = value
+            owner[key] = producer
+    return merged
 
 
 def parse_data_declarations(
     declarations: Any,
     base_dir: pathlib.Path,
     declared_in: Optional[pathlib.Path],
+    build_dir: Optional[pathlib.Path] = None,
+    project_root: Optional[pathlib.Path] = None,
 ) -> dict[str, DataSource]:
     """
     Returns {name: DataSource} for a `_data` mapping, resolving relative paths
-    against 'base_dir' (the directory of 'declared_in').
+    against 'base_dir' (the directory of 'declared_in'). Produced sources with
+    no `path` are stored under 'build_dir'.
     """
+    project_root = project_root or base_dir
+    build_dir = build_dir or project_root / DEFAULT_BUILD_DIR
     where = str(declared_in) if declared_in is not None else "the document"
     if declarations is None:
         return {}
@@ -187,15 +258,41 @@ def parse_data_declarations(
                 f"`_data` entry {name!r} in {where} has unknown option(s) "
                 f"{sorted(unknown)}. Choose from: {sorted(SOURCE_KEYS)}."
             )
-        if not spec.get("path"):
-            raise DataSourceError(f"`_data` entry {name!r} in {where} needs a `path`.")
+        producers = spec.get("from") or ()
+        if isinstance(producers, str):
+            producers = [producers]
+        if not isinstance(producers, (list, tuple)) or not all(isinstance(p, str) for p in producers):
+            raise DataSourceError(f"`from` of `_data` entry {name!r} in {where} must be a path or a list of paths.")
+        if not spec.get("path") and not producers:
+            raise DataSourceError(f"`_data` entry {name!r} in {where} needs a `path` or a `from`.")
+        if spec.get("path") and len(producers) > 1:
+            raise DataSourceError(
+                f"`_data` entry {name!r} in {where} has several producers, so it cannot have a `path`: "
+                "each producer's output is stored separately and read as one."
+            )
         sources[name] = DataSource(
             name=name,
             declared_in=declared_in,
-            path=(base_dir / str(spec["path"])).resolve(),
+            path=(base_dir / str(spec["path"])).resolve() if spec.get("path") else None,
             loader=spec.get("loader"),
+            producers=tuple((base_dir / p).resolve() for p in producers),
+            store_dir=(build_dir / ".ym" / "exports" / name).resolve(),
+            project_root=project_root,
         )
     return sources
+
+
+def resolve_build_dir(config_paths: Iterable[pathlib.Path], project_root: pathlib.Path) -> pathlib.Path:
+    """
+    Returns the project's build directory: `_build: {dir: ...}` from the
+    highest config layer that sets it (relative to that file), else
+    <project root>/build.
+    """
+    build_dir = project_root / DEFAULT_BUILD_DIR
+    for settings, path in config_declarations(config_paths, "_build"):
+        if isinstance(settings, Mapping) and settings.get("dir"):
+            build_dir = path.parent / str(settings["dir"])
+    return build_dir.resolve()
 
 
 def config_file(layer: pathlib.Path) -> Optional[pathlib.Path]:
@@ -252,10 +349,13 @@ class DataCatalog:
         (lowest priority first), then the document's own `_data`, each entry
         replacing an earlier one with the same name.
         """
+        config_paths = list(config_paths)
+        project_root = project_root or base_dir
+        build_dir = resolve_build_dir(config_paths, project_root)
         sources: dict[str, DataSource] = {}
         for declarations, path in config_declarations(config_paths, "_data"):
-            sources.update(parse_data_declarations(declarations, path.parent, path))
-        sources.update(parse_data_declarations(document_data, base_dir, source))
+            sources.update(parse_data_declarations(declarations, path.parent, path, build_dir, project_root))
+        sources.update(parse_data_declarations(document_data, base_dir, source, build_dir, project_root))
         return cls(sources=sources, project_root=project_root)
 
     def __contains__(self, name: object) -> bool:
@@ -282,8 +382,18 @@ class DataCatalog:
     def path(self, name: str) -> pathlib.Path:
         """Returns the file data source 'name' is read from, recording the read."""
         source = self.get_source(name)
-        self.reads[name] = source.files()
-        return source.path
+        files = source.files()
+        if len(files) != 1:
+            raise DataSourceError(
+                f"Data source {name!r} is read from several files (one per producer), so it has no single path."
+            )
+        self.reads[name] = files
+        return files[0]
+
+    def produced_by(self, producer: pathlib.Path) -> list[DataSource]:
+        """The data sources that name 'producer' in their `from`."""
+        producer = pathlib.Path(producer).resolve()
+        return [source for source in self.sources.values() if producer in source.producers]
 
     def record_file(self, path: pathlib.Path) -> None:
         self.files.add(pathlib.Path(path).resolve())
