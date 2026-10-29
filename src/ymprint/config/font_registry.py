@@ -25,7 +25,8 @@ def register_fonts() -> None:
     resolves to the bundled copy on any platform, regardless of what system
     fonts are installed.
 
-    Call once at program start before building any flowables.
+    Safe to call before every render: the search path and the registered fonts
+    are only added once, so later calls do no font I/O.
 
     Raises
     ------
@@ -53,8 +54,9 @@ def register_fonts() -> None:
                 )
             )
             continue
-        if _FONTS_DIR not in rl_config.TTFSearchPath:
-            rl_config.TTFSearchPath.insert(0, str(fontpath.resolve()))
+        search_dir = str(fontpath.resolve())
+        if search_dir not in rl_config.TTFSearchPath:
+            rl_config.TTFSearchPath.insert(0, search_dir)
         font_family = fontpath.name
         font_names = {
             font_family: f"{font_family}.ttf",
@@ -80,8 +82,9 @@ def register_fonts() -> None:
                 #     f"Bold Italic: FontFamily-BoldOblique.ttf"
                 # )
 
-            else:
-                pdfmetrics.registerFont(TTFont(font_name, font_filename))
+            elif font_name not in pdfmetrics.getRegisteredFontNames():
+                # The full path, so ReportLab doesn't search its font directories.
+                pdfmetrics.registerFont(TTFont(font_name, str(fontpath / font_filename)))
 
         # Map <b>/<i> markup (and so **bold** / *italic*) onto the family's faces.
         # Italic faces are named either -Italic or -Oblique; a missing face falls
