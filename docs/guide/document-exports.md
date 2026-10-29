@@ -105,13 +105,21 @@ event.pdf      # Path
 ## Serialization
 
 JSON-native values are written as they are. Paths become strings, sets become lists, and
-anything with `__float__` becomes a float. A plugin can register richer types, for example
-a units package turning a quantity into `{"value": 30200.0, "unit": "N"}`:
+real numbers (including numpy's) become numbers. Any other object is an error until a
+serializer is registered for it. This includes a units quantity: its `float()` may be a
+scaled display value (`30.2` for 30.2 kN, `500.0` for 0.5 kN), so writing it would record a
+wrong number.
+
+A plugin registers richer types. A serializer that tags its output with `"$type"`, together
+with a decoder for that tag, makes the value round-trip, so whoever reads the data gets a
+quantity back rather than a dict:
 
 ```python
-from ymprint import register_serializer
+from ymprint import register_decoder, register_serializer
+from ymprint.exports import TYPE_KEY
 
-register_serializer(Quantity, lambda q: {"value": float(q), "unit": q.unit})
+register_serializer(Quantity, lambda q: {TYPE_KEY: "mypkg.Quantity", "si": q.si, "unit": q.unit})
+register_decoder("mypkg.Quantity", lambda m: Quantity(m["si"], m["unit"]))
 ```
 
 See [Plugins](../reference/api.md#plugins) to register serializers when a package is installed.

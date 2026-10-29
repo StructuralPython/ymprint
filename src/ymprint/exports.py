@@ -13,6 +13,7 @@ is a Jinja template. The `_data` entries that name the document in their
 from __future__ import annotations
 
 import json
+import numbers
 import os
 import pathlib
 import tempfile
@@ -75,16 +76,44 @@ def _evaluate(value: Any, variables: Mapping, where: str, name: str) -> Any:
 # --- serialization -------------------------------------------------------------
 
 Serializer = Callable[[Any], Any]
+Decoder = Callable[[dict], Any]
+
+# A serialized value may be a mapping tagged with its type under this key, e.g.
+# {"$type": "forallpeople.Physical", ...}; the decoder registered for the tag
+# turns it back into the value when the JSON is read.
+TYPE_KEY = "$type"
 
 _SERIALIZERS: list[tuple[type, Serializer]] = []
+_DECODERS: dict[str, Decoder] = {}
 
 
 def register_serializer(type_: type, serializer: Serializer) -> None:
     """
     Registers serializer(value) -> JSON-native data for exported values of
-    'type_' (and its subclasses). Later registrations take precedence.
+    'type_' (and its subclasses). Later registrations take precedence. To be
+    read back as the same type, return a mapping tagged with TYPE_KEY and
+    register a decoder for the tag.
     """
     _SERIALIZERS.insert(0, (type_, serializer))
+
+
+def register_decoder(tag: str, decoder: Decoder) -> None:
+    """
+    Registers decoder(mapping) -> value for JSON mappings whose TYPE_KEY is
+    'tag'. Mappings with an unregistered tag are read as plain dicts.
+    """
+    _DECODERS[tag] = decoder
+
+
+def decode_typed(mapping: dict) -> Any:
+    """The json.load `object_hook`: rebuilds mappings tagged with a registered type."""
+    tag = mapping.get(TYPE_KEY)
+    if isinstance(tag, str):
+        load_plugins()
+        decoder = _DECODERS.get(tag)
+        if decoder is not None:
+            return decoder(mapping)
+    return mapping
 
 
 def to_json_native(value: Any) -> Any:
@@ -97,11 +126,14 @@ def to_json_native(value: Any) -> Any:
         return os.fspath(value)
     if isinstance(value, (set, frozenset)):
         return sorted(value, key=str)
-    if hasattr(value, "__float__"):
-        return float(value)
+    # Only real numbers: other objects with __float__ (a units quantity, say) may
+    # give a scaled or display value, which would be written as a wrong number.
+    if isinstance(value, numbers.Real):
+        return float(value) if not isinstance(value, numbers.Integral) else int(value)
     raise TypeError(
-        f"cannot export a {type(value).__name__}; register a serializer for it "
-        "(ymprint.exports.register_serializer)"
+        f"cannot export a {type(value).__name__} ({value!r}); install a plugin that "
+        "serializes it, register a serializer (ymprint.exports.register_serializer), "
+        "or export a plain number"
     )
 
 
