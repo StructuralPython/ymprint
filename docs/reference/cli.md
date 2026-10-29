@@ -74,8 +74,14 @@ ym live SRC [--dest DEST] [--config-file FILE] [--var NAME=VALUE ...] [--only NA
 
 **What it watches.** Live mode watches the source file and every config file in play
 (the discovered project config, the `--config-file`, and a custom application's own
-config), plus the [data files](../guide/data-sources.md) the document read. When any of
-them changes, the PDF is re-rendered and Okular refreshes.
+config), plus the files the document read: its [data files](../guide/data-sources.md),
+`_img` images, `_loadjson` files and [PDF backgrounds](../guide/pdf-backgrounds.md). When any
+of them changes, the PDF is re-rendered and Okular refreshes. The panel lists the files the
+last render read under *inputs*.
+
+A save is reloaded once the file has stopped changing, so a PDF that a design tool writes in
+several steps isn't read half-written. If a render fails, the files it got as far as reading
+stay watched: fixing a mistyped background path, or creating the missing PDF, re-renders.
 
 **Starting from scratch.** If `SRC` does not exist yet, live mode offers to create a
 minimal starter document at that path (after a confirming prompt) so you can begin

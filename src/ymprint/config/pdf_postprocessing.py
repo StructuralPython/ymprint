@@ -6,6 +6,7 @@ import time
 
 import pymupdf as mu
 from .config_loaders import config_base_dir, config_layer_paths
+from ..errors import BackgroundNotFoundError
 
 # Seconds to keep retrying when the destination PDF is locked. A sync client such
 # as the Egnyte Drive client can hold a freshly written file open while it uploads.
@@ -150,10 +151,10 @@ def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None
     return out_docs
 
 
-def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
+def background_paths(context: dict) -> dict[str, pathlib.Path | None]:
     """
-    Returns a dict mapping each page template name to its background PDF as a
-    BytesIO stream (or None when the template has no background). Relative
+    Returns a dict mapping each page template name to the absolute path of its
+    background PDF (or None when the template has no background). Relative
     background paths resolve against the file that declares them: the document
     (base) directory, or the config directory for `relative-to: config`;
     `relative-to: cwd` resolves against the current directory.
@@ -170,22 +171,43 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
         config_parent = source_parent
 
     doctemplate = context['doctemplate']['ymprint']
-    backgrounds: dict[str, io.BytesIO | None] = {}
+    paths: dict[str, pathlib.Path | None] = {}
     for name, template in doctemplate.templates.items():
         background = template.background
         if background is None:
-            backgrounds[name] = None
+            paths[name] = None
             continue
 
         relative_to = background.relative_to
         if relative_to == 'config':
             background_path = config_parent / background.filepath
         elif relative_to == 'cwd':
-            background_path = background.filepath
+            background_path = pathlib.Path(background.filepath)
         else:
             # `source`, or unset: a path written in the document resolves against
             # the document. (Config layers made theirs absolute when loaded.)
             background_path = source_parent / background.filepath
+        paths[name] = background_path.resolve()
+
+    return paths
+
+
+def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
+    """
+    Returns a dict mapping each page template name to its background PDF as a
+    BytesIO stream (or None when the template has no background), read from
+    the paths background_paths() resolves. Raises BackgroundNotFoundError for
+    a background that does not exist.
+    """
+    templates = context['doctemplate']['ymprint'].templates
+    backgrounds: dict[str, io.BytesIO | None] = {}
+    for name, background_path in background_paths(context).items():
+        if background_path is None:
+            backgrounds[name] = None
+            continue
+        if not background_path.is_file():
+            background = templates[name].background
+            raise BackgroundNotFoundError(name, background.filepath, background_path, background.relative_to)
 
         pdf = mu.open(background_path)
         data = io.BytesIO()

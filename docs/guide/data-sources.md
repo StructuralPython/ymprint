@@ -75,8 +75,8 @@ precedence over data sources.
 - **A fresh copy per render.** Changing data in a `_py` block only changes this render's
   copy; the next document sees the file as it is.
 
-Live mode watches the data files a document reads, so editing `design.yml` re-renders
-the document that uses it.
+Live mode watches the data files a document reads (as well as its images and PDF
+backgrounds), so editing `design.yml` re-renders the document that uses it.
 
 ## One path rule
 

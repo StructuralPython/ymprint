@@ -12,13 +12,14 @@ def convert_loadjson_block(block_key: str, block_value: dict, context: dict) -> 
     """
     file_path = pathlib.Path(block_value['path'])
     json_path = (pathlib.Path(context['base_dir']) / file_path).resolve()
+    if 'data' in context:
+        # Recorded even when missing, so live mode re-renders once it exists.
+        context['data'].record_file(json_path)
     if not json_path.exists():
         raise YMPrintValueError(
             f"The loadjson block {block_key} file path does not exist: {json_path}"
         )
     data = load_file(json_path, "json")
-    if 'data' in context:
-        context['data'].record_file(json_path)
     namespace = block_value.get('namespace')
     if namespace is not None:
         context['vars'][namespace] = data

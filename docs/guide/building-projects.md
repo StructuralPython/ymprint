@@ -90,7 +90,8 @@ A step is **stale**, and runs, when:
 
 - it has never been built, or its last build failed;
 - its source file changed;
-- any file it read last time changed (by content hash), including the project config;
+- any file it read last time changed (by content hash): its data, images, `_loadjson`
+  files and PDF backgrounds, and the project config;
 - one of its outputs (its PDFs, its exports) is missing; or
 - the YMPrint or plugin version changed.
 

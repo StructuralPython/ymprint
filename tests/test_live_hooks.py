@@ -239,7 +239,9 @@ def test_locked_destination_falls_back_to_preview(doc, headless_live, lockable, 
     def unlock():
         lockable["on"] = False
 
-    headless_live.extend([lock_and_save, save_again, unlock])
+    # Each save gets one more poll to settle before it reloads.
+    settle = lambda: None
+    headless_live.extend([lock_and_save, settle, save_again, settle, unlock])
     console = Console(record=True, width=200)
 
     assert run_live(app, doc, console=console) == 0

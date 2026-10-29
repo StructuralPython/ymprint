@@ -73,3 +73,23 @@ class PythonBlockError(YmprintAuthoringError):
         self.source = source
         self.original = original
         super().__init__(f"{type(original).__name__}: {original}")
+
+
+class BackgroundNotFoundError(YmprintAuthoringError):
+    """A page template's background PDF does not exist.
+
+    Names the template, the path as written, where it resolved to and the
+    `relative-to` rule that resolved it, since a wrong base directory is the
+    usual cause.
+    """
+
+    def __init__(self, template: str, filepath: str, resolved: pathlib.Path, relative_to: Optional[str]):
+        self.template = template
+        self.filepath = filepath
+        self.resolved = resolved
+        self.relative_to = relative_to
+        rule = f"relative-to: {relative_to}" if relative_to else "relative to the file that declares it"
+        super().__init__(
+            f"The background PDF of page template {template!r} was not found: {filepath!r} "
+            f"resolved ({rule}) to {resolved}"
+        )

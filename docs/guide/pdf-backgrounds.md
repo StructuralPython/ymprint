@@ -31,6 +31,12 @@ report, or the config file. See [the path rule](data-sources.md#one-path-rule). 
 over its background; when a background PDF has multiple pages, they are matched by page
 number.
 
+A background that doesn't exist is reported with the template's name, the path as written and
+where it resolved to. [`ym live`](../reference/cli.md#ym-live) watches every background in
+play, so saving a new letterhead from your design tool refreshes the preview, and
+[`ym build`](building-projects.md) rebuilds the documents that use a background when its
+contents change.
+
 :::{tip}
 Give a cover or title page its own background by defining a **separate page template** with
 its own `background` and switching to the body template with `_pagebreak` — useful when the
