@@ -74,10 +74,10 @@ def build_cli(ym_app: "Ymprint") -> Typer:
             if variables:
                 # Explicit values: one render, whatever the document's `_render` entry says.
                 events = [ym_app.render(src, dest, config_dir, mode="convert", vars=variables)]
-                failures = []
+                failures, written, notes = [], [], []
             else:
                 run = ym_app.render_all(src, config_dir, destination=dest, only=selection, mode="convert")
-                events, failures = run.results, run.failures
+                events, failures, written, notes = run.results, run.failures, run.written, run.notes
         except RenderUsageError as exc:
             console.print(f"[red]{exc}[/red]")
             raise typer.Exit(code=2)
@@ -89,6 +89,10 @@ def build_cli(ym_app: "Ymprint") -> Typer:
             console.print(
                 f"✍️ .... 📝 ... PDF created: {event.destination.resolve()}"
             )
+        for path in written:
+            console.print(f"📤 Exports written: {path}")
+        for note in notes:
+            console.print(f"[yellow]{note}[/yellow]")
         for failure in failures:
             print_render_error(console, ym_app.name, failure.error, label=failure.instance.key)
         if failures:

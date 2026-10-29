@@ -19,6 +19,7 @@ from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake
 from .context_builder import build_context, rebuild_styles
 from .data_sources import YM_VAR, DataCatalog, DocumentVars, YmContext, build_document_vars
 from .errors import YmprintAuthoringError
+from .exports import evaluate_exports
 from .exceptions import YMPrintSyntaxException
 from .story_builder import build_story
 from .yaml_loader import load_yaml
@@ -60,6 +61,14 @@ class RenderEvent:
     # Set by the render: the data files the document read (its `_data` sources
     # and any files read directly), for build tools that track dependencies.
     inputs: set[pathlib.Path] = field(default_factory=set)
+    # Set by the render: the values of the document's `_export`, or None when it
+    # has none.
+    exports: Optional[dict] = None
+
+    @property
+    def pdf(self) -> pathlib.Path:
+        """The PDF this render wrote."""
+        return self.output_path
 
     @property
     def initial(self) -> bool:
@@ -152,6 +161,7 @@ def render_document(
 
     source_data = load_source(event.source, data)
     register_fonts()
+    export_declarations = source_data.pop("_export", None) if isinstance(source_data, dict) else None
     document_vars = document_variables(event, source_data)
     catalog = document_vars.catalog
     project_root = document_vars[YM_VAR].project_root
@@ -179,6 +189,8 @@ def render_document(
 
     story = build_story(context["content"], context)
     event.inputs = catalog.inputs()
+    if export_declarations is not None:
+        event.exports = evaluate_exports(export_declarations, context["vars"], describe_render(event))
     rl_doc, page_template_map = doctemplate.build(event.destination)
     rl_report_buffer = BytesIO()
     rl_doc.build(story, filename=rl_report_buffer)
@@ -195,6 +207,14 @@ def render_document(
     )
 
     run_hooks("after_render", hooks.after_render, event)
+
+
+def describe_render(event: RenderEvent) -> str:
+    """Names the document of a render, and its parameter set, for error messages."""
+    name = event.source.name if event.source is not None else "the document"
+    if event.params:
+        name += " (" + ", ".join(f"{k}={v}" for k, v in event.params.items()) + ")"
+    return name
 
 
 def document_variables(event: RenderEvent, source_data: dict) -> DocumentVars:

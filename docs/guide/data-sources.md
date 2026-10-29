@@ -50,6 +50,7 @@ _data:
 | --- | --- |
 | `path` | The file, relative to the file that declares the entry. |
 | `loader` | The loader to read it with. Built in: `yaml` (`.yml`, `.yaml`) and `json` (`.json`). |
+| `from` | The document(s) or script(s) that produce this data, instead of a person writing it. See [Document exports](document-exports.md). |
 
 ### In a document
 
@@ -101,7 +102,7 @@ that needs project paths uses the reserved variable `ym`:
 | --- | --- |
 | `ym.project_root` | `pathlib.Path` of the project root |
 | `ym.source` | `pathlib.Path` of the document being rendered |
-| `ym.path(name)` | The resolved path of data source `name`, for code that does its own I/O |
+| `ym.path(name)` | The resolved path of data source `name`, for code that does its own I/O (not for a source with several producers) |
 | `ym.params` | The current parameter set, for documents rendered once per parameter set |
 
 ```yaml

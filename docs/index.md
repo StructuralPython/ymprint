@@ -94,6 +94,7 @@ Control page templates, text styles, and table styles across layered priority le
 :link: guide/variables
 guide/data-sources
 guide/parameterized-documents
+guide/document-exports
 :link-type: doc
 
 Define `_vars`, render them with Jinja, and pass Python objects into blocks.
