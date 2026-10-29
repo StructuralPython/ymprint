@@ -92,8 +92,10 @@ def register_loader(
 
 
 def _load_json(path: pathlib.Path) -> Any:
+    from .exports import decode_typed
+
     with open(path, encoding="utf-8") as file:
-        return json.load(file)
+        return json.load(file, object_hook=decode_typed)
 
 
 register_loader("yaml", load_yaml, extensions=[".yml", ".yaml"])

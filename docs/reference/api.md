@@ -7,7 +7,7 @@ from ymprint import (
     Ymprint, default_app,
     RenderEvent, RenderCallbackError,
     BlockRegistry, BlockExistsError, parse_block_key,
-    register_loader, register_serializer, RenderRun,
+    register_loader, register_serializer, register_decoder, RenderRun,
 )
 ```
 
@@ -153,7 +153,17 @@ those suffixes. The built-in loaders are `yaml` and `json`.
 
 Registers `serializer(value) -> JSON-native data` for exported values of `type` (and its
 subclasses). Later registrations take precedence. Built in: JSON-native types, paths, sets,
-and anything with `__float__`.
+and real numbers (including numpy's). Any other object is an error, even one with
+`__float__`: a units quantity's `float()` can be a scaled display value, which would be
+written as a wrong number.
+
+### `register_decoder(tag, decoder)`
+
+Registers `decoder(mapping) -> value` for JSON mappings tagged `{"$type": tag, ...}`
+(`ymprint.exports.TYPE_KEY`). A serializer that returns such a mapping, together with a
+decoder for its tag, makes a type round-trip: a document or script reading the data with
+[`_data`](../guide/data-sources.md) gets the value back, not a dict. JSON read with the
+built-in `json` loader is decoded, and a mapping with an unregistered tag stays a plain dict.
 
 ### Installed plugins
 

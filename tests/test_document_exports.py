@@ -9,7 +9,8 @@ from typer.testing import CliRunner
 
 from ymprint import Ymprint
 from ymprint.data_sources import DataSourceError
-from ymprint.exports import ExportError, dumps, register_serializer
+from ymprint.data_sources import load_file
+from ymprint.exports import TYPE_KEY, ExportError, dumps, register_decoder, register_serializer, write_json_atomic
 from ymprint.report_reader import load_report
 
 
@@ -226,15 +227,61 @@ class Quantity:
     def __init__(self, value, unit):
         self.value, self.unit = value, unit
 
+    def __eq__(self, other):
+        return isinstance(other, Quantity) and (self.value, self.unit) == (other.value, other.unit)
+
 
 class Ratio:
+    """Has __float__ but isn't a number, like a units quantity whose float() is scaled."""
+
     def __float__(self):
         return 0.5
 
 
 def test_serialization():
     register_serializer(Quantity, lambda q: {"value": q.value, "unit": q.unit})
-    data = {"q": Quantity(30.2, "kN"), "p": pathlib.PurePosixPath("a/b"), "r": Ratio(), "s": {2, 1}}
-    assert json.loads(dumps(data)) == {"q": {"value": 30.2, "unit": "kN"}, "p": "a/b", "r": 0.5, "s": [1, 2]}
+    data = {"q": Quantity(30.2, "kN"), "p": pathlib.PurePosixPath("a/b"), "s": {2, 1}}
+    assert json.loads(dumps(data)) == {"q": {"value": 30.2, "unit": "kN"}, "p": "a/b", "s": [1, 2]}
     with pytest.raises(TypeError, match="cannot export a object"):
         dumps({"x": object()})
+
+
+def test_an_object_with_float_but_no_serializer_is_not_exported_as_a_number():
+    with pytest.raises(TypeError, match="cannot export a Ratio"):
+        dumps({"r": Ratio()})
+
+
+def test_numpy_numbers_export_as_numbers():
+    np = pytest.importorskip("numpy")
+    data = {"f": np.float32(0.5), "i": np.int64(3), "f64": np.float64(1.25)}
+    assert json.loads(dumps(data)) == {"f": 0.5, "i": 3, "f64": 1.25}
+    assert isinstance(json.loads(dumps(data))["i"], int)
+
+
+def test_a_document_exporting_an_unserializable_value_fails_clearly(tmp_path):
+    write(tmp_path / "p.ymprint.yml", "_data:\n  out:\n    from: calc.yml\n")
+    calc = write(tmp_path / "calc.yml", """
+        _export:
+          V: $V
+        Doc:
+          - _py:
+              echo: false
+              source: |
+                class Quantity:
+                    def __float__(self):
+                        return 30.2
+                V = Quantity()
+    """)
+    with pytest.raises(ExportError, match="cannot export a Quantity"):
+        Ymprint().render_all(calc)
+
+
+def test_tagged_values_round_trip_through_json(tmp_path):
+    register_serializer(Quantity, lambda q: {TYPE_KEY: "tests.Quantity", "value": q.value, "unit": q.unit})
+    register_decoder("tests.Quantity", lambda m: Quantity(m["value"], m["unit"]))
+    path = tmp_path / "out.json"
+    write_json_atomic(path, {"B01": {"Vr": Quantity(30.2, "kN"), "n": 2}, "other": {TYPE_KEY: "unknown", "a": 1}})
+    data = load_file(path)
+    assert data["B01"] == {"Vr": Quantity(30.2, "kN"), "n": 2}
+    # An unregistered tag is read as a plain dict.
+    assert data["other"] == {TYPE_KEY: "unknown", "a": 1}
