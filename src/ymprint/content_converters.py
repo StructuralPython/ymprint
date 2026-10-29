@@ -1,3 +1,4 @@
+from collections import ChainMap
 from itertools import cycle
 from typing import TypeAlias, Union
 from reportlab.platypus import (
@@ -18,6 +19,22 @@ from .markdown.inline import convert_inline_markdown
 
 RLFlowables: TypeAlias = Union[Paragraph, Spacer, Table, KeepTogether, Image]
 jinja_env = Environment(undefined=DebugUndefined)
+
+
+def render_template(text: str, variables: dict) -> str:
+    """
+    Returns 'text' rendered as a Jinja template with 'variables'.
+
+    The variables are used as the template's context directly rather than
+    copied (as Template.render does), so a lazily loaded `_data` source is only
+    read when the template actually uses it.
+    """
+    template = jinja_env.from_string(text)
+    context = template.new_context(ChainMap(variables, template.globals), shared=True)
+    try:
+        return jinja_env.concat(template.root_render_func(context))
+    except Exception:
+        return jinja_env.handle_exception()
 
 def _family_sheet(context: dict, current_style: str):
     """Returns the reportlab StyleSheet1 for the active text style family."""
@@ -52,8 +69,7 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body", curre
     paras = []
     for para in paragraphs:
         para_md = convert_inline_markdown(para)
-        template = jinja_env.from_string(para_md)
-        rendered = template.render(context['vars'])
+        rendered = render_template(para_md, context['vars'])
         if underline:
             rendered = f"<u>{rendered}</u>"
         rl_para = Paragraph(rendered, style=style)
@@ -90,8 +106,7 @@ def convert_ul(value: list[str], context: dict, level: int = 0, current_style: s
             bullet_contents.extend(sub_bullets)
         else:
             para_md = convert_inline_markdown(elem)
-            template = jinja_env.from_string(para_md)
-            rendered = template.render(context['vars'])
+            rendered = render_template(para_md, context['vars'])
             bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}"><b>{bul_symbol}</b></bullet>{rendered}', bullet_style)
             bullet_contents.append(bullet_content)
             
@@ -124,8 +139,7 @@ def convert_ol(value: list | dict, context: dict, level: int = 0, current_style:
             bullet_contents.extend(sub_bullets)
             continue
         para_md = convert_inline_markdown(elem)
-        template = jinja_env.from_string(para_md)
-        rendered = template.render(context['vars'])
+        rendered = render_template(para_md, context['vars'])
         bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}">{number}. </bullet>{rendered}', bullet_style)
         bullet_contents.append(bullet_content)
         number += 1
@@ -139,8 +153,7 @@ def convert_table(value: list[dict], context: dict) -> list[Table]:
     for row in value:
         inner = []
         for cell in row.values():
-            template = jinja_env.from_string(str(cell))
-            rendered = template.render(context['vars'])
+            rendered = render_template(str(cell), context['vars'])
             inner.append(rendered)
         table_data.append(inner)
     return [Table(table_data, style=table_style)]

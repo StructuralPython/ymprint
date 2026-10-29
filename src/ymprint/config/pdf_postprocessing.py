@@ -154,8 +154,9 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
     """
     Returns a dict mapping each page template name to its background PDF as a
     BytesIO stream (or None when the template has no background). Relative
-    background paths are resolved against the base (source) or config directory according
-    to each background's 'relative-to' setting.
+    background paths resolve against the file that declares them: the document
+    (base) directory, or the config directory for `relative-to: config`;
+    `relative-to: cwd` resolves against the current directory.
     """
     source_parent = pathlib.Path(context['base_dir'])
 
@@ -177,12 +178,14 @@ def load_pdf_backgrounds(context: dict) -> dict[str, io.BytesIO | None]:
             continue
 
         relative_to = background.relative_to
-        if relative_to == 'source':
-            background_path = source_parent / background.filepath
-        elif relative_to == 'config':
+        if relative_to == 'config':
             background_path = config_parent / background.filepath
-        else:
+        elif relative_to == 'cwd':
             background_path = background.filepath
+        else:
+            # `source`, or unset: a path written in the document resolves against
+            # the document. (Config layers made theirs absolute when loaded.)
+            background_path = source_parent / background.filepath
 
         pdf = mu.open(background_path)
         data = io.BytesIO()

@@ -4,6 +4,7 @@ from reportlab.lib import pagesizes
 from typing import Optional
 from .config import ReportStyles, TableStyle, DocConfig
 from .blocks.registry import BlockRegistry
+from .data_sources import DataCatalog
 
 def build_context(
         content_yaml: dict,
@@ -16,15 +17,21 @@ def build_context(
         config_path: str | pathlib.Path,
         blocks: Optional[BlockRegistry] = None,
         base_dir: Optional[str | pathlib.Path] = None,
+        data: Optional[DataCatalog] = None,
+        project_root: Optional[str | pathlib.Path] = None,
     ) -> dict:
     """
     Returns the render context. 'base_dir' is the directory that relative paths in
     the document (images, JSON, `relative-to: source` backgrounds) resolve against;
     it defaults to the source file's directory. 'source_path' is None when the
-    document was supplied as data rather than read from a file.
+    document was supplied as data rather than read from a file. 'data' is the
+    catalog of the document's `_data` sources; 'project_root' defaults to
+    'base_dir'.
     """
     if base_dir is None:
         base_dir = pathlib.Path(source_path).parent if source_path is not None else pathlib.Path.cwd()
+    if project_root is None:
+        project_root = base_dir
     # inline_styles = {} if "_style" not in content_yaml else content_yaml.pop("_style")
     report_styles = ReportStyles.model_validate(text_styles_yaml['_style'])
     # inline_doctemplate = {} if "_doc" not in content_yaml else content_yaml.pop("_doc")
@@ -73,6 +80,8 @@ def build_context(
         "config_path": config_path,
         "destination_path": destination_path,
         "base_dir": pathlib.Path(base_dir),
+        "project_root": pathlib.Path(project_root),
+        "data": data if data is not None else DataCatalog(project_root=pathlib.Path(project_root)),
         "blocks": blocks if blocks is not None else _builtin_blocks(),
     }
     rebuild_styles(context)

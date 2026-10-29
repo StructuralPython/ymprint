@@ -16,6 +16,7 @@ class Margins(BaseModel):
 class RelativeTo(StrEnum):
     CONFIG = 'config'
     SOURCE = 'source'
+    CWD = 'cwd'
 
 class PDFBackground(BaseModel):
     filepath: str

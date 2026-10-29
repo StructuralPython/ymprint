@@ -296,6 +296,11 @@ documents you trust.
 
 Read a JSON file into your variable context at render time, optionally under a namespace.
 
+:::{tip}
+For data that several documents use, declare it once in the project config with
+[`_data`](../guide/data-sources.md) instead; documents then use it by name, with no path.
+:::
+
 ```yaml
 _loadjson:
   path: extra_vars.json

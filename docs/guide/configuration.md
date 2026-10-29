@@ -70,6 +70,10 @@ A project config file holds the same `_doc`, `_style`, and `_tablestyle` keys. A
 that doesn't override a given setting inherits it from the project config, which in turn
 inherits from the internal defaults.
 
+The project config's directory is the **project root**. The project config can also
+declare the project's data files once, by name, under `_data`; see
+[Project data](data-sources.md).
+
 (cfg-doc)=
 ## Document template — `_doc`
 

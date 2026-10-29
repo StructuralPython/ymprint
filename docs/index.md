@@ -92,6 +92,7 @@ Control page templates, text styles, and table styles across layered priority le
 
 :::{grid-item-card} 🔢 Variables
 :link: guide/variables
+guide/data-sources
 :link-type: doc
 
 Define `_vars`, render them with Jinja, and pass Python objects into blocks.
