@@ -323,6 +323,7 @@ _tablestyle:
 | `headers.row` | Header background colour and which rule `lines` to draw (`above`, `below`). |
 | `body.text` | Font, size, and colour of body cells. |
 | `body.rows.color` | Row banding — separate colours for `even` and `odd` rows. |
+| `body.rows.styles` | Named row colours that a [`_table`](#block-table)'s `row_style` can apply, e.g. `{critical: "#ff0000"}`. Added to the built-in `danger` (`#f8d7da`) and `warning` (`#fff3cd`). |
 | `body.rows.lines` | Which rule lines to draw around body rows. |
 
 ## Putting it together

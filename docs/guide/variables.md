@@ -67,8 +67,9 @@ Report:
 ```
 
 :::{important}
-`$var` is only for **block parameters**. You cannot use the `$name` syntax inside content
-that is meant to be displayed — attempting to do so raises an error. For display text, use
+`$var` is for **block parameters** and for **tables**. As content on its own, `$name` must
+hold tabular data (a list of mappings), which renders as a table; see
+[Tables from data](#tables-from-data). Any other value raises an error. For display text, use
 Jinja (`{{name}}`) instead.
 :::
 
