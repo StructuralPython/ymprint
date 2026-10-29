@@ -21,7 +21,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # The _hc block (handcalcs calculations); see docs/installation.md.
-hc = ["ym-handcalcs>=0.2.0"]
+hc = ["ym-handcalcs>=0.2.1"]
 
 [project.scripts]
 ym = "ymprint.cli.main:app"
@@ -40,5 +40,5 @@ dev = [
     "matplotlib>=3.11.0",
     "pytest>=9.0.3",
     "rich>=15.0.0",
-    "ym-handcalcs>=0.2.0",
+    "ym-handcalcs>=0.2.1",
 ]

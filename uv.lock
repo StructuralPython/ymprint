@@ -628,15 +628,15 @@ wheels = [
 
 [[package]]
 name = "ym-handcalcs"
-version = "0.2.0"
+version = "0.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "handcalcs" },
     { name = "reportlab" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3d/f4/dc70c78254917306a0f42ae0fc29bcbfcc60ffd3b46aded2d54edd12bb15/ym_handcalcs-0.2.0.tar.gz", hash = "sha256:185f22c001d2debe5883216407446233e134c441d428df3e18b96338c2ebecb7", size = 35224, upload-time = "2026-10-29T06:13:23.013Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/66/d1/cd86afb89972345c1998cbf9375515fc5471683f157c2a2f4085aeea6ecb/ym_handcalcs-0.2.1.tar.gz", hash = "sha256:575e8da6aa40b9df0cabe79b08b49f2c512cf5cc0ce11c58dff74eee38224544", size = 35237, upload-time = "2026-10-29T23:04:14.783Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/79/3bb4dfad27b173fe20783c30b116ee75813f0fe81beafbda168a8f5c1ec2/ym_handcalcs-0.2.0-py3-none-any.whl", hash = "sha256:735ea6c0b847d5e8754ef1f4e62bfa3c75a0699d7435bec2c930e96df1d22c74", size = 38538, upload-time = "2026-10-29T06:13:21.815Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/ef/9a535f463226be6f83aacfc9227b250da5f6a01bb4843f1516629cf5e8b0/ym_handcalcs-0.2.1-py3-none-any.whl", hash = "sha256:33fbefd9ae420502e06bcbbaae4958dd14477935e60fd9e3c2a96322eb67bf98", size = 38537, upload-time = "2026-10-29T23:04:13.453Z" },
 ]
 
 [[package]]
@@ -681,7 +681,7 @@ requires-dist = [
     { name = "ruamel-yaml", specifier = ">=0.19.1" },
     { name = "typer", specifier = ">=0.26.7" },
     { name = "wenmode", specifier = ">=0.8.0" },
-    { name = "ym-handcalcs", marker = "extra == 'hc'", specifier = ">=0.2.0" },
+    { name = "ym-handcalcs", marker = "extra == 'hc'", specifier = ">=0.2.1" },
 ]
 provides-extras = ["hc"]
 
@@ -691,5 +691,5 @@ dev = [
     { name = "matplotlib", specifier = ">=3.11.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "rich", specifier = ">=15.0.0" },
-    { name = "ym-handcalcs", specifier = ">=0.2.0" },
+    { name = "ym-handcalcs", specifier = ">=0.2.1" },
 ]
