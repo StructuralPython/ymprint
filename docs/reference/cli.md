@@ -8,15 +8,17 @@ ym --help
 
 | Command | What it does |
 | --- | --- |
-| [`ym convert`](#ym-convert) | Render a YAML file to a PDF once. |
+| [`ym convert`](#ym-convert) | Render a YAML file to PDF (once per parameter set, if it has them). |
 | [`ym live`](#ym-live) | Render, open the PDF in Okular, which will hot-reload on every save. |
 
 ## `ym convert`
 
-Render a single YAML file to a PDF.
+Render a YAML file to a PDF. A document with a `_render` entry in the project config is
+rendered as it says: once per parameter set, to its `output`. See
+[Parameterized documents](../guide/parameterized-documents.md).
 
 ```bash
-ym convert SRC [--dest DEST] [--config-dir DIR]
+ym convert SRC [--dest DEST] [--config-dir DIR] [--var NAME=VALUE ...] [--only NAME=VALUE ...]
 ```
 
 | Argument | Required | Meaning |
@@ -24,6 +26,11 @@ ym convert SRC [--dest DEST] [--config-dir DIR]
 | `SRC` | ✅ | Path to the source YAML report. |
 | `--dest` | | Output PDF path. Defaults to the source path with a `.pdf` extension, written next to the source file. |
 | `--config-dir` | | Directory holding a config file. It is layered over any project config found by searching the source file's parent directories, which in turn is layered over the internal defaults. |
+| `--var` | | Set a variable, `NAME=VALUE` (repeatable), over the document's `_vars`. Renders once, ignoring the document's parameter sets. Values are read as YAML scalars. |
+| `--only` | | Render only the parameter sets with `NAME=VALUE` (repeatable). |
+
+If any parameter set fails, the others still render, the failures are listed, and the
+exit code is 1. `--dest` cannot be used with a document that has parameter sets.
 
 **Examples**
 
@@ -52,7 +59,7 @@ automatically whenever the source (or the non-default config file) changes.
 Ideal for live authoring.
 
 ```bash
-ym live SRC [--dest DEST] [--config-file FILE]
+ym live SRC [--dest DEST] [--config-file FILE] [--var NAME=VALUE ...] [--only NAME=VALUE ...]
 ```
 
 | Argument | Required | Meaning |
@@ -60,10 +67,13 @@ ym live SRC [--dest DEST] [--config-file FILE]
 | `SRC` | ✅ | YAML file to render and watch. |
 | `--dest` | | Output PDF path. Defaults to the source path with a `.pdf` extension. |
 | `--config-file` | | A config file layered over any discovered project config. |
+| `--var` | | Set a variable, `NAME=VALUE` (repeatable). |
+| `--only` | | For a document with parameter sets: preview the one set with `NAME=VALUE`, written to its `output`. Without it, live mode previews the `_vars` defaults. |
 
 **What it watches.** Live mode watches the source file and every config file in play
 (the discovered project config, the `--config-file`, and a custom application's own
-config). When any of them changes, the PDF is re-rendered and Okular refreshes.
+config), plus the [data files](../guide/data-sources.md) the document read. When any of
+them changes, the PDF is re-rendered and Okular refreshes.
 
 **Starting from scratch.** If `SRC` does not exist yet, live mode offers to create a
 minimal starter document at that path (after a confirming prompt) so you can begin

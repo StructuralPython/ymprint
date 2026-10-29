@@ -17,7 +17,7 @@ from .config.config_loaders import load_report_config
 from .config.font_registry import register_fonts
 from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake, overlay_pdf_background
 from .context_builder import build_context, rebuild_styles
-from .data_sources import DataCatalog, YmContext, build_document_vars
+from .data_sources import YM_VAR, DataCatalog, DocumentVars, YmContext, build_document_vars
 from .errors import YmprintAuthoringError
 from .exceptions import YMPrintSyntaxException
 from .story_builder import build_story
@@ -48,6 +48,9 @@ class RenderEvent:
     # Variables merged over the document's own `_vars`. A before_render hook can
     # fill this to feed data into the document without writing it to disk.
     vars: dict = field(default_factory=dict)
+    # The parameter set of this render, when the document is rendered once per
+    # parameter set (its `_render` entry has a `for_each`); `ym.params`.
+    params: dict = field(default_factory=dict)
     # Where the PDF is actually written, when not 'destination'. Live mode sets
     # this to a local preview copy when the destination is locked.
     output: Optional[pathlib.Path] = None
@@ -107,17 +110,20 @@ def run_hooks(stage: str, hooks: list[Callable], *args: Any) -> None:
 
 
 def load_source(source: Optional[pathlib.Path], data: Optional[dict]) -> dict:
-    """Returns the document as a fresh dict, read from 'source' or copied from 'data'."""
-    if source is not None:
-        if not source.exists():
-            raise FileNotFoundError(f"The source YAML file at {str(source)} does not exist")
-        source_data = load_yaml(source)
-        name = source.name
-    else:
+    """
+    Returns the document as a fresh dict: copied from 'data' when given (a
+    document supplied as data, or a source file already read once for several
+    renders), else read from 'source'.
+    """
+    name = source.name if source is not None else "<data>"
+    if data is not None:
         # The pipeline pops config and `_vars` out of the document; copy so the
         # caller's dict is left as it was and can be rendered again.
         source_data = copy.deepcopy(data)
-        name = "<data>"
+    else:
+        if not source.exists():
+            raise FileNotFoundError(f"The source YAML file at {str(source)} does not exist")
+        source_data = load_yaml(source)
     if not source_data:
         # An empty document (or one with no content) loads as None. Report it as an
         # authoring error so the CLI/live mode shows it instead of crashing with a
@@ -145,22 +151,12 @@ def render_document(
     run_hooks("before_render", hooks.before_render, event)
 
     source_data = load_source(event.source, data)
-    document_data = source_data.pop("_data", None) if isinstance(source_data, dict) else None
     register_fonts()
+    document_vars = document_variables(event, source_data)
+    catalog = document_vars.catalog
+    project_root = document_vars[YM_VAR].project_root
     textstyles, tablestyles, doc_data = load_report_config(source_data, list(event.config_paths))
     doctemplate = DocConfig.model_validate(doc_data['_doc'])
-    project_root = event.project_root or event.base_dir
-    catalog = DataCatalog.from_config(
-        event.config_paths, document_data, event.base_dir, event.source, project_root
-    )
-    ym = YmContext(project_root=project_root, source=event.source, catalog=catalog)
-    document_vars = build_document_vars(
-        extract_vars(source_data),
-        event.vars,
-        catalog,
-        ym,
-        where=event.source.name if event.source is not None else "the document",
-    )
     context = build_context(
         source_data,
         textstyles,
@@ -199,6 +195,35 @@ def render_document(
     )
 
     run_hooks("after_render", hooks.after_render, event)
+
+
+def document_variables(event: RenderEvent, source_data: dict) -> DocumentVars:
+    """
+    Returns the variables of the render 'event' describes: the document's
+    `_vars` and `_data` (popped from 'source_data'), the config's `_data`, `ym`,
+    and event.vars.
+    """
+    document_data = None
+    if isinstance(source_data, dict):
+        document_data = source_data.pop("_data", None)
+        if "_render" in source_data:
+            raise YMPrintSyntaxException(
+                "`_render` belongs in the project config (*.ymprint.yml), not in the document."
+            )
+    project_root = event.project_root or event.base_dir
+    catalog = DataCatalog.from_config(
+        event.config_paths, document_data, event.base_dir, event.source, project_root
+    )
+    ym = YmContext(
+        project_root=project_root, source=event.source, params=dict(event.params), catalog=catalog
+    )
+    return build_document_vars(
+        extract_vars(source_data),
+        event.vars,
+        catalog,
+        ym,
+        where=event.source.name if event.source is not None else "the document",
+    )
 
 
 def extract_vars(source_data: dict) -> dict:

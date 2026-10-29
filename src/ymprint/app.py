@@ -19,13 +19,21 @@ of ymprint::
 """
 from __future__ import annotations
 
+import copy
 import pathlib
-from typing import Callable, Optional, Sequence
+from typing import Callable, Mapping, Optional, Sequence
 
 from .blocks.builtin import BUILTIN_BLOCKS
 from .blocks.registry import BlockConverter, BlockRegistry
 from .config.config_loaders import locate_config_file
-from .render import ContextHook, RenderEvent, RenderHook, RenderHooks, RenderMode, render_document
+from .fanout import (
+    Instance, RenderFailure, RenderRun, RenderSpec, RenderUsageError,
+    build_instances, matches, render_specs,
+)
+from .render import (
+    ContextHook, RenderEvent, RenderHook, RenderHooks, RenderMode,
+    document_variables, load_source, render_document,
+)
 
 PathLike = str | pathlib.Path
 ConfigPaths = PathLike | Sequence[PathLike]
@@ -161,9 +169,11 @@ class Ymprint:
         mode: RenderMode = "api",
         output: Optional[PathLike] = None,
         project_root: Optional[PathLike] = None,
+        vars: Optional[Mapping] = None,
+        params: Optional[Mapping] = None,
     ) -> RenderEvent:
         """
-        Renders 'source' to a PDF and returns the RenderEvent describing it.
+        Renders 'source' to a PDF, once, and returns the RenderEvent describing it.
 
         'source': a YAML document path, or the document as a dict.
         'destination': the PDF to write. Defaults to the source path with a .pdf
@@ -178,7 +188,35 @@ class Ymprint:
             'destination' as the document's target.
         'project_root': `ym.project_root` in the document. Defaults to the
             directory of the discovered *.ymprint.yml, else 'base_dir'.
+        'vars': variables layered over the document's `_vars` (they win).
+        'params': the parameter set this render is for (`ym.params`).
+
+        A `_render` entry for the document is not used; see render_all.
         """
+        event, data = self._event(
+            source, destination, config_path,
+            base_dir=base_dir, discover_config=discover_config, trigger=trigger, mode=mode,
+            output=output, project_root=project_root, vars=vars, params=params,
+        )
+        render_document(event, data, self.blocks, self.hooks)
+        return event
+
+    def _event(
+        self,
+        source: PathLike | dict,
+        destination: Optional[PathLike],
+        config_path: Optional[ConfigPaths],
+        *,
+        base_dir: Optional[PathLike] = None,
+        discover_config: bool = True,
+        trigger: Optional[PathLike] = None,
+        mode: RenderMode = "api",
+        output: Optional[PathLike] = None,
+        project_root: Optional[PathLike] = None,
+        vars: Optional[Mapping] = None,
+        params: Optional[Mapping] = None,
+    ) -> tuple[RenderEvent, Optional[dict]]:
+        """Returns the RenderEvent for a render, and the document data (None for a path)."""
         if isinstance(source, dict):
             data = source
             source_path = None
@@ -201,14 +239,112 @@ class Ymprint:
             config_paths=self.config_layers(base_dir, config_path, discover_config),
             trigger=pathlib.Path(trigger) if trigger is not None else None,
             mode=mode,
+            vars=dict(vars or {}),
+            params=dict(params or {}),
             output=pathlib.Path(output) if output is not None else None,
             project_root=(
                 pathlib.Path(project_root).resolve() if project_root is not None
                 else self.project_root(base_dir, discover_config)
             ),
         )
-        render_document(event, data, self.blocks, self.hooks)
-        return event
+        return event, data
+
+    def _plan(
+        self,
+        source: PathLike,
+        config_path: Optional[ConfigPaths],
+        discover_config: bool,
+        mode: RenderMode,
+    ) -> tuple[Optional[RenderSpec], Optional[dict], list[Instance], set[pathlib.Path]]:
+        """
+        Returns the document's `_render` entry, its data (read once, when it
+        fans out), its renders, and the data files read to work them out.
+        """
+        source_path = pathlib.Path(source).resolve()
+        event, _ = self._event(source_path, None, config_path, discover_config=discover_config, mode=mode)
+        spec = render_specs(event.config_paths).get(source_path)
+        if spec is None or not spec.fans_out:
+            return spec, None, build_instances(spec, source_path, {}), set()
+        data = load_source(source_path, None)
+        variables = document_variables(event, copy.deepcopy(data))
+        instances = build_instances(spec, source_path, variables)
+        return spec, data, instances, variables.catalog.inputs()
+
+    def instances(
+        self,
+        source: PathLike,
+        config_path: Optional[ConfigPaths] = None,
+        *,
+        only: Optional[Mapping] = None,
+        discover_config: bool = True,
+    ) -> list[Instance]:
+        """
+        Returns the renders of the document at 'source' that render_all would
+        make: one per parameter set of its `_render` entry (those matching
+        'only'), or a single one.
+        """
+        spec, _, instances, _ = self._plan(source, config_path, discover_config, "api")
+        if only and (spec is None or not spec.fans_out):
+            raise RenderUsageError(_not_parameterized(source))
+        return [i for i in instances if matches(i.params, only)]
+
+    def render_all(
+        self,
+        source: PathLike,
+        config_path: Optional[ConfigPaths] = None,
+        *,
+        destination: Optional[PathLike] = None,
+        only: Optional[Mapping] = None,
+        discover_config: bool = True,
+        mode: RenderMode = "api",
+    ) -> RenderRun:
+        """
+        Renders the document at 'source' as its `_render` entry in the project
+        config says: once per parameter set of its `for_each` (only the sets
+        matching 'only', e.g. {"member_name": "B02"}), to its `output`.
+
+        A document without a `_render` entry renders once, to 'destination'
+        (default: next to the source), and errors propagate as from render().
+        With parameter sets, the data is read once, every set is rendered even
+        if some fail, and the failures are returned on the RenderRun.
+        """
+        source_path = pathlib.Path(source).resolve()
+        spec, data, instances, inputs = self._plan(source_path, config_path, discover_config, mode)
+        if spec is None or not spec.fans_out:
+            if only:
+                raise RenderUsageError(_not_parameterized(source_path))
+            instance = instances[0]
+            if destination is not None:
+                instance = Instance(params={}, destination=pathlib.Path(destination), key="")
+            instance.destination.parent.mkdir(parents=True, exist_ok=True)
+            event = self.render(
+                source_path, instance.destination, config_path, discover_config=discover_config, mode=mode
+            )
+            return RenderRun(source_path, spec, instances=[instance], results=[event], inputs=set(event.inputs))
+        if destination is not None:
+            raise RenderUsageError(
+                f"{source_path.name} is rendered once per parameter set; its PDFs go where the "
+                "`output` of its `_render` entry says, so a destination cannot be given."
+            )
+
+        run = RenderRun(
+            source_path, spec, instances=[i for i in instances if matches(i.params, only)], inputs=inputs
+        )
+        for instance in run.instances:
+            instance.destination.parent.mkdir(parents=True, exist_ok=True)
+            event, _ = self._event(
+                source_path, instance.destination, config_path,
+                discover_config=discover_config, mode=mode, vars=instance.params, params=instance.params,
+            )
+            try:
+                render_document(event, data, self.blocks, self.hooks)
+            except Exception as exc:
+                # One failing parameter set must not stop the others.
+                run.failures.append(RenderFailure(instance, exc))
+            else:
+                run.results.append(event)
+            run.inputs |= event.inputs
+        return run
 
     def live(
         self,
@@ -217,15 +353,19 @@ class Ymprint:
         config_path: Optional[ConfigPaths] = None,
         *,
         watch: Sequence[PathLike] = (),
+        vars: Optional[Mapping] = None,
+        only: Optional[Mapping] = None,
     ) -> int:
         """
         Renders 'source', opens it in Okular and re-renders on every change to it,
-        its config or the 'watch' files. Blocks until Ctrl+C; returns an exit code.
+        its config, the data it reads or the 'watch' files. Blocks until Ctrl+C;
+        returns an exit code. 'vars' are layered over the document's `_vars`;
+        'only' selects one parameter set of a document rendered per set.
         """
         if isinstance(source, dict):
             raise TypeError("Live mode watches a document file; it cannot render a dict source.")
         from .cli.live import run_live
-        return run_live(self, source, destination, config_path, watch=watch)
+        return run_live(self, source, destination, config_path, watch=watch, vars=vars, only=only)
 
     def cli(self):
         """
@@ -241,3 +381,10 @@ class Ymprint:
 
 # The application behind `ym` and the module-level helpers like load_report.
 default_app = Ymprint()
+
+
+def _not_parameterized(source: PathLike) -> str:
+    return (
+        f"{pathlib.Path(source).name} is not rendered per parameter set: it has no `_render` entry "
+        "with a `for_each` in the project config, so there is nothing to select with 'only'."
+    )

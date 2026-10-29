@@ -7,7 +7,7 @@ from ymprint import (
     Ymprint, default_app,
     RenderEvent, RenderCallbackError,
     BlockRegistry, BlockExistsError, parse_block_key,
-    register_loader,
+    register_loader, RenderRun,
 )
 ```
 
@@ -40,8 +40,10 @@ Ymprint(
 | `@before_render` | Registers `fn(event)` to run before every render. |
 | `@on_context` | Registers `fn(event, context)` to run after the context is built, before content is rendered. Changes to the style models in `context` take effect. |
 | `@after_render` | Registers `fn(event)` to run after every render that wrote the PDF. |
-| `render(source, destination=None, config_path=None, *, base_dir=None, discover_config=True, trigger=None, mode="api", project_root=None)` | Renders a path or dict to a PDF; returns the `RenderEvent`. |
-| `live(source, destination=None, config_path=None, *, watch=())` | Runs live mode; blocks until Ctrl+C and returns an exit code. |
+| `render(source, destination=None, config_path=None, *, base_dir=None, discover_config=True, trigger=None, mode="api", project_root=None, vars=None, params=None)` | Renders a path or dict to a PDF, once; returns the `RenderEvent`. |
+| `render_all(source, config_path=None, *, destination=None, only=None, discover_config=True, mode="api")` | Renders a document as its `_render` entry says (once per parameter set); returns a [`RenderRun`](#render-all). |
+| `instances(source, config_path=None, *, only=None, discover_config=True)` | The renders `render_all` would make, as `Instance(params, destination, key)`s. |
+| `live(source, destination=None, config_path=None, *, watch=(), vars=None, only=None)` | Runs live mode; blocks until Ctrl+C and returns an exit code. |
 | `config_layers(base_dir, config_path=None, discover_config=True)` | The config layers a render would use, lowest priority first. |
 | `project_root(base_dir, discover_config=True)` | The project root for a document in `base_dir`. |
 | `cli()` | Returns a new Typer app with `convert` and `live` commands. |
@@ -57,16 +59,38 @@ Ymprint(
 | `discover_config` | Search `base_dir` and its parents for a `*.ymprint.yml`. |
 | `trigger`, `mode` | Passed through to the hooks on the `RenderEvent`. |
 | `project_root` | `ym.project_root` in the document. Defaults to the directory of the discovered `*.ymprint.yml`, else `base_dir`. |
+| `vars` | Variables layered over the document's `_vars` (they win). |
+| `params` | The parameter set this render is for: `ym.params` and `RenderEvent.params`. |
+
+(render-all)=
+### `render_all()` and `RenderRun`
+
+`render_all` renders a document as its [`_render`](../guide/parameterized-documents.md)
+entry in the project config says. With a `for_each`, the document is read once and
+rendered once per parameter set; a failing set doesn't stop the others. Without one, it
+renders once (to the entry's `output`, `destination`, or next to the source) and errors
+propagate as from `render()`.
+
+| `RenderRun` field | Meaning |
+| --- | --- |
+| `source` | The document. |
+| `spec` | Its `_render` entry, or `None`. |
+| `instances` | The renders attempted: `Instance(params, destination, key)`. |
+| `results` | The `RenderEvent` of each render that succeeded. |
+| `failures` | `RenderFailure(instance, error)` for each that failed; `describe()` gives a one-line summary. |
+| `inputs` | Every data file read, by `for_each` and by the renders. |
+| `ok` | `True` when nothing failed. |
 
 ## `default_app`
 
 The `Ymprint` instance behind the `ym` command. `ymprint.report_reader.load_report(src,
-dest, config)` renders with it, using exactly the config given (no discovery).
+dest, config, vars=None)` renders with it, using exactly the config given (no discovery),
+and returns the `RenderEvent`.
 
 ## `RenderEvent`
 
 A dataclass passed to every hook. Its fields are `app`, `source`, `destination`,
-`base_dir`, `config_paths`, `trigger`, `mode`, `vars` and `project_root`, plus the
+`base_dir`, `config_paths`, `trigger`, `mode`, `vars`, `params` and `project_root`, plus the
 `initial` property. After the content is rendered, `inputs` holds the data files the
 document read (its [`_data`](../guide/data-sources.md) sources and `_loadjson` files).
 See [The RenderEvent](../guide/custom-applications.md#the-renderevent).
