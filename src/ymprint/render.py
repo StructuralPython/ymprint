@@ -27,7 +27,7 @@ from .yaml_loader import load_yaml
 if TYPE_CHECKING:
     from .app import Ymprint
 
-RenderMode = Literal["convert", "live", "api"]
+RenderMode = Literal["convert", "live", "api", "build"]
 
 
 @dataclass

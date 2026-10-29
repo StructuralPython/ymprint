@@ -1,6 +1,6 @@
 # CLI reference
 
-YMPrint installs a single command, `ym`, with two subcommands.
+YMPrint installs a single command, `ym`, with four subcommands.
 
 ```bash
 ym --help
@@ -10,6 +10,8 @@ ym --help
 | --- | --- |
 | [`ym convert`](#ym-convert) | Render a YAML file to PDF (once per parameter set, if it has them). |
 | [`ym live`](#ym-live) | Render, open the PDF in Okular, which will hot-reload on every save. |
+| [`ym build`](#ym-build) | Build the project's documents and scripts in dependency order, skipping what's up to date. |
+| [`ym graph`](#ym-graph) | Print the project's dependency graph. |
 
 ## `ym convert`
 
@@ -102,6 +104,32 @@ Live mode uses **Okular** as the viewer. Install it via your system package mana
 example `sudo apt install okular` on Debian/Ubuntu). See
 [Installation → Live preview](../installation.md#live-preview-optional).
 :::
+
+## `ym build`
+
+Build the project: every document and script, in dependency order, if stale. See
+[Building a project](../guide/building-projects.md).
+
+```bash
+ym build [TARGET ...] [--all] [--dry-run] [--project DIR]
+```
+
+| Argument | Meaning |
+| --- | --- |
+| `TARGET` | Documents or scripts to build, with whatever they need. Default: the whole project. |
+| `--all` | Rebuild every step, stale or not. |
+| `--dry-run` | Print what would be built and why, without building. |
+| `--project` | A directory inside the project. Default: the current directory. |
+
+The exit code is 1 if any step failed.
+
+## `ym graph`
+
+Print the project's data sources, their producers, and what each step read on its last build.
+
+```bash
+ym graph [--format text|dot|mermaid] [--project DIR]
+```
 
 ## Config discovery
 

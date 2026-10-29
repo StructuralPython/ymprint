@@ -35,6 +35,7 @@ import copy
 import json
 import os
 import pathlib
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import Any, Callable, Iterable, Mapping, Optional
 
@@ -44,6 +45,19 @@ from .yaml_loader import load_yaml
 
 # The variable that gives `_py` and `_hc` code the project paths; see YmContext.
 YM_VAR = "ym"
+
+# Called with each DataSource just before it is read (by a document or by
+# ymprint.project.data). `ym build` sets it to record what each step reads and
+# to produce the data first.
+DATA_ACCESS_HOOK: ContextVar[Optional[Callable[["DataSource"], None]]] = ContextVar(
+    "ymprint_data_access", default=None
+)
+
+
+def _notify_access(source: "DataSource") -> None:
+    hook = DATA_ACCESS_HOOK.get()
+    if hook is not None:
+        hook(source)
 
 
 class DataSourceError(YmprintAuthoringError):
@@ -375,6 +389,7 @@ class DataCatalog:
     def load(self, name: str) -> Any:
         """Returns a fresh copy of data source 'name', recording the read."""
         source = self.get_source(name)
+        _notify_access(source)
         data = source.load()
         self.reads[name] = source.files()
         return data
@@ -383,6 +398,7 @@ class DataCatalog:
         """Returns the file data source 'name' is read from, recording the read."""
         source = self.get_source(name)
         files = source.files()
+        _notify_access(source)
         if len(files) != 1:
             raise DataSourceError(
                 f"Data source {name!r} is read from several files (one per producer), so it has no single path."

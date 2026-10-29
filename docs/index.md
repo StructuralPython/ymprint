@@ -92,9 +92,6 @@ Control page templates, text styles, and table styles across layered priority le
 
 :::{grid-item-card} 🔢 Variables
 :link: guide/variables
-guide/data-sources
-guide/parameterized-documents
-guide/document-exports
 :link-type: doc
 
 Define `_vars`, render them with Jinja, and pass Python objects into blocks.
@@ -145,6 +142,10 @@ examples
 guide/document-structure
 guide/configuration
 guide/variables
+guide/data-sources
+guide/parameterized-documents
+guide/document-exports
+guide/building-projects
 guide/pdf-backgrounds
 guide/slides
 guide/custom-applications

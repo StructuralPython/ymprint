@@ -46,7 +46,7 @@ Ymprint(
 | `live(source, destination=None, config_path=None, *, watch=(), vars=None, only=None)` | Runs live mode; blocks until Ctrl+C and returns an exit code. |
 | `config_layers(base_dir, config_path=None, discover_config=True)` | The config layers a render would use, lowest priority first. |
 | `project_root(base_dir, discover_config=True)` | The project root for a document in `base_dir`. |
-| `cli()` | Returns a new Typer app with `convert` and `live` commands. |
+| `cli()` | Returns a new Typer app with `convert`, `live`, `build` and `graph` commands. |
 
 ### `render()` arguments
 
@@ -174,3 +174,20 @@ from ymprint import register_loader
 def setup():
     register_loader("yaml+units", load_yaml_with_quantities)
 ```
+
+## `ymprint.project`
+
+For scripts that are steps of a [project build](../guide/building-projects.md).
+
+| Function | Meaning |
+| --- | --- |
+| `data(name)` | A fresh copy of data source `name` of the project containing the calling script. |
+| `path(name)` | The file data source `name` is read from. |
+| `publish(name, value)` | Writes `value` (as JSON, atomically) for data source `name`; the calling script must be named in its `from:`. Returns the file written. |
+
+## `ymprint.build.Build`
+
+`Build(app, start=None, *, force=False, dry_run=False, report=None)` is the engine behind
+`ym build`. `run(targets=())` returns a `BuildSummary` whose `results` are `StepResult`s
+(`step`, `status`, `reasons`, `seconds`, `detail`, `error`, `failures`) in the order the
+steps finished; `report(result)` is called as each finishes.
