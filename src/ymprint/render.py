@@ -15,7 +15,7 @@ from .blocks.registry import BlockRegistry
 from .config import DocConfig
 from .config.config_loaders import load_report_config
 from .config.font_registry import register_fonts
-from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake, overlay_pdf_background
+from .config.pdf_postprocessing import background_paths, load_pdf_backgrounds, fill_forms_and_bake, overlay_pdf_background
 from .context_builder import build_context, rebuild_styles
 from .data_sources import YM_VAR, DataCatalog, DocumentVars, YmContext, build_document_vars
 from .errors import YmprintAuthoringError
@@ -58,8 +58,9 @@ class RenderEvent:
     # The directory of the project config; the document's directory when there
     # is none. `ym.project_root` in the document.
     project_root: Optional[pathlib.Path] = None
-    # Set by the render: the data files the document read (its `_data` sources
-    # and any files read directly), for build tools that track dependencies.
+    # Set by the render: the files the document read (its `_data` sources, files
+    # read directly, images and background PDFs), for live mode and build tools
+    # that track dependencies.
     inputs: set[pathlib.Path] = field(default_factory=set)
     # Set by the render: the values of the document's `_export`, or None when it
     # has none.
@@ -156,7 +157,23 @@ def render_document(
     A failing before_render or on_context hook aborts the render (its output may
     be an input to the document); after_render hooks only run once the PDF has
     been written.
+
+    An exception that escapes the render carries the event as `render_event`,
+    so a caller such as live mode can still watch the files read before it.
     """
+    try:
+        _run_render(event, data, blocks, hooks)
+    except Exception as exc:
+        exc.render_event = event
+        raise
+
+
+def _run_render(
+    event: RenderEvent,
+    data: Optional[dict],
+    blocks: BlockRegistry,
+    hooks: RenderHooks,
+) -> None:
     run_hooks("before_render", hooks.before_render, event)
 
     source_data = load_source(event.source, data)
@@ -182,13 +199,33 @@ def render_document(
         project_root=project_root,
     )
 
+    try:
+        _build_pdf(event, context, doctemplate, hooks, export_declarations)
+    finally:
+        # The data files, images and JSON the document read, recorded even when
+        # the render fails part way so they can still be watched.
+        event.inputs |= catalog.inputs()
+
+    run_hooks("after_render", hooks.after_render, event)
+
+
+def _build_pdf(
+    event: RenderEvent,
+    context: dict,
+    doctemplate: DocConfig,
+    hooks: RenderHooks,
+    export_declarations: Any,
+) -> None:
     if hooks.on_context:
         run_hooks("on_context", hooks.on_context, event, context)
         # Hooks may have changed the style models; rebuild what is derived from them.
         rebuild_styles(context)
 
+    # Backgrounds are recorded before the story is built, so a missing or
+    # half-written background is still watched when the render fails.
+    event.inputs |= {path for path in background_paths(context).values() if path is not None}
+
     story = build_story(context["content"], context)
-    event.inputs = catalog.inputs()
     if export_declarations is not None:
         event.exports = evaluate_exports(export_declarations, context["vars"], describe_render(event))
     rl_doc, page_template_map = doctemplate.build(event.destination)
@@ -205,8 +242,6 @@ def render_document(
         context,
         page_template_map,
     )
-
-    run_hooks("after_render", hooks.after_render, event)
 
 
 def describe_render(event: RenderEvent) -> str:

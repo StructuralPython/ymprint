@@ -78,7 +78,7 @@ propagate as from `render()`.
 | `instances` | The renders attempted: `Instance(params, destination, key)`. |
 | `results` | The `RenderEvent` of each render that succeeded. |
 | `failures` | `RenderFailure(instance, error)` for each that failed; `describe()` gives a one-line summary. |
-| `inputs` | Every data file read, by `for_each` and by the renders. |
+| `inputs` | Every file read, by `for_each` and by the renders (data, images, backgrounds). |
 | `keys` | The key of each result, in order. |
 | `exports` | The document's [exports](../guide/document-exports.md): its `_export` values, or `{key: values}` per parameter set. `None` without `_export`. |
 | `written` | The export files written to the `_data` entries that name the document in `from:`. |
@@ -95,10 +95,11 @@ and returns the `RenderEvent`.
 
 A dataclass passed to every hook. Its fields are `app`, `source`, `destination`,
 `base_dir`, `config_paths`, `trigger`, `mode`, `vars`, `params` and `project_root`, plus the
-`initial` property. After the content is rendered, `inputs` holds the data files the
-document read (its [`_data`](../guide/data-sources.md) sources and `_loadjson` files), and
-`exports` holds its [`_export`](../guide/document-exports.md) values (or `None`). `pdf` is
-the PDF written.
+`initial` property. After the content is rendered, `inputs` holds the files the document
+read (its [`_data`](../guide/data-sources.md) sources, `_loadjson` files, `_img` images and
+PDF backgrounds), and `exports` holds its [`_export`](../guide/document-exports.md) values
+(or `None`). `pdf` is the PDF written. An exception raised by a render carries its event as
+`render_event`, with `inputs` holding the files read before it failed.
 See [The RenderEvent](../guide/custom-applications.md#the-renderevent).
 
 ## `RenderCallbackError`

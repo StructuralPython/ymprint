@@ -35,30 +35,51 @@ if TYPE_CHECKING:
     from ..app import Ymprint
 
 
+# A file's (mtime, size), or None when it does not exist.
+FileState = Optional[tuple[float, int]]
+
+
 class FileWatcher:
+    """
+    Reports when a file changes. A change is only reported once the file has
+    stopped changing for one more poll, so a file that is still being written
+    (a design tool saving a PDF in several chunks) is not read half-written.
+    """
+
     def __init__(self, path: Path):
         self.path = path
-        self._mtime: Optional[float] = self._read_mtime()
+        self._state: FileState = self._read_state()
+        # The state seen on the last poll while waiting for the file to settle,
+        # wrapped in a tuple since a deleted file's state is None.
+        self._pending: Optional[tuple[FileState]] = None
 
     def __repr__(self):
         return str(self.path.resolve())
 
-    def _read_mtime(self) -> Optional[float]:
+    def _read_state(self) -> FileState:
         try:
-            return self.path.stat().st_mtime
+            st = self.path.stat()
         except FileNotFoundError:
             return None
+        return (st.st_mtime, st.st_size)
 
     def changed(self) -> bool:
-        mtime = self._read_mtime()
-        if mtime != self._mtime:
-            self._mtime = mtime
+        state = self._read_state()
+        if state == self._state:
+            self._pending = None
+            return False
+        if self._pending is not None and state == self._pending[0]:
+            self._state = state
+            self._pending = None
             return True
+        # Changed since the last poll: wait for it to settle.
+        self._pending = (state,)
         return False
 
     def sync(self) -> None:
         """Accept the file's current state as seen, without reporting a change."""
-        self._mtime = self._read_mtime()
+        self._state = self._read_state()
+        self._pending = None
 
 
 def format_callback_error(exc: RenderCallbackError) -> RenderableType:
@@ -115,8 +136,12 @@ def build_live_panel(
     watchers: list[FileWatcher],
     lower: RenderableType,
     border_style: str,
+    inputs: Iterable[FileWatcher] = (),
 ) -> Panel:
-    """Assemble the two-part live panel: watch list + throbber over a status area."""
+    """
+    Assemble the two-part live panel: watch list + throbber over a status area.
+    'inputs' are the files the last render read (data, images, backgrounds).
+    """
     header = Text()
     header.append("👁  ", style="bold")
     header.append("YMPrint live", style="bold cyan")
@@ -128,6 +153,13 @@ def build_live_panel(
         files.append(f"{watcher.path.name}\n", style="cyan")
     files.append("     ", style="dim")
     files.append(str(watchers[0].path.resolve().parent), style="dim")
+    inputs = list(inputs)
+    if inputs:
+        files.append("\n   inputs\n", style="dim")
+        for watcher in inputs:
+            files.append("   • ", style="dim")
+            files.append(f"{watcher.path.name}\n", style="cyan dim")
+        files.rstrip()
 
     upper = Group(header, Text(), files, Text(), state.render())
     body = Group(upper, Rule(style=border_style), lower)
@@ -235,6 +267,8 @@ def run_live(
             console.print("[dim]No document to render. Exiting.[/dim]")
             return 0
 
+    # The source, its config layers and --watch files are watched for the whole
+    # session; the files a render read are replaced after each render.
     file_watchers = [FileWatcher(source)]
     config_layers = app.config_layers(source.resolve().parent, config_path)
     file_watchers.extend(FileWatcher(p) for p in config_layers if p.is_file())
@@ -262,11 +296,29 @@ def run_live(
         )
         viewer_opened = True
 
-    def watch_inputs(event) -> None:
-        # Data files the document read (its `_data` sources) are watched too, so
-        # editing the data re-renders the document that uses it.
-        watched = {w.path.resolve() for w in file_watchers}
-        file_watchers.extend(FileWatcher(p) for p in sorted(event.inputs) if p not in watched)
+    input_watchers: dict[Path, FileWatcher] = {}
+
+    def all_watchers() -> list[FileWatcher]:
+        return [*file_watchers, *input_watchers.values()]
+
+    def watch_inputs(event, *, failed: bool = False) -> None:
+        # The files the document read (its data, images and background PDFs) are
+        # watched too, so editing one re-renders the document. A successful render
+        # replaces them; a failed one only adds, so a file that might fix the
+        # failure stays watched.
+        fixed = {w.path.resolve() for w in file_watchers}
+        paths = sorted(p for p in event.inputs if p not in fixed)
+        if not failed:
+            for path in set(input_watchers) - set(paths):
+                del input_watchers[path]
+        for path in paths:
+            if path not in input_watchers:
+                input_watchers[path] = FileWatcher(path)
+
+    def watch_failed_inputs(exc: BaseException) -> None:
+        event = getattr(exc, "render_event", None)
+        if event is not None:
+            watch_inputs(event, failed=True)
 
     def render_once(trigger: Optional[Path]) -> None:
         nonlocal preview, preview_rendered
@@ -295,20 +347,23 @@ def run_live(
         try:
             render_once(trigger)
         except YmprintAuthoringError as exc:
+            watch_failed_inputs(exc)
             state.trigger_error_explosion()
             return format_authoring_error(exc), "red"
         except RenderCallbackError as exc:
+            watch_failed_inputs(exc)
             state.trigger_error_explosion()
             return format_callback_error(exc), "red"
         except Exception as exc:
             # Anything else (e.g. an unwritable destination) is shown, not fatal:
             # the next save tries again.
+            watch_failed_inputs(exc)
             state.trigger_error_explosion()
             return format_render_error(exc), "red"
         finally:
             # Ignore changes the hooks made to watched files so they do not
             # retrigger a render in an endless loop.
-            for watcher in file_watchers:
+            for watcher in all_watchers():
                 watcher.sync()
         names = ", ".join(w.path.name for w in file_watchers)
         stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -328,7 +383,7 @@ def run_live(
         open_viewer(preview or destination)
 
         with Live(
-            build_live_panel(state, file_watchers, lower, border),
+            build_live_panel(state, file_watchers, lower, border, input_watchers.values()),
             console=console,
             refresh_per_second=FPS,
             transient=False,
@@ -337,18 +392,21 @@ def run_live(
                 while True:
                     t0 = time.monotonic()
 
-                    changed = next((w for w in file_watchers if w.changed()), None)
+                    # Poll every watcher (not just up to the first change) so each one
+                    # tracks whether its file has settled.
+                    changes = [w for w in all_watchers() if w.changed()]
+                    changed = changes[0] if changes else None
                     if changed is not None:
                         # A save clears any prior error immediately and shows the
                         # reload in progress before we attempt it.
                         state.trigger_explosion()
                         lower = Text(f"⟳ reloading ({changed.path.name}) …", style="yellow")
                         border = "yellow"
-                        live.update(build_live_panel(state, file_watchers, lower, border))
+                        live.update(build_live_panel(state, file_watchers, lower, border, input_watchers.values()))
                         lower, border = render(changed.path)
 
                     state.advance()
-                    live.update(build_live_panel(state, file_watchers, lower, border))
+                    live.update(build_live_panel(state, file_watchers, lower, border, input_watchers.values()))
 
                     elapsed = time.monotonic() - t0
                     time.sleep(max(0.0, frame_time - elapsed))

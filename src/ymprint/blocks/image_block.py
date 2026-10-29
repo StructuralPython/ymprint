@@ -20,6 +20,9 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
             f"Block {key!r} needs an image path. Add a 'source:' field.",
         )
     image_path = pathlib.Path(context['base_dir']) / pathlib.Path(source)
+    if 'data' in context:
+        # Recorded even when missing, so live mode re-renders once it exists.
+        context['data'].record_file(image_path)
     if not image_path.exists():
         raise FileNotFoundError(
             f"The image file for block '{key}' was not found: {str(image_path)}"
