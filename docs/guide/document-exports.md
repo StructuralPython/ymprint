@@ -63,8 +63,8 @@ Utilizations:
   of the producers' mappings. Two producers giving the same key is an error: every value
   has exactly one author.
 - Files are written atomically (to a temporary file, then renamed).
-- The `from:` declaration is the only place the relationship is stated; a build tool
-  uses it to order the build.
+- The `from:` declaration is the only place the relationship is stated;
+  [`ym build`](building-projects.md) uses it to order the build.
 
 Exports are **not** written when only some parameter sets were rendered (`--only`), or by
 `ym live` and `--var` renders. If any parameter set fails, the producer's previous output is

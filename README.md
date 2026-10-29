@@ -110,9 +110,15 @@ ym live report.yml
   | `_hc` | Typeset Python as handcalcs calculations (`pip install "ymprint[hc]"`) |
   | `_p` | A standalone paragraph with a selectable text style |
   | `_loadjson` | Load variables from a JSON file |
+  | `_table` | A table from computed data, with formats, sorting and row colours |
   | `_pagebreak` | Force a page break |
   | `_hrule` | A configurable horizontal rule |
   | `_spacer` | Insert vertical whitespace |
+
+- **Projects**: name project data once in the project config (`_data`) and use it by name
+  in every document; render a document once per item (`_render`); declare what a
+  document produces (`_export`); and build everything in dependency order with
+  `ym build`. See the guides under *Project data* in the docs.
 
 ## Examples
 

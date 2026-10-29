@@ -92,4 +92,4 @@ one set fails, the others still render; the failures are listed with their keys
 (`B03: KeyError: 'Zx' in _hc`) and the command exits with a non-zero code.
 
 From Python, `Ymprint.render_all()` does the same and returns a `RenderRun`; see the
-[API reference](../reference/api.md#render-all).
+[API reference](#render-all).
