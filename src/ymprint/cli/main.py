@@ -3,6 +3,7 @@ from pathlib import Path
 from .error_display import format_authoring_error
 from ..config.pdf_postprocessing import DestinationLockedError
 from ..errors import YmprintAuthoringError
+from ..fanout import RenderUsageError, parse_assignments
 from ..render import RenderCallbackError
 from rich import box
 from rich.console import Console
@@ -10,7 +11,7 @@ from rich.panel import Panel
 import typer
 from typer import Typer
 
-from .live import format_callback_error, run_live
+from .live import format_callback_error, format_render_error, run_live
 
 if TYPE_CHECKING:
     from ..app import Ymprint
@@ -42,53 +43,63 @@ def build_cli(ym_app: "Ymprint") -> Typer:
                 "Config directory must have an *.ymprint.yml file in it. "
                 "It is layered over any *.ymprint.yml found by searching the source file's parent directories. "
                 "If no config file is found, the default config is used."
-            )] = None
+            )] = None,
+        var: Annotated[Optional[list[str]], typer.Option(
+            "--var",
+            help="Set a variable, NAME=VALUE (repeatable). Renders once with these values, "
+                 "ignoring the document's parameter sets.",
+        )] = None,
+        only: Annotated[Optional[list[str]], typer.Option(
+            "--only",
+            help="Render only the parameter sets with NAME=VALUE (repeatable).",
+        )] = None,
     ):
         """
-        Render a single YAML source file to a PDF, once.
+        Render a YAML source file to PDF.
 
         Writes the PDF next to the source file (or to DEST if given) and exits.
-        Errors in the authored document are reported without a traceback.
+        A document with a `_render` entry in the project config is rendered as
+        it says: once per parameter set, to its `output`. Errors in the
+        authored document are reported without a traceback.
         """
         console = Console()
+        try:
+            variables = parse_assignments(var, "--var")
+            selection = parse_assignments(only, "--only")
+        except ValueError as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(code=2)
 
         try:
-            event = ym_app.render(src, dest, config_dir, mode="convert")
-        except YmprintAuthoringError as exc:
-            # This is a problem in the author's document, not an ymprint crash. Make
-            # that explicit and show the actionable, compact error.
-            console.print(
-                Panel(
-                    format_authoring_error(exc),
-                    title=f"[bold red]{ym_app.name} convert — error in your document[/bold red]",
-                    subtitle="[dim]this is an error in the file you authored, not an ymprint bug[/dim]",
-                    border_style="red",
-                    box=box.ROUNDED,
-                    padding=(1, 2),
-                )
-            )
-            raise typer.Exit(code=1)
-        except RenderCallbackError as exc:
-            console.print(
-                Panel(
-                    format_callback_error(exc),
-                    title=f"[bold red]{ym_app.name} convert — {exc.stage} hook failed[/bold red]",
-                    border_style="red",
-                    box=box.ROUNDED,
-                    padding=(1, 2),
-                )
-            )
-            raise typer.Exit(code=1)
-        except DestinationLockedError as exc:
-            console.print(
-                f"[red]Could not write {exc.path}: it is open in another program "
-                f"(e.g. a PDF viewer or sync client). Close it or wait, then try again.[/red]"
-            )
+            if variables:
+                # Explicit values: one render, whatever the document's `_render` entry says.
+                events = [ym_app.render(src, dest, config_dir, mode="convert", vars=variables)]
+                failures = []
+            else:
+                run = ym_app.render_all(src, config_dir, destination=dest, only=selection, mode="convert")
+                events, failures = run.results, run.failures
+        except RenderUsageError as exc:
+            console.print(f"[red]{exc}[/red]")
+            raise typer.Exit(code=2)
+        except (YmprintAuthoringError, RenderCallbackError, DestinationLockedError) as exc:
+            print_render_error(console, ym_app.name, exc)
             raise typer.Exit(code=1)
 
-        console.print(
-            f"✍️ .... 📝 ... PDF created: {event.destination.resolve()}"
-        )
+        for event in events:
+            console.print(
+                f"✍️ .... 📝 ... PDF created: {event.destination.resolve()}"
+            )
+        for failure in failures:
+            print_render_error(console, ym_app.name, failure.error, label=failure.instance.key)
+        if failures:
+            console.print(
+                f"[red]Rendered {len(events)} of {len(events) + len(failures)}. Failed:[/red]\n"
+                + "\n".join(f"[red]  ✗ {failure.describe()}[/red]" for failure in failures)
+            )
+            raise typer.Exit(code=1)
+        if not events:
+            console.print(f"[red]No parameter set of {src} matches --only {' '.join(only or [])}.[/red]")
+            raise typer.Exit(code=1)
 
     @cli.command(
         name='live',
@@ -105,6 +116,13 @@ def build_cli(ym_app: "Ymprint") -> Typer:
         config_file: Annotated[Optional[str], typer.Option(
             help="Location of optional document config *.ymprint.yml file"
         )] = None,
+        var: Annotated[Optional[list[str]], typer.Option(
+            "--var", help="Set a variable, NAME=VALUE (repeatable).",
+        )] = None,
+        only: Annotated[Optional[list[str]], typer.Option(
+            "--only",
+            help="Preview one parameter set of a document rendered per parameter set, NAME=VALUE (repeatable).",
+        )] = None,
     ):
         """
         Render SRC to a PDF, open it in Okular, and hot-reload on every save.
@@ -113,12 +131,56 @@ def build_cli(ym_app: "Ymprint") -> Typer:
         PDF whenever they change. If SRC does not exist, you'll be prompted to
         create a minimal starter document at that path and drop straight into
         live editing. Press Ctrl+C to stop.
+
+        A document rendered per parameter set previews its `_vars` defaults,
+        or the set chosen with --only.
         """
-        exit_code = run_live(ym_app, src, dest, config_file)
+        try:
+            variables = parse_assignments(var, "--var")
+            selection = parse_assignments(only, "--only")
+        except ValueError as exc:
+            Console().print(f"[red]{exc}[/red]")
+            raise typer.Exit(code=2)
+        exit_code = run_live(ym_app, src, dest, config_file, vars=variables, only=selection)
         if exit_code:
             raise typer.Exit(code=exit_code)
 
     return cli
+
+
+def print_render_error(console: Console, app_name: str, exc: BaseException, label: str = "") -> None:
+    """Prints a failed render's error; 'label' names the parameter set, if any."""
+    where = f" ({label})" if label else ""
+    if isinstance(exc, YmprintAuthoringError):
+        # This is a problem in the author's document, not an ymprint crash. Make
+        # that explicit and show the actionable, compact error.
+        console.print(
+            Panel(
+                format_authoring_error(exc),
+                title=f"[bold red]{app_name} convert{where} — error in your document[/bold red]",
+                subtitle="[dim]this is an error in the file you authored, not an ymprint bug[/dim]",
+                border_style="red",
+                box=box.ROUNDED,
+                padding=(1, 2),
+            )
+        )
+    elif isinstance(exc, RenderCallbackError):
+        console.print(
+            Panel(
+                format_callback_error(exc),
+                title=f"[bold red]{app_name} convert{where} — {exc.stage} hook failed[/bold red]",
+                border_style="red",
+                box=box.ROUNDED,
+                padding=(1, 2),
+            )
+        )
+    elif isinstance(exc, DestinationLockedError):
+        console.print(
+            f"[red]Could not write {exc.path}: it is open in another program "
+            f"(e.g. a PDF viewer or sync client). Close it or wait, then try again.[/red]"
+        )
+    else:
+        console.print(Panel(format_render_error(exc), title=f"[bold red]{app_name} convert{where} — render failed[/bold red]", border_style="red"))
 
 
 def _default_cli() -> Typer:

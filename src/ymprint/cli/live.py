@@ -172,6 +172,8 @@ def run_live(
     *,
     watch: Iterable[str | Path] = (),
     console: Optional[Console] = None,
+    vars: Optional[dict] = None,
+    only: Optional[dict] = None,
 ) -> int:
     """
     Render `source` with `app`, open it in Okular, and hot-reload on every change.
@@ -187,6 +189,10 @@ def run_live(
             config and any ``*.ymprint.yml`` found next to the source.
         watch: Extra files whose changes should also trigger a re-render, e.g.
             the inputs a ``before_render`` hook reads.
+        vars: Variables layered over the document's ``_vars``.
+        only: Select one parameter set of a document rendered per parameter
+            set (e.g. ``{"member_name": "B02"}``): live mode renders that set,
+            to its ``output`` unless `destination` is given.
         console: Rich console to draw on. Defaults to a new ``Console()``.
 
     Files changed by the hooks themselves (for instance, a ``before_render``
@@ -197,11 +203,30 @@ def run_live(
     it in a new viewer, and saves it over `destination` when the session ends.
     """
     source = Path(source)
+    console = console or Console()
+    vars = dict(vars or {})
+    params: dict = {}
+    if only:
+        try:
+            selected = app.instances(source, config_path, only=only) if source.exists() else []
+        except (ValueError, YmprintAuthoringError) as exc:
+            console.print(f"[red]{exc}[/red]")
+            return 2
+        if len(selected) != 1:
+            console.print(
+                f"[red]--only must select exactly one parameter set of {source.name}; "
+                f"it matches {len(selected)}.[/red]"
+            )
+            return 2
+        params = selected[0].params
+        vars = {**params, **vars}
+        if destination is None:
+            destination = selected[0].destination
+            destination.parent.mkdir(parents=True, exist_ok=True)
     if destination is None:
         destination = source.parent / f"{source.stem}.pdf"
     else:
         destination = Path(destination)
-    console = console or Console()
 
     # Live mode can bootstrap a new document: if the source does not exist yet,
     # offer to create a starter file so the user can begin editing immediately.
@@ -246,13 +271,19 @@ def run_live(
     def render_once(trigger: Optional[Path]) -> None:
         nonlocal preview, preview_rendered
         try:
-            event = app.render(source, destination, config_path, trigger=trigger, mode="live", output=preview)
+            event = app.render(
+                source, destination, config_path,
+                trigger=trigger, mode="live", output=preview, vars=vars, params=params,
+            )
         except DestinationLockedError:
             if preview is not None:
                 raise
             preview = preview_path(destination)
             preview.parent.mkdir(parents=True, exist_ok=True)
-            event = app.render(source, destination, config_path, trigger=trigger, mode="live", output=preview)
+            event = app.render(
+                source, destination, config_path,
+                trigger=trigger, mode="live", output=preview, vars=vars, params=params,
+            )
             if viewer_opened:
                 open_viewer(preview)
         watch_inputs(event)
