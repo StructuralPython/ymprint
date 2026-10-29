@@ -202,14 +202,16 @@ def load_config_layer(report_config_path: pathlib.Path) -> tuple[dict, dict, dic
 
 def resolve_config_relative_backgrounds(doctemplate: dict, base_dir: pathlib.Path) -> None:
     """
-    Rewrites `relative-to: config` background paths in 'doctemplate' (in place) to
-    absolute paths against 'base_dir'. With several config layers, "config" means
-    the layer that defines the background, which is only known while loading it.
+    Rewrites the background paths in 'doctemplate' (in place) that resolve
+    against the config file, `relative-to: config` or no `relative-to` at all,
+    to absolute paths against 'base_dir'. With several config layers, "config"
+    means the layer that defines the background, which is only known while
+    loading it.
     """
     templates = (doctemplate or {}).get("templates") or {}
     for template in templates.values():
         background = (template or {}).get("background")
-        if not isinstance(background, dict) or background.get("relative-to") != "config":
+        if not isinstance(background, dict) or background.get("relative-to") not in ("config", None):
             continue
         background["filepath"] = str((base_dir / background["filepath"]).resolve())
         background["relative-to"] = None

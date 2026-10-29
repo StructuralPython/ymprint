@@ -111,6 +111,12 @@ Report:
 
 See [Namespaces](#namespaces) for what `namespace: py1` does.
 
+:::{tip}
+Data that several documents share (a design schedule, section tables, analysis results)
+belongs in the project config's [`_data`](data-sources.md), where it is named once and
+used by name in every document.
+:::
+
 (vars-loadjson)=
 ## Loading variables from JSON — `_loadjson`
 

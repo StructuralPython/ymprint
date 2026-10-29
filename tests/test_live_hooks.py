@@ -313,3 +313,17 @@ def test_cli_convert_reports_locked_destination(tmp_path, lockable):
     assert result.exit_code == 1
     assert "open in another program" in result.output
     assert dest.read_bytes() == b"old"
+
+
+def test_live_watches_the_data_files_the_document_reads(tmp_path, headless_live):
+    data = tmp_path / "values.yml"
+    data.write_text("a: 1\n")
+    src = tmp_path / "doc.yml"
+    src.write_text("_data:\n  values: values.yml\nDoc:\n  - '{{ values.a }}'\n")
+    triggers = []
+    app = Ymprint()
+    app.before_render(lambda e: triggers.append(e.trigger))
+    headless_live.extend([lambda: _bump_mtime(data), lambda: None])
+
+    assert run_live(app, src, console=Console(quiet=True)) == 0
+    assert triggers == [None, data.resolve()]

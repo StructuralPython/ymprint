@@ -237,18 +237,25 @@ def run_live(
         )
         viewer_opened = True
 
+    def watch_inputs(event) -> None:
+        # Data files the document read (its `_data` sources) are watched too, so
+        # editing the data re-renders the document that uses it.
+        watched = {w.path.resolve() for w in file_watchers}
+        file_watchers.extend(FileWatcher(p) for p in sorted(event.inputs) if p not in watched)
+
     def render_once(trigger: Optional[Path]) -> None:
         nonlocal preview, preview_rendered
         try:
-            app.render(source, destination, config_path, trigger=trigger, mode="live", output=preview)
+            event = app.render(source, destination, config_path, trigger=trigger, mode="live", output=preview)
         except DestinationLockedError:
             if preview is not None:
                 raise
             preview = preview_path(destination)
             preview.parent.mkdir(parents=True, exist_ok=True)
-            app.render(source, destination, config_path, trigger=trigger, mode="live", output=preview)
+            event = app.render(source, destination, config_path, trigger=trigger, mode="live", output=preview)
             if viewer_opened:
                 open_viewer(preview)
+        watch_inputs(event)
         if preview is not None:
             preview_rendered = True
 

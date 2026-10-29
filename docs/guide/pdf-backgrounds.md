@@ -24,8 +24,10 @@ Custom styling with PDF backgrounds:
     can carry your letterhead, borders, watermarks, and form fields.
 ```
 
-`relative-to` may be `source` (resolve the path against the report file) or `config`
-(against the project config directory). Each page rendered with a template is composited
+`relative-to` may be `source` (resolve the path against the report file), `config`
+(against the project config directory) or `cwd` (against the directory `ym` runs in).
+Without `relative-to`, the path resolves against the file that declares the background: the
+report, or the config file. See [the path rule](data-sources.md#one-path-rule). Each page rendered with a template is composited
 over its background; when a background PDF has multiple pages, they are matched by page
 number.
 

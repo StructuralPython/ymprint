@@ -17,6 +17,7 @@ from .config.config_loaders import load_report_config
 from .config.font_registry import register_fonts
 from .config.pdf_postprocessing import load_pdf_backgrounds, fill_forms_and_bake, overlay_pdf_background
 from .context_builder import build_context, rebuild_styles
+from .data_sources import DataCatalog, YmContext, build_document_vars
 from .errors import YmprintAuthoringError
 from .exceptions import YMPrintSyntaxException
 from .story_builder import build_story
@@ -50,6 +51,12 @@ class RenderEvent:
     # Where the PDF is actually written, when not 'destination'. Live mode sets
     # this to a local preview copy when the destination is locked.
     output: Optional[pathlib.Path] = None
+    # The directory of the project config; the document's directory when there
+    # is none. `ym.project_root` in the document.
+    project_root: Optional[pathlib.Path] = None
+    # Set by the render: the data files the document read (its `_data` sources
+    # and any files read directly), for build tools that track dependencies.
+    inputs: set[pathlib.Path] = field(default_factory=set)
 
     @property
     def initial(self) -> bool:
@@ -138,10 +145,22 @@ def render_document(
     run_hooks("before_render", hooks.before_render, event)
 
     source_data = load_source(event.source, data)
+    document_data = source_data.pop("_data", None) if isinstance(source_data, dict) else None
     register_fonts()
     textstyles, tablestyles, doc_data = load_report_config(source_data, list(event.config_paths))
     doctemplate = DocConfig.model_validate(doc_data['_doc'])
-    document_vars = {**extract_vars(source_data), **event.vars}
+    project_root = event.project_root or event.base_dir
+    catalog = DataCatalog.from_config(
+        event.config_paths, document_data, event.base_dir, event.source, project_root
+    )
+    ym = YmContext(project_root=project_root, source=event.source, catalog=catalog)
+    document_vars = build_document_vars(
+        extract_vars(source_data),
+        event.vars,
+        catalog,
+        ym,
+        where=event.source.name if event.source is not None else "the document",
+    )
     context = build_context(
         source_data,
         textstyles,
@@ -153,6 +172,8 @@ def render_document(
         list(event.config_paths),
         blocks=blocks,
         base_dir=event.base_dir,
+        data=catalog,
+        project_root=project_root,
     )
 
     if hooks.on_context:
@@ -161,6 +182,7 @@ def render_document(
         rebuild_styles(context)
 
     story = build_story(context["content"], context)
+    event.inputs = catalog.inputs()
     rl_doc, page_template_map = doctemplate.build(event.destination)
     rl_report_buffer = BytesIO()
     rl_doc.build(story, filename=rl_report_buffer)

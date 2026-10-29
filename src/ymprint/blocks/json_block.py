@@ -1,26 +1,28 @@
-from reportlab.platypus import HRFlowable
-from ..config.helpers import parse_width, YMPrintValueError
-from typing import Any
+from ..config.helpers import YMPrintValueError
+from ..data_sources import load_file
 import pathlib
 
-import json
 
 def convert_loadjson_block(block_key: str, block_value: dict, context: dict) -> list:
     """
-    Loads a JSON file into the vars in the context
+    Loads a JSON file into the vars in the context.
+
+    Prefer a `_data` entry, which names the file once for the whole project;
+    `_loadjson` reads it the same way (cached, path relative to the document).
     """
     file_path = pathlib.Path(block_value['path'])
-    json_path = pathlib.Path(context['base_dir']).resolve() / file_path
+    json_path = (pathlib.Path(context['base_dir']) / file_path).resolve()
     if not json_path.exists():
         raise YMPrintValueError(
             f"The loadjson block {block_key} file path does not exist: {json_path}"
         )
-    with open(json_path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
+    data = load_file(json_path, "json")
+    if 'data' in context:
+        context['data'].record_file(json_path)
     namespace = block_value.get('namespace')
     if namespace is not None:
         context['vars'][namespace] = data
     else:
         context['vars'].update(data)
-        
+
     return []

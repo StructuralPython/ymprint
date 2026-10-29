@@ -111,6 +111,16 @@ class Ymprint:
 
     # --- rendering ---------------------------------------------------------------
 
+    def project_root(self, base_dir: pathlib.Path, discover_config: bool = True) -> pathlib.Path:
+        """
+        Returns the project root for a document in 'base_dir': the directory of
+        the nearest *.ymprint.yml at or above it, or 'base_dir' itself when there
+        is none (or 'discover_config' is False).
+        """
+        base_dir = base_dir.resolve()
+        found = locate_config_file(base_dir) if discover_config else None
+        return found.parent if found is not None else base_dir
+
     def config_layers(
         self,
         base_dir: pathlib.Path,
@@ -150,6 +160,7 @@ class Ymprint:
         trigger: Optional[PathLike] = None,
         mode: RenderMode = "api",
         output: Optional[PathLike] = None,
+        project_root: Optional[PathLike] = None,
     ) -> RenderEvent:
         """
         Renders 'source' to a PDF and returns the RenderEvent describing it.
@@ -165,6 +176,8 @@ class Ymprint:
         'trigger', 'mode': passed through to the hooks on the RenderEvent.
         'output': write the PDF here instead of 'destination'; hooks still see
             'destination' as the document's target.
+        'project_root': `ym.project_root` in the document. Defaults to the
+            directory of the discovered *.ymprint.yml, else 'base_dir'.
         """
         if isinstance(source, dict):
             data = source
@@ -189,6 +202,10 @@ class Ymprint:
             trigger=pathlib.Path(trigger) if trigger is not None else None,
             mode=mode,
             output=pathlib.Path(output) if output is not None else None,
+            project_root=(
+                pathlib.Path(project_root).resolve() if project_root is not None
+                else self.project_root(base_dir, discover_config)
+            ),
         )
         render_document(event, data, self.blocks, self.hooks)
         return event
