@@ -133,15 +133,32 @@ Report:
     - dx = {{extra_vars.dx}}
 ```
 
+(vars-dumpjson)=
+## Writing variables to JSON — `_dumpjson`
+
+The [`_dumpjson` block](#block-dumpjson) writes variables defined so far in the document
+to a JSON file. A dotted name writes a nested value:
+
+```yaml
+Report:
+  - _dumpjson:
+      path: out/values.json
+      vars: [beam.span, phi]   # {"beam": {"span": 6.0}, "phi": 0.9}
+```
+
 ## Namespaces
 
-Both `_py` and `_loadjson` accept an optional `namespace`. When you provide one, the
+`_py` and `_loadjson` accept an optional `namespace`. When you provide one, the
 variables they create are nested under that name in the variable dictionary, so you access
 them as `{{namespace.variable}}`. Without a namespace, the variables land at the top level
 and are accessed directly as `{{variable}}`.
 
 This keeps computed or loaded values from colliding with the variables you defined in
 `_vars`.
+
+`_dumpjson` accepts a `namespace` too, the other way round: it writes the names inside
+that mapping at the top level of the file, so `_loadjson` with the same `namespace` puts
+them back where they were.
 
 ## Auto-filling PDF form fields
 

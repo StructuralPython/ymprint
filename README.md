@@ -110,6 +110,7 @@ ym live report.yml
   | `_hc` | Typeset Python as handcalcs calculations (`pip install "ymprint[hc]"`) |
   | `_p` | A standalone paragraph with a selectable text style |
   | `_loadjson` | Load variables from a JSON file |
+  | `_dumpjson` | Write variables to a JSON file |
   | `_table` | A table from computed data, with formats, sorting and row colours |
   | `_pagebreak` | Force a page break |
   | `_hrule` | A configurable horizontal rule |
