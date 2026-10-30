@@ -46,6 +46,7 @@ You can add your own blocks by building a [custom application](../guide/custom-a
 | [`_py`](#block-py) | Execute Python and optionally show the syntax-highlighted source. |
 | [`_hc`](#block-hc) | Run Python and typeset it as handcalcs calculations. Needs `ymprint[hc]`. |
 | [`_loadjson`](#block-loadjson) | Load variables into the document from a JSON file. |
+| [`_dumpjson`](#block-dumpjson) | Write variables from the document to a JSON file. |
 | [`_table`](#block-table) | A table from data, with column, format, sort and row-style options. |
 | [`_p`](#block-p) | A standalone paragraph, with a selectable text style. |
 | [`_ul`](#block-ul) | An unordered (bulleted) list. |
@@ -317,6 +318,46 @@ _loadjson:
   - - bn = {{extra_vars.bn}}
     - dx = {{extra_vars.dx}}
 ```
+
+---
+
+(block-dumpjson)=
+## `_dumpjson` — Write JSON variables
+
+Write variables to a JSON file at render time: the counterpart of `_loadjson`. Any variable
+defined at the block's position can be written: from `_vars`, or made by an earlier `_py`,
+`_hc` or `_loadjson` block.
+
+:::{tip}
+For values that other documents in the project use, declare them with
+[`_export`](../guide/document-exports.md) instead; YMPrint then writes them and orders the
+build for you.
+:::
+
+```yaml
+_vars:
+  beam: {span: 6.0, load: 12}
+  phi: 0.9
+
+Report:
+  - _dumpjson:
+      path: out/values.json
+      vars: [beam.span, phi]       # {"beam": {"span": 6.0}, "phi": 0.9}
+  - _dumpjson:
+      path: out/beam.json
+      namespace: beam
+      vars: [span, load]           # {"span": 6.0, "load": 12}
+```
+
+| Parameter | Required | Meaning |
+| --- | --- | --- |
+| `path` | ✅ | Path to the JSON file, relative to the report file (or absolute). May use `{{ }}`, e.g. one file per [parameter set](../guide/parameterized-documents.md). |
+| `vars` | ✅ | The variables to write. A dotted name (`beam.span`) is looked up in, and written as, nested mappings. |
+| `namespace` | | Look the names up inside this mapping and write them at the top level, so `_loadjson` with the same `namespace` reads them back. |
+
+The file is replaced whole on each render, and left untouched when its content would not
+change. Values are written as [`_export` writes them](../guide/document-exports.md#serialization):
+a value with no JSON form (and no registered serializer) is an error.
 
 ---
 

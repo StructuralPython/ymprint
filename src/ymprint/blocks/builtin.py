@@ -11,7 +11,7 @@ from .admonition_block import generate_admonition_block
 from .code_block import convert_code_block
 from .hrule_block import convert_hrule
 from .image_block import convert_image_block
-from .json_block import convert_loadjson_block
+from .json_block import convert_dumpjson_block, convert_loadjson_block
 from .matplotfig_block import convert_matplotfig_block
 from .nextpagetemplate_block import convert_next_page_template
 from .p_block import convert_p_block
@@ -30,6 +30,7 @@ BUILTIN_BLOCKS = BlockRegistry({
     "_code": convert_code_block,
     "_hrule": convert_hrule,
     "_img": convert_image_block,
+    "_dumpjson": convert_dumpjson_block,
     "_loadjson": convert_loadjson_block,
     "_matplotfig": convert_matplotfig_block,
     "_nextpagetemplate": convert_next_page_template,

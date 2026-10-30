@@ -150,6 +150,11 @@ def write_json_atomic(path: pathlib.Path, data: Any, where: str = "") -> None:
         text = dumps(data)
     except (TypeError, ValueError) as exc:
         raise ExportError(f"Exports of {where or path.name} could not be written: {exc}") from exc
+    write_text_atomic(path, text)
+
+
+def write_text_atomic(path: pathlib.Path, text: str) -> None:
+    """Writes 'text' to 'path' via a temporary file renamed over it."""
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
     try:
