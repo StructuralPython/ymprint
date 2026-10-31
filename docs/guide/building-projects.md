@@ -72,6 +72,9 @@ publish("frame", extract_results(model))     # writes where `frame` is declared
 | `path(name)` | The file a data source is read from, for code that does its own I/O. |
 | `publish(name, value)` | Writes `value` as JSON for data source `name`. The script must be named in the source's `from:`. |
 
+For how a script producer compares with a document producer (which hands over its values
+with `_export` instead), see [Produced data — `from:`](#produced-data).
+
 The project is found from the script's own location, so a script also runs on its own
 (`python 3-analysis/frame.py`). Under `ym build`, scripts run in the same process,
 as `python script.py` would run them, with their folder importable.
