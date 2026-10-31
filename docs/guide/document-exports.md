@@ -30,7 +30,9 @@ computation.
 ## Exports as a data source
 
 A `_data` entry names its producers with `from:`. Consumers read it by name like any other
-source; they never see a path.
+source; they never see a path. A producer can also be a Python script, which calls
+`publish()` instead of declaring `_export`; see
+[Produced data — `from:`](#produced-data) for the two side by side.
 
 ```yaml
 # project.ymprint.yml
