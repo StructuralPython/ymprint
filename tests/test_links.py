@@ -51,24 +51,31 @@ def ctx():
     "file:///C:/Users/me/video.mp4",
 ])
 def test_urls_are_kept_as_they_are(url, tmp_path):
-    assert resolve_link(url, tmp_path) == url
+    assert resolve_link(url, tmp_path) == ("URI", url)
 
 
 def test_relative_path_resolves_against_the_document_folder(tmp_path):
-    assert resolve_link("videos/clip.mp4", tmp_path) == (tmp_path / "videos" / "clip.mp4").resolve().as_uri()
+    assert resolve_link("videos/clip.mp4", tmp_path) == (
+        "Launch", (tmp_path / "videos" / "clip.mp4").resolve().as_posix())
 
 
-def test_absolute_path_becomes_a_file_url(tmp_path):
+def test_absolute_path_is_kept(tmp_path):
     video = tmp_path / "elsewhere" / "clip.mp4"
-    assert resolve_link(str(video), REPO_ROOT) == video.resolve().as_uri()
+    assert resolve_link(str(video), REPO_ROOT) == ("Launch", video.resolve().as_posix())
+
+
+def test_spaces_in_paths_are_not_encoded(tmp_path):
+    kind, target = resolve_link("Slide deck v2.5/my clip.mp4", tmp_path)
+    assert kind == "Launch"
+    assert target.endswith("Slide deck v2.5/my clip.mp4") and "%" not in target
 
 
 def test_link_target_need_not_exist(tmp_path):
-    assert resolve_link("not-here.mp4", tmp_path).startswith("file:")
+    assert resolve_link("not-here.mp4", tmp_path)[0] == "Launch"
 
 
 def test_windows_drive_letter_is_a_path_not_a_url_scheme(tmp_path):
-    assert resolve_link("C:/Videos/clip.mp4", tmp_path).startswith("file:")
+    assert resolve_link("C:/Videos/clip.mp4", tmp_path)[0] == "Launch"
 
 
 # --- the _img block ---------------------------------------------------------------
@@ -82,7 +89,13 @@ def test_img_with_link_is_a_linked_image(ctx):
     table = convert_blocks("_img", {"source": str(IMAGE), "link": "https://example.com"}, ctx)[0]
     image = table._cellvalues[0][0]
     assert isinstance(image, LinkedImage)
-    assert image.link == "https://example.com"
+    assert (image.kind, image.link) == ("URI", "https://example.com")
+
+
+def test_img_with_a_path_link_launches_the_file(ctx):
+    table = convert_blocks("_img", {"source": str(IMAGE), "link": "videos/clip.mp4"}, ctx)[0]
+    image = table._cellvalues[0][0]
+    assert image.kind == "Launch" and image.link.endswith("videos/clip.mp4")
 
 
 @pytest.mark.parametrize("bad", ["", "   ", 42, ["a.mp4"], {"url": "x"}])
@@ -140,7 +153,15 @@ def test_links_survive_a_background_template(tmp_path):
     assert uris == ["https://example.com/text", "https://example.com/video"]
 
 
-def test_local_video_link_opens_the_file(tmp_path):
+def _action(pdf, page_number=0, index=0) -> str:
+    """The PDF source of a link's action, as the viewer will read it."""
+    xref = pdf[page_number].get_links()[index]["xref"]
+    kind, value = pdf.xref_get_key(xref, "A")
+    return pdf.xref_object(int(value.split()[0])) if kind == "xref" else value
+
+
+@pytest.mark.parametrize("folder", ["videos", "Slide deck v2.5"])
+def test_local_video_link_launches_the_file_by_its_exact_path(tmp_path, folder):
     pdf = render(tmp_path, f"""
         _doc:
           page-size: [960, 540]
@@ -148,12 +169,23 @@ def test_local_video_link_opens_the_file(tmp_path):
         The video:
           - _img:
               source: {IMAGE}
-              link: videos/clip.mp4
+              link: {folder}/my clip.mp4
     """)
-    (link,) = pdf[0].get_links()
-    target = link.get("file") or link.get("uri")
-    assert pathlib.Path(target.removeprefix("file://")).as_posix().endswith("videos/clip.mp4")
-    assert str(tmp_path.resolve().as_posix()) in pathlib.Path(target.removeprefix("file://")).as_posix()
+    action = _action(pdf)
+    expected = (tmp_path / folder / "my clip.mp4").resolve().as_posix()
+    assert "/Launch" in action
+    assert f"({expected})" in action
+    assert "%" not in action
+
+
+def test_file_url_in_text_is_copied_exactly(tmp_path):
+    pdf = render(tmp_path, """
+        Report:
+          - "[clip](file:///home/me/Slide%20deck/clip.mp4)"
+    """)
+    action = _action(pdf)
+    assert "file:///home/me/Slide%20deck/clip.mp4" in action
+    assert "%2520" not in action
 
 
 def test_links_are_kept_on_every_slide(tmp_path):
@@ -172,6 +204,19 @@ def test_links_are_kept_on_every_slide(tmp_path):
 
 
 # --- copy_links -------------------------------------------------------------------
+
+def test_copy_links_keeps_a_launch_link_with_spaces():
+    source = pymupdf.open()
+    source.new_page(width=200, height=200)
+    source[0].insert_link({"kind": pymupdf.LINK_LAUNCH, "from": pymupdf.Rect(10, 10, 50, 30),
+                           "file": "/home/me/Slide deck/clip.mp4"})
+    output = pymupdf.open()
+    output.new_page(width=200, height=200)
+    copy_links(source, output)
+    (link,) = output[0].get_links()
+    assert link["from"] == pymupdf.Rect(10, 10, 50, 30)
+    assert "(/home/me/Slide deck/clip.mp4)" in output.xref_object(link["xref"])
+
 
 def test_copy_links_keeps_a_link_to_a_later_page():
     source = pymupdf.open()

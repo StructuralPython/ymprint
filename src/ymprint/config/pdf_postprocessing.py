@@ -1,6 +1,7 @@
 import io
 import os
 import pathlib
+import re
 import shutil
 import time
 
@@ -129,13 +130,42 @@ def copy_links(source: mu.Document, output: mu.Document) -> None:
     show_pdf_page copies a page's drawing but not its link annotations, so without
     this every link (markdown links in text, linked images) is lost. It runs once
     every output page exists, because a link can point to a later page.
+
+    Links within the document are re-created with insert_link, since the pages
+    they point to are new objects. Links out of the document (web pages, files)
+    keep their action exactly as written: pymupdf's get_links percent-encodes file
+    names, so re-creating them would turn "a b.mp4" into "a%20b.mp4".
     """
     for i in range(source.page_count):
         out_page = output[i]
         for link in source[i].get_links():
+            action = None
+            if link["kind"] not in (mu.LINK_GOTO, mu.LINK_NAMED) and link.get("xref"):
+                action = _external_action(source, link["xref"])
             # 'xref' and 'id' identify the annotation in the source document.
-            link = {k: v for k, v in link.items() if k not in ("xref", "id")}
-            out_page.insert_link(link)
+            plain = {k: v for k, v in link.items() if k not in ("xref", "id")}
+            if action is None:
+                out_page.insert_link(plain)
+                continue
+            out_page.insert_link({"kind": mu.LINK_URI, "from": plain["from"], "uri": "about:blank"})
+            # The link just added is the page's last annotation.
+            new_xref = out_page.annot_xrefs()[-1][0]
+            output.xref_set_key(new_xref, "A", action)
+
+
+def _external_action(doc: mu.Document, annot_xref: int) -> str | None:
+    """
+    The action of a link annotation, as PDF source, or None when it refers to
+    other objects in 'doc' (which wouldn't exist in another document).
+    """
+    kind, value = doc.xref_get_key(annot_xref, "A")
+    if kind == "xref":
+        value = doc.xref_object(int(value.split()[0]), compressed=True)
+    elif kind != "dict":
+        return None
+    if re.search(r"\b\d+ \d+ R\b", value):
+        return None
+    return value
 
 
 def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO | None]:

@@ -12,35 +12,64 @@ _URL_SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]+:")
 
 
 class LinkedImage(Image):
-    """An image that is also a link: clicking it opens 'link'."""
+    """
+    An image that is also a link. 'kind' is "URI" (open the URL 'link') or
+    "Launch" (open the local file at path 'link'), as returned by resolve_link.
+    """
 
-    def __init__(self, filename, width=None, height=None, *, link: str, **kwargs):
+    def __init__(self, filename, width=None, height=None, *, link: str,
+                 kind: str = "URI", **kwargs):
         super().__init__(filename, width=width, height=height, **kwargs)
         self.link = link
+        self.kind = kind
 
     def draw(self):
         super().draw()
         x = getattr(self, '_offs_x', 0)
         y = getattr(self, '_offs_y', 0)
-        self.canv.linkURL(
-            self.link, (x, y, x + self.drawWidth, y + self.drawHeight), relative=1
-        )
+        rect = (x, y, x + self.drawWidth, y + self.drawHeight)
+        if self.kind == "URI":
+            self.canv.linkURL(self.link, rect, relative=1)
+        else:
+            _link_launch(self.canv, self.link, rect)
 
 
-def resolve_link(link: str, base_dir: pathlib.Path) -> str:
+def _link_launch(canv, path: str, rect: tuple) -> None:
     """
-    Returns the URL an image's 'link' opens. URLs (https:, mailto:, file:, ...)
-    are kept as they are. Anything else is a file path, relative to 'base_dir'
-    (the document's folder) unless absolute, and becomes a file: URL. The file
-    doesn't have to exist when the document is rendered: a video may only be on
-    the computer the slides are presented from.
+    Adds a link that opens the local file 'path'. ReportLab's linkURL only makes
+    URI and GoToR links; a Launch action is the PDF way to open a file, and keeps
+    the path as written (a file: URL would need spaces percent-encoded).
+    """
+    from reportlab.pdfbase.pdfdoc import PDFArray, PDFDictionary, PDFName, PDFString
+    from reportlab.pdfgen.canvas import _annFormat
+
+    action = PDFDictionary()
+    action["Type"] = PDFName("Action")
+    action["S"] = PDFName("Launch")
+    action["F"] = PDFString(path)
+    ann = PDFDictionary()
+    ann["Type"] = PDFName("Annot")
+    ann["Subtype"] = PDFName("Link")
+    ann["Rect"] = PDFArray(canv._absRect(rect, 1))
+    ann["A"] = action
+    _annFormat(ann, None, 0, None)
+    canv._addAnnotation(ann)
+
+
+def resolve_link(link: str, base_dir: pathlib.Path) -> tuple[str, str]:
+    """
+    Returns (kind, target) for an image's 'link'. A URL (https:, mailto:, file:,
+    ...) is ("URI", link) as written. Anything else is a file path, relative to
+    'base_dir' (the document's folder) unless absolute: ("Launch", absolute path
+    with forward slashes). The file doesn't have to exist when the document is
+    rendered: a video may only be on the computer the slides are presented from.
     """
     if _URL_SCHEME.match(link):
-        return link
+        return "URI", link
     path = pathlib.Path(link).expanduser()
     if not path.is_absolute():
         path = pathlib.Path(base_dir) / path
-    return path.resolve().as_uri()
+    return "Launch", path.resolve().as_posix()
 
 
 def convert_image_block(block_key: str, block_value: dict, context: dict) -> list[Table]:
@@ -85,9 +114,10 @@ def convert_image_block(block_key: str, block_value: dict, context: dict) -> lis
     if link is None:
         image_flowable = Image(str(image_path), width=scaled_width, height=scaled_height)
     elif isinstance(link, str) and link.strip():
+        kind, target = resolve_link(link.strip(), context['base_dir'])
         image_flowable = LinkedImage(
             str(image_path), width=scaled_width, height=scaled_height,
-            link=resolve_link(link.strip(), context['base_dir']),
+            link=target, kind=kind,
         )
     else:
         raise BlockError(
