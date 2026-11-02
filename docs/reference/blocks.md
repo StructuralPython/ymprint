@@ -77,6 +77,28 @@ _img:
 | `source` | ✅ | — | Path to the image, relative to the `.yml` file or absolute. (`src` is accepted as a deprecated alias.) |
 | `caption` | | — | Optional caption text shown below the image. Omit it for an image with no caption. |
 | `width_ratio` | | `1` | Scale factor relative to the available content width. The image is automatically shrunk to fit the frame if it would overflow. (`scale_ratio` is accepted as a deprecated alias.) |
+| `link` | | — | Makes the image clickable. A URL (`https:`, `mailto:`, `file:`, …) is used as it is; anything else is a file path, relative to the `.yml` file or absolute. The file doesn't have to exist when you render. |
+
+(img-link)=
+### Linking an image to a video or web page
+
+Give the image a `link` and clicking it in the PDF opens that page or file. In slides this
+makes a video thumbnail: clicking it plays the video in your default video player.
+
+```yaml
+The BBC visits the Atlas computer:
+  - _img:
+      source: images/bbc_1966.png
+      link: C:/Users/connor/Videos/bbc_atlas_1966.mp4   # or a path relative to the .yml
+  - _img_site:
+      source: images/qr.png
+      link: https://structuralpython.com
+```
+
+Whether a click opens a *local file* depends on the PDF viewer. Okular opens it; Acrobat asks
+first, or blocks it under strict security settings; browser PDF viewers usually don't open
+local files. Web links work everywhere. Use an absolute path when the slides and the video
+won't move together.
 
 ---
 
