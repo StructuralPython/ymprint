@@ -109,6 +109,8 @@ def overlay_pdf_background(
 
         out_page.show_pdf_page(document_page.rect, document, pno=i)
 
+    copy_links(document, output)
+
     if isinstance(destination_path, io.BytesIO):
         output.save(destination_path)
         return
@@ -118,6 +120,22 @@ def overlay_pdf_background(
     staged = staging_path(destination_path)
     output.save(str(staged))
     replace_destination(staged, destination_path)
+
+
+def copy_links(source: mu.Document, output: mu.Document) -> None:
+    """
+    Adds the links of each page of 'source' to the same page of 'output'.
+
+    show_pdf_page copies a page's drawing but not its link annotations, so without
+    this every link (markdown links in text, linked images) is lost. It runs once
+    every output page exists, because a link can point to a later page.
+    """
+    for i in range(source.page_count):
+        out_page = output[i]
+        for link in source[i].get_links():
+            # 'xref' and 'id' identify the annotation in the source document.
+            link = {k: v for k, v in link.items() if k not in ("xref", "id")}
+            out_page.insert_link(link)
 
 
 def fill_forms_and_bake(vars: dict, pdf_backgrounds: dict[str, io.BytesIO | None]) -> dict[str, io.BytesIO | None]:

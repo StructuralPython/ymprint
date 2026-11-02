@@ -170,7 +170,7 @@ Text values support a small amount of inline markdown, converted to styled runs 
 | `` `code` `` | inline code on a light grey background in a monospace face |
 | `*emphasis*` | *italic* |
 | `**strong**` | **bold** |
-| `[label](url)` | a link |
+| `[label](url)` | a clickable link (images can be links too: [`_img` `link`](#img-link)) |
 
 ```yaml
 Notes:

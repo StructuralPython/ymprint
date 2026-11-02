@@ -60,6 +60,8 @@ Here is what people were doing in 1966:
   [`_style`](#cfg-style).
 - Blocks size themselves to the frame they are in, so an `_img` with `width_ratio: 1`
   fills its frame's width.
+- An `_img` with a [`link`](#img-link) is clickable, e.g. a video thumbnail that plays a
+  video file from your computer.
 - A slide without `_slide` uses the `default` layout.
 
 ### Built-in layouts
