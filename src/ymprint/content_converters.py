@@ -79,7 +79,42 @@ def convert_paragraph(value: str, context: dict, text_style: str = "body", curre
         paras.append(Spacer(1, 5))
     return paras
 
-# Test
+def _list_item_text(elem, context: dict) -> str:
+    """
+    Returns the rendered paragraph text for one list item. An empty item (a bare
+    `-` in the YAML, which loads as None) renders as a blank bullet.
+    """
+    if elem is None:
+        return "&nbsp;"
+    para_md = convert_inline_markdown(str(elem))
+    return render_template(para_md, context['vars'])
+
+
+def _expand_list_items(items) -> list:
+    """
+    Flattens the mapping form of a nested list item into the item and its sub-list:
+
+        - one:          ->  ['one', ['a', 'b']]
+          - a
+          - b
+
+    A mapping with several keys yields each key followed by its sub-list. A key
+    whose value is not a list (or is empty) is just an item.
+    """
+    expanded = []
+    for elem in items:
+        if isinstance(elem, Mapping):
+            for key, sub in elem.items():
+                expanded.append(key)
+                if isinstance(sub, list) and sub:
+                    expanded.append(sub)
+                elif sub is not None:
+                    expanded.append([sub])
+        else:
+            expanded.append(elem)
+    return expanded
+
+
 def convert_ul(value: list[str], context: dict, level: int = 0, current_style: str = "default") -> list[ListFlowable]:
     ymp_style = _family_model(context, current_style)
     text_spacing = ymp_style.body.spacing
@@ -99,21 +134,19 @@ def convert_ul(value: list[str], context: dict, level: int = 0, current_style: s
         int(bul_color.blue),
     )
     bullet_contents = []
-    for elem in value:
+    for elem in _expand_list_items(value):
         if isinstance(elem, list):
             # A list item that is itself a list is a nested list: append the nested
             # ListFlowable (not the wrapping python list) so ReportLab indents it.
             sub_bullets = convert_ul(elem, context, level=level + 1, current_style=current_style)
             bullet_contents.extend(sub_bullets)
         else:
-            para_md = convert_inline_markdown(elem)
-            rendered = render_template(para_md, context['vars'])
+            rendered = _list_item_text(elem, context)
             bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}"><b>{bul_symbol}</b></bullet>{rendered}', bullet_style)
             bullet_contents.append(bullet_content)
             
     return [ListFlowable(bullet_contents, start=0, bulletType='bullet', spaceAfter=space_around)]
 
-# Test
 def convert_ol(value: list | dict, context: dict, level: int = 0, current_style: str = "default") -> list[ListFlowable]:
     sheet = _family_sheet(context, current_style)
     ymp_style = _family_model(context, current_style)
@@ -129,7 +162,7 @@ def convert_ol(value: list | dict, context: dict, level: int = 0, current_style:
     )
     # Accept a list (positional numbering) or a mapping (back-compat: numbered by
     # insertion order, keys ignored).
-    items = list(value.values()) if isinstance(value, dict) else value
+    items = list(value.values()) if isinstance(value, dict) else _expand_list_items(value)
     bullet_contents = []
     number = 1
     for elem in items:
@@ -139,8 +172,7 @@ def convert_ol(value: list | dict, context: dict, level: int = 0, current_style:
             sub_bullets = convert_ol(elem, context, level=level + 1, current_style=current_style)
             bullet_contents.extend(sub_bullets)
             continue
-        para_md = convert_inline_markdown(elem)
-        rendered = render_template(para_md, context['vars'])
+        rendered = _list_item_text(elem, context)
         bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}">{number}. </bullet>{rendered}', bullet_style)
         bullet_contents.append(bullet_content)
         number += 1

@@ -90,16 +90,33 @@ would come out as a one-item bullet.
 
 ### Nested bullets
 
-Nest a list inside a `_ul` item to indent bullets. The bullet symbol changes with depth
+Indent sub-bullets under the bullet they belong to. The bullet symbol changes with depth
 (the default hierarchy is `•‣⁃∘`):
 
 ```yaml
 _ul:
   - Bullet 1
   - Bullet 2
-  - - Sub-bullet A
+    - Sub-bullet A
     - Sub-bullet B
-    - Sub-bullet C
+      - Sub-sub-bullet
+  - Bullet 3
+```
+
+Two other spellings give the same result: a nested list as its own item
+(`- - Sub-bullet A`), or the parent bullet written as a key (`- Bullet 2:`) with the
+sub-bullets beneath it. The same forms work in `_ol`.
+
+### Empty bullets
+
+A bare `-` is a blank bullet (or a blank numbered line in `_ol`), which is handy as a
+placeholder to fill in by hand:
+
+```yaml
+_ul:
+  - First
+  -
+  - Third
 ```
 
 ## Ordered lists — `_ol`
