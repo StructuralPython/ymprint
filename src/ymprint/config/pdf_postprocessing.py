@@ -111,6 +111,7 @@ def overlay_pdf_background(
         out_page.show_pdf_page(document_page.rect, document, pno=i)
 
     copy_links(document, output)
+    copy_outline(document, output)
 
     if isinstance(destination_path, io.BytesIO):
         output.save(destination_path)
@@ -121,6 +122,18 @@ def overlay_pdf_background(
     staged = staging_path(destination_path)
     output.save(str(staged))
     replace_destination(staged, destination_path)
+
+
+def copy_outline(source: mu.Document, output: mu.Document) -> None:
+    """
+    Copies the outline (bookmarks) of 'source' to 'output', whose pages match.
+
+    Like links, the outline is lost when pages are re-created with show_pdf_page.
+    Each entry keeps its target page and position.
+    """
+    toc = source.get_toc(simple=False)
+    if toc:
+        output.set_toc(toc)
 
 
 def copy_links(source: mu.Document, output: mu.Document) -> None:

@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 
 from .content_checks import (
     check_for_paragraph,
@@ -12,6 +14,7 @@ from .content_converters import (
     convert_ol,
 )
 from .exceptions import YMPrintSyntaxException
+from .outline import heading_style_name, mark_outline
 from .blocks import convert_blocks, get_variable_name
 from .blocks.registry import parse_block_key
 from .slides import build_slide, _extract_slide_directive, _misplaced_directive_message
@@ -98,14 +101,27 @@ def _slide_mode(context: dict) -> bool:
     return bool(getattr(doctemplate, "slides", False))
 
 
-def build_story(source_data: dict | list, context: dict, level: int = 0, current_style: str = "default") -> list:
+def build_story(
+    source_data: dict | list,
+    context: dict,
+    level: int = 1,
+    current_style: str = "default",
+    top: bool = True,
+) -> list:
     """
     Returns a list of Flowables generated from 'source_data' and 'context'.
+
+    'level' is the heading level a key in this frame becomes. Only a heading adds
+    a level: its content is built at 'level' + 1, while lists and mappings without
+    headings pass 'level' through, so a heading's level is the number of headings
+    above it plus one. Levels past MAX_HEADING_LEVEL render as h6.
 
     'current_style' is the active text style family for this frame. It is a plain
     parameter (not shared state): a `_textstyle` switch updates it for the rest of
     this frame's siblings and is inherited by descendant frames, then reverts
     automatically when the frame returns.
+
+    'top' is True for the document's root frame only; nested frames pass False.
     """
     story = []
     if isinstance(source_data, dict):
@@ -114,11 +130,10 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
         source_iter = iter(source_data)
     registered_blocks = context["blocks"]
     # In slide mode each top-level heading is one slide on its own page.
-    slides_at_this_level = level == 0 and _slide_mode(context)
+    slides_at_this_level = top and _slide_mode(context)
     slide_count = 0
 
     for elem in source_iter:
-        # print(f"{level=} | {elem=}")
         if isinstance(elem, tuple):
             k, v = elem
         else:
@@ -149,36 +164,56 @@ def build_story(source_data: dict | list, context: dict, level: int = 0, current
                 story.extend(convert_ol(items, context, current_style=current_style))
             continue
 
-        if k is not None:
-            heading_level = level
-            parsed = parse_block_key(k)
-            if parsed is not None and parsed[0] in registered_blocks:
-                story.extend(convert_blocks(k, v, context))
-                continue
-            else:
-                if heading_level == 0:
-                    heading_level = 1
-                if slides_at_this_level:
-                    story.extend(build_slide(k, v, context, current_style, first=slide_count == 0))
-                    slide_count += 1
-                    continue
-                heading_style_name = f"h{heading_level}"
-                if check_for_paragraph(k, context):
-                    # If this section's content opens with a `_textstyle` switch, the
-                    # heading adopts that style too, so the whole section (title
-                    # included) is styled uniformly.
-                    heading_style = _leading_textstyle(v, context) or current_style
-                    heading = convert_paragraph(k, context, heading_style_name, heading_style)
-                    story.extend(heading)
+        if k is None:
+            # A list item: its content (paragraph, sub-section, table) sits at this
+            # frame's level, so it doesn't add one.
+            story.extend(build_content(v, context, level, current_style))
+            continue
 
-        story.extend(build_content(v, context, level, current_style))
+        parsed = parse_block_key(k)
+        if parsed is not None and parsed[0] in registered_blocks:
+            # Blocks learn where they sit (see `section(context)`), e.g. to place
+            # their own headings below the current one.
+            with _section(context, level, current_style):
+                story.extend(convert_blocks(k, v, context))
+            continue
+        if slides_at_this_level:
+            story.extend(build_slide(k, v, context, current_style, first=slide_count == 0))
+            slide_count += 1
+            continue
+        content_level = level
+        if check_for_paragraph(k, context):
+            # If this section's content opens with a `_textstyle` switch, the
+            # heading adopts that style too, so the whole section (title
+            # included) is styled uniformly.
+            heading_style = _leading_textstyle(v, context) or current_style
+            heading = convert_paragraph(k, context, heading_style_name(level), heading_style)
+            if heading:
+                mark_outline(heading[0], level)
+            story.extend(heading)
+            content_level = level + 1
+        story.extend(build_content(v, context, content_level, current_style))
     return story
 
 
-def build_content(value, context: dict, level: int = 0, current_style: str = "default") -> list:
+@contextmanager
+def _section(context: dict, level: int, text_style: str):
+    """Sets context['section'] for the blocks built inside, restoring it after."""
+    saved = context.get("section")
+    context["section"] = {"level": level, "text_style": text_style}
+    try:
+        yield
+    finally:
+        if saved is None:
+            context.pop("section", None)
+        else:
+            context["section"] = saved
+
+
+def build_content(value, context: dict, level: int = 1, current_style: str = "default") -> list:
     """
     Returns the flowables for a section's content 'value' (the value under a heading,
-    or a single list item) found at 'level'.
+    or a single list item). A heading inside 'value' gets 'level'.
     """
     if check_for_variable(value, context):
         return convert_variable(value, context)
@@ -189,7 +224,7 @@ def build_content(value, context: dict, level: int = 0, current_style: str = "de
     if isinstance(value, (list, dict)):
         # A bare list/mapping is a sequence of content items: strings become
         # paragraphs, mappings become subsections. Bullets/numbers require _ul/_ol.
-        return build_story(value, context, level=level + 1, current_style=current_style)
+        return build_story(value, context, level=level, current_style=current_style, top=False)
     return []
 
 
