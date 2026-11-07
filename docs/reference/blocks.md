@@ -543,8 +543,10 @@ Beam B01:
 | `with` | | Parameters, over the partial's `_vars` defaults. |
 | `namespace` | | Run in a copy of the variables; afterwards, what the partial set is in `_vars[namespace]`. |
 
-`_include: beam_check` is short for `_include: {path: beam_check}`. See
-[Partial documents](../guide/partials.md) for writing partials, scope and paths.
+`_include: beam_check` is short for `_include: {path: beam_check}`. A partial with
+front matter (`_data`, `_vars`) and no heading of its own puts its content under
+`_content`. See [Partial documents](../guide/partials.md) for writing partials, scope
+and paths.
 
 ---
 

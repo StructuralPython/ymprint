@@ -26,7 +26,7 @@ def parse_block_key(key) -> Optional[tuple[str, Optional[str]]]:
 # Structural keys handled by the story builder itself, or popped as config before
 # the story is built. A block may not take one of these codes.
 RESERVED_CODES = frozenset({
-    "_ul", "_ol", "_textstyle", "_slide", "_frame", "_include",
+    "_ul", "_ol", "_textstyle", "_slide", "_frame", "_include", "_content",
     "_vars", "_style", "_doc", "_tablestyle", "_data", "_export",
 })
 

@@ -27,12 +27,18 @@ _data:
   calc: beam_check.py          # next to this file
 _vars:
   caption: Bending moment diagram
-- _hc:
-    path: calc
-- _matplotfig:
-    fig: $fig
-    caption: "{{ caption }}"
+_content:
+  - _hc:
+      path: calc
+  - _matplotfig:
+      fig: $fig
+      caption: "{{ caption }}"
 ```
+
+The content goes under `_content` because YAML can't follow front matter (a mapping)
+with a bare list. A partial with no front matter can be a plain list, and a partial
+whose content starts with a heading can write the heading directly after its front
+matter (`Moment check:` instead of `_content:`).
 
 This partial has no heading of its own, which is usually the best style. The document
 supplies the heading where it includes the partial (`Beam B01:` above), so the partial
