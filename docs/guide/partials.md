@@ -115,7 +115,9 @@ Calculations:          # h1
     - _include: beam_check   # a heading in the partial is h3
 ```
 
-So the same partial fits at any depth. See [Heading levels](#heading-levels).
+So the same partial fits at any depth. See [Heading levels](#heading-levels). Heading
+comments in an `_hc` calculation continue the same way (see
+[Calc headings](../reference/blocks.md#calc-headings)).
 
 ## `ym live` and `ym build`
 

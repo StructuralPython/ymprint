@@ -1,7 +1,8 @@
 # Design: Heading levels and `_include`
 
-Status: accepted (option D for `_hc` headings). Heading-count levels, the h6 cap,
-`section(context)` and PDF bookmarks are implemented in YMPrint 0.11.0.
+Status: implemented. Heading-count levels, the h6 cap, `section(context)`, PDF bookmarks
+and `_include` are in YMPrint 0.11.0. Option D for `_hc` headings (the `headings` option,
+default `document`) is in ym-handcalcs 0.4.0, required by YMPrint 0.11.1.
 Follow-up to `scoped_includes.yml`.
 
 ## The question

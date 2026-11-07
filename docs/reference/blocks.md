@@ -310,6 +310,7 @@ _hc_moment:
 | `theme_color` | | `"#0B5F66"` | A dark `#RRGGBB` colour; the calculation's whole palette is derived from it. |
 | `base_size` | | the body text size | Font size, in points, that every calculation style scales from. |
 | `namespace` | | — | Put the results in `_vars[namespace]` (read as `{{ namespace.var }}`, or `namespace["var"]` in Python) instead of the top level. |
+| `headings` | | `document` | How `## ...` heading comments render: `document`, `calc` or `flat`. See below. Needs ym-handcalcs 0.4.0. |
 
 With `path`, the calculation lives in its own `.py` file. Declare the file once in the
 project's `_data`, then use its name:
@@ -329,6 +330,30 @@ _data:
 A relative `path` is an error: declare the file in `_data` so documents contain no paths.
 `ym live` re-renders when the file changes, and `ym build` counts it as an input of the
 document. Needs ym-handcalcs 0.3.0 or later.
+
+### Calc headings
+
+Heading comments in a calc (`##`, `###`, `####`) are headings of the document:
+
+- **`document`** (the default): `##` gets the level a YAML heading written at the block's
+  position would get, and `###` and `####` the next two. They use the document's heading
+  styles (up to h6) and appear in the PDF's [bookmarks](#heading-levels), so the same
+  calculation fits at any depth, including inside a [partial](../guide/partials.md).
+- **`calc`**: the calc's own heading sizes and accent colour. They're still bookmarked,
+  under the heading that holds the block.
+- **`flat`**: bold labels, with no heading level and no bookmark.
+
+```yaml
+Calculations:          # h1
+  - Beam B01:          # h2
+    - _hc:
+        path: beam_calc   # `## Moment check` is h3, `### Factored moment` is h4
+```
+
+In every mode, the calc follows the active [text style](#block-textstyle): its base size
+is that style's body size, `# ...` prose comments use its body font and headings use its
+heading font. Math stays in DejaVuSans, which has the Greek letters and operators that a
+document font such as Helvetica lacks.
 
 :::{warning}
 Like `_py`, `_hc` runs its source in the same Python environment as YMPrint. Only render
