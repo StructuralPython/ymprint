@@ -140,6 +140,7 @@ examples
 :caption: Guides
 
 guide/document-structure
+guide/partials
 guide/configuration
 guide/variables
 guide/data-sources

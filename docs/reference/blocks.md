@@ -51,6 +51,7 @@ You can add your own blocks by building a [custom application](../guide/custom-a
 | [`_p`](#block-p) | A standalone paragraph, with a selectable text style. |
 | [`_ul`](#block-ul) | An unordered (bulleted) list. |
 | [`_ol`](#block-ol) | An ordered (numbered) list. |
+| [`_include`](#block-include) | Build a partial document in place. |
 | [`_pagebreak`](#block-pagebreak) | Force a page break, optionally switching page template. |
 | [`_nextpagetemplate`](#block-nextpagetemplate) | Arm the page template to switch to at the next break. |
 | [`_slide` / `_frame`](#block-slide) | Choose a slide's layout and template; route content into a frame. Slide mode only. |
@@ -494,6 +495,31 @@ Findings:
 `_ul` works as the value of a heading key (as above) or as a list item
 (`- _ul: [...]`). Bullet glyph, colour, and indentation come from `_style.body.bullets`
 (see [Configuration → Text styles](#cfg-style)).
+
+---
+
+(block-include)=
+## `_include` — Partial documents
+
+Builds a partial document (a YAML content file kept anywhere) where the `_include` is,
+at the current heading level and text style.
+
+```yaml
+Beam B01:
+  - _include:
+      path: beam_check      # a `_data` name, or an absolute path
+      namespace: b1         # optional: run in its own scope
+      with: {span: 6.0}     # optional: parameters
+```
+
+| Parameter | Required | Meaning |
+| --- | --- | --- |
+| `path` | ✅ | The partial's `_data` name, or an absolute path. |
+| `with` | | Parameters, over the partial's `_vars` defaults. |
+| `namespace` | | Run in a copy of the variables; afterwards, what the partial set is in `_vars[namespace]`. |
+
+`_include: beam_check` is short for `_include: {path: beam_check}`. See
+[Partial documents](../guide/partials.md) for writing partials, scope and paths.
 
 ---
 

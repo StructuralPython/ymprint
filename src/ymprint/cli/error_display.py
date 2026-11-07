@@ -23,6 +23,16 @@ TAIL_FRAMES = 3
 
 def format_authoring_error(exc: YmprintAuthoringError) -> RenderableType:
     """Return a rich renderable describing an authoring error."""
+    body = _format_error(exc)
+    chain = getattr(exc, "include_chain", None)
+    if not chain:
+        return body
+    names = [getattr(p, "name", None) or "the document" for p in chain]
+    where = f"In the partial {names[-1]}, included from " + " → ".join(names[:-1])
+    return Group(body, Text(where, style="yellow"))
+
+
+def _format_error(exc: YmprintAuthoringError) -> RenderableType:
     if isinstance(exc, YamlSyntaxError):
         return _format_yaml_error(exc)
     if isinstance(exc, PythonBlockError):

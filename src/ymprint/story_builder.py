@@ -15,11 +15,14 @@ from .content_converters import (
 )
 from .exceptions import YMPrintSyntaxException
 from .outline import heading_style_name, mark_outline
+from .includes import build_include, extract_include
 from .blocks import convert_blocks, get_variable_name
 from .blocks.registry import parse_block_key
 from .slides import build_slide, _extract_slide_directive, _misplaced_directive_message
 
 TEXTSTYLE_BLOCK = "_textstyle"
+# The number of slides built so far in this render (slide mode).
+SLIDE_COUNT_KEY = "slide_count"
 
 # Explicit list constructs. These are intercepted structurally in build_story
 # (not registered blocks): a bare YAML list is a sequence of content items, while
@@ -121,7 +124,8 @@ def build_story(
     this frame's siblings and is inherited by descendant frames, then reverts
     automatically when the frame returns.
 
-    'top' is True for the document's root frame only; nested frames pass False.
+    'top' is True for the document's root frame only (and for a partial included
+    there); nested frames pass False.
     """
     story = []
     if isinstance(source_data, dict):
@@ -131,7 +135,6 @@ def build_story(
     registered_blocks = context["blocks"]
     # In slide mode each top-level heading is one slide on its own page.
     slides_at_this_level = top and _slide_mode(context)
-    slide_count = 0
 
     for elem in source_iter:
         if isinstance(elem, tuple):
@@ -152,6 +155,12 @@ def build_story(
         directive = _extract_slide_directive(k, v)
         if directive is not None:
             raise YMPrintSyntaxException(_misplaced_directive_message(directive[0], context))
+
+        # A partial document, built here as if it were written in place.
+        include = extract_include(k, v)
+        if include is not None:
+            story.extend(build_include(*include, context, level, current_style, top))
+            continue
 
         # Explicit unordered / ordered lists are structural, intercepted before any
         # heading or block dispatch. They honour the active text style.
@@ -178,8 +187,11 @@ def build_story(
                 story.extend(convert_blocks(k, v, context))
             continue
         if slides_at_this_level:
+            # Counted on the context, so slides from an `_include` at the top level
+            # continue the deck rather than starting it again.
+            slide_count = context.get(SLIDE_COUNT_KEY, 0)
             story.extend(build_slide(k, v, context, current_style, first=slide_count == 0))
-            slide_count += 1
+            context[SLIDE_COUNT_KEY] = slide_count + 1
             continue
         content_level = level
         if check_for_paragraph(k, context):

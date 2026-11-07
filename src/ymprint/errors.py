@@ -93,3 +93,13 @@ class BackgroundNotFoundError(YmprintAuthoringError):
             f"The background PDF of page template {template!r} was not found: {filepath!r} "
             f"resolved ({rule}) to {resolved}"
         )
+
+
+class IncludeError(YmprintAuthoringError):
+    """An `_include` could not be resolved, or the partial it names is invalid.
+
+    Covers a missing or relative path, a partial that is empty or uses a key only
+    a document may use (`_doc`, `_export`, ...), and a partial that includes
+    itself. Errors raised while a partial renders keep the chain of partials in
+    `include_chain` instead.
+    """
