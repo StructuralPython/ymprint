@@ -283,6 +283,29 @@ that needs project paths uses the reserved variable `ym`:
     loads = pd.read_csv(ym.path("load_schedule"))
 ```
 
+## Calculations in `.py` files
+
+A `_data` entry can name a `.py` file that holds an [`_hc`](#block-hc)
+calculation. The `_hc` block's `path` option runs and typesets it by name:
+
+```yaml
+# project.ymprint.yml
+_data:
+  beam_calc: calcs/beam_moment.py
+```
+
+```yaml
+# 5-validation/beams/calc.yml
+Beam B01:
+  - _hc: {path: beam_calc}
+  - "Factored moment: {{ M_f }} kN·m"
+```
+
+The file is never loaded as data (there is no `.py` loader). `_hc` only asks for its path,
+the same way `ym.path(name)` does, so the read is still recorded for `ym live` and
+`ym build`. This is different from a script named in `from:`: a script produces a data
+source, while a `path` file is the source code of one calculation in a document.
+
 ## Custom loaders
 
 Register a loader for other file types. A plugin package can do this when it is

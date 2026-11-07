@@ -304,9 +304,30 @@ _hc_moment:
 
 | Parameter | Required | Default | Meaning |
 | --- | --- | --- | --- |
-| `source` | ✅ | — | Python source to run and render. |
+| `source` | ✅ or `path` | — | Python source to run and render. |
+| `path` | ✅ or `source` | — | Read the source from a `.py` file instead: the name of a [`_data`](../guide/data-sources.md) source, or an absolute path. |
 | `theme_color` | | `"#0B5F66"` | A dark `#RRGGBB` colour; the calculation's whole palette is derived from it. |
 | `base_size` | | the body text size | Font size, in points, that every calculation style scales from. |
+| `namespace` | | — | Put the results in `_vars[namespace]` (read as `{{ namespace.var }}`, or `namespace["var"]` in Python) instead of the top level. |
+
+With `path`, the calculation lives in its own `.py` file. Declare the file once in the
+project's `_data`, then use its name:
+
+```yaml
+# project.ymprint.yml
+_data:
+  beam_calc: calcs/beam_moment.py
+```
+
+```yaml
+- _hc:
+    path: beam_calc
+    namespace: beam
+```
+
+A relative `path` is an error: declare the file in `_data` so documents contain no paths.
+`ym live` re-renders when the file changes, and `ym build` counts it as an input of the
+document. Needs ym-handcalcs 0.3.0 or later.
 
 :::{warning}
 Like `_py`, `_hc` runs its source in the same Python environment as YMPrint. Only render
