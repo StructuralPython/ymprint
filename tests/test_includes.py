@@ -434,3 +434,55 @@ def test_build_tracks_partials_and_their_local_data(project, tmp_path):
     write(lib / "local.yml", "_data:\n  table: table.yml\nPart: \"changed {{ table.rating }}\"\n")
     assert build()["report.yml"].status == "built"
     assert "changed 2" in pdf_text(project / "report.pdf")
+
+
+# --- front matter with headingless content (`_content`) -----------------------------------
+
+def test_headingless_partial_with_front_matter_uses_content(project, tmp_path):
+    lib = tmp_path / "library"
+    write(lib / "with_front_matter.yml", """
+        _vars:
+          caption: Default
+        _content:
+          - "Caption: {{ caption }}"
+          - Second paragraph.
+    """)
+    write(project / "project.ymprint.yml", "_data:\n  fm: ../library/with_front_matter.yml\n")
+    _, pdf = render(project, "Section:\n  - _include: {path: fm, with: {caption: Given}}\n")
+    text = pdf_text(pdf)
+    assert "Caption: Given" in text and "Second paragraph." in text
+    assert toc(pdf) == [[1, "Section", 1]]
+
+
+@needs_hc
+def test_headingless_hc_partial(project, tmp_path):
+    lib = tmp_path / "library"
+    write(lib / "beam_check.py", "## Moment check\nM_f = w * L**2 / 8\n")
+    write(lib / "hc_content.yml", """
+        _data:
+          calc: beam_check.py
+        _content:
+          - _hc:
+              path: calc
+          - "M_f = {{ M_f }}"
+    """)
+    write(project / "project.ymprint.yml", "_data:\n  beam_check: ../library/hc_content.yml\n")
+    _, pdf = render(project, """
+        Calculations:
+          - Beam B01:
+            - _include: {path: beam_check, namespace: b1, with: {w: 12.5, L: 6.0}}
+          - Beam B02:
+            - _include: {path: beam_check, namespace: b2, with: {w: 10.0, L: 4.0}}
+          - "Summary: {{ b1.M_f }} and {{ b2.M_f }}"
+    """)
+    assert "Summary: 56.25 and 20.0" in pdf_text(pdf)
+    # With ym-handcalcs 0.4+, the calc's `##` heading continues the document's levels.
+    levels = [entry[:2] for entry in toc(pdf)]
+    assert levels[:3] == [[1, "Calculations"], [2, "Beam B01"], [3, "Moment check"]]
+
+
+def test_content_with_other_keys_is_an_error(project, tmp_path):
+    write(tmp_path / "library" / "mixed.yml", "_content:\n  - a\nHeading: b\n")
+    write(project / "project.ymprint.yml", "_data:\n  mixed: ../library/mixed.yml\n")
+    with pytest.raises(IncludeError, match="Put all of its content under `_content`"):
+        render(project, "S:\n  - _include: mixed\n")

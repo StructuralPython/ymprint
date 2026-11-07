@@ -3,7 +3,9 @@
 
 A partial is a YAML content file, stored anywhere, that may begin with `_data`
 (files it uses, relative to the partial) and `_vars` (defaults for its
-parameters). A document includes it by name:
+parameters). Content without a heading of its own goes under `_content` when
+there is front matter (YAML can't follow a mapping with a bare list). A
+document includes it by name:
 
     Beam B01:
       - _include:
@@ -42,6 +44,8 @@ OPTIONS = {"path", "with", "namespace"}
 # Keys only a whole document may use.
 DOCUMENT_ONLY_KEYS = ("_doc", "_style", "_tablestyle", "_export", "_render")
 PARTIAL_SUFFIXES = (".yml", ".yaml")
+# A partial's content, when it has front matter and no heading of its own.
+CONTENT_KEY = "_content"
 # context keys: the stack of partials being built, and parsed partials by path.
 STACK_KEY = "include_stack"
 CACHE_KEY = "include_cache"
@@ -204,6 +208,18 @@ def _parse_partial(key: str, path: pathlib.Path) -> tuple[Any, Any, dict]:
         defaults = data.pop("_vars", None) or {}
         if not isinstance(defaults, dict):
             raise IncludeError(f"{key}: `_vars` in the partial {path.name} must be a mapping.")
+        if CONTENT_KEY in data:
+            # YAML can't follow front matter (a mapping) with a bare list, so content
+            # without a heading of its own goes under `_content`.
+            others = [k for k in data if k != CONTENT_KEY]
+            if others:
+                raise IncludeError(
+                    f"{key}: the partial {path.name} has `_content` and also "
+                    f"{', '.join(repr(k) for k in others)}. Put all of its content under `_content`."
+                )
+            data = data[CONTENT_KEY]
+            if not isinstance(data, (dict, list, str)):
+                raise IncludeError(f"{key}: `_content` in the partial {path.name} must be content (a list, mapping or text).")
         if not data:
             raise IncludeError(f"{key}: the partial {path.name} has no content.")
     return data, local_data, dict(defaults)
