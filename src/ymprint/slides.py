@@ -12,6 +12,7 @@ from reportlab.platypus.flowables import KeepTogether
 
 from .content_checks import check_for_paragraph
 from .exceptions import YMPrintSyntaxException
+from .outline import mark_outline
 
 # `_slide` (per-slide settings) and `_frame` (route content to a frame) are structural
 # directives, not registered blocks. A trailing `_suffix` is allowed for uniqueness
@@ -253,16 +254,21 @@ def build_slide(title, value, context: dict, current_style: str, first: bool = F
     box_height = context["frames"][template_name]["height"]
 
     frames = []
+    outline_title = str(title)
     for name in frame_names:
         frame_config = layout[name]
         x, y, width, height = frame_config.resolve(box_width, box_height)
         frame_context = _frame_context(context, x, y, width, height)
         flowables = []
         if name == title_frame and check_for_paragraph(title, context):
-            flowables.extend(convert_paragraph(title, frame_context, "h1", slide_style))
+            title_paragraphs = convert_paragraph(title, frame_context, "h1", slide_style)
+            if title_paragraphs:
+                # The rendered title: variables filled in, markup removed.
+                outline_title = title_paragraphs[0].getPlainText()
+            flowables.extend(title_paragraphs)
         if shares[name]:
             flowables.extend(
-                build_content(_rebuild(shares[name], is_mapping), frame_context, 0, slide_style)
+                build_content(_rebuild(shares[name], is_mapping), frame_context, 2, slide_style)
             )
         frames.append(
             SlideFrame(
@@ -272,6 +278,9 @@ def build_slide(title, value, context: dict, current_style: str, first: bool = F
             )
         )
     slide = SlideFlowable(str(title), box_width, box_height, frames)
+    # Each slide is one bookmark, named by its title. Headings inside the slide's
+    # frames are drawn by the slide, so they are not bookmarked.
+    mark_outline(slide, 1, title=outline_title)
     if first:
         return [slide]
     return [NextPageTemplate(template_name), PageBreak(), slide]

@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate
 import reportlab.lib.pagesizes as rl_pagesizes
 from .helpers import get_pagesize
+from ..outline import YmprintDocTemplate
 
 
 class Margins(BaseModel):
@@ -239,7 +240,7 @@ class DocConfig(PageSizeMixin, LandscapeMixin, BaseModel):
                 )
             )
 
-        doc = BaseDocTemplate(
+        doc = YmprintDocTemplate(
             str(destination),
             pagesize=self.page_dims,
             pageTemplates=page_templates,

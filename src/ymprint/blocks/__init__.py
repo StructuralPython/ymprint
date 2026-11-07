@@ -29,6 +29,20 @@ def content_box(context: dict) -> dict:
     return context['frames'].get('current') or context['frames']['all_pages']
 
 
+def section(context: dict) -> dict:
+    """
+    Returns where the block being rendered sits in the document:
+
+        {"level": int, "text_style": str}
+
+    'level' is the heading level a heading written at the block's position would
+    get (1 for h1), so a block that renders its own headings starts them there.
+    'text_style' is the name of the active text style family; its ReportLab
+    styles are context["styles"]["families"][text_style]["rl"] (h1..h6, body).
+    """
+    return context.get("section") or {"level": 1, "text_style": "default"}
+
+
 def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> list[RLFlowables]:
     parsed = parse_block_key(block_key)
     if parsed is None:

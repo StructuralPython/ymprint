@@ -87,6 +87,32 @@ list of ReportLab flowables:
 | `block_value` | The data under the key, with any `$VAR` values already replaced by the variable's Python object. |
 | `context` | The render state: `styles`, `frames`, `vars`, `base_dir`, `blocks` and more. Use `ymprint.blocks.content_box(context)` for the width and height available to your block. |
 
+Two helpers read the context for you:
+
+- `ymprint.blocks.content_box(context)`: the width and height available to your block.
+- `ymprint.blocks.section(context)`: where the block sits in the document, as
+  `{"level": …, "text_style": …}`. `level` is the level a heading written at the
+  block's position would get (1 for h1), and `text_style` is the active
+  [text style](#block-textstyle) family. A block that renders
+  headings of its own should start them at `level`, using the family's ReportLab
+  styles, `context["styles"]["families"][text_style]["rl"]` (`h1` to `h6`, `body`).
+
+To put a heading your block renders into the PDF's bookmarks, mark it with
+`ymprint.outline.mark_outline(flowable, level)`:
+
+```python
+from reportlab.platypus import Paragraph
+from ymprint.blocks import section
+from ymprint.outline import heading_style_name, mark_outline
+
+@app.block("_beam")
+def beam_block(block_key, block_value, context):
+    where = section(context)
+    sheet = context["styles"]["families"][where["text_style"]]["rl"]
+    title = Paragraph(block_value["mark"], sheet[heading_style_name(where["level"])])
+    return [mark_outline(title, where["level"]), ...]
+```
+
 Each application starts from its own **copy** of the built-in blocks, so blocks you
 register never leak into `ym` or into another application. To replace a built-in
 block, pass `override=True`. Registering a code that already exists otherwise raises

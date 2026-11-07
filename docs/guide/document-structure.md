@@ -48,6 +48,34 @@ Scope: >
   A single paragraph under the "Scope" heading.
 ```
 
+### Heading levels
+
+A heading's level is the number of headings above it, plus one. Lists and mappings
+don't add levels, so the two spellings below give the same document: `Report` is h1,
+`Scope` is h2 and `Details` is h3.
+
+```yaml
+Report:
+  - Introduction text.
+  - Scope:
+    - Details: text
+```
+
+```yaml
+Report:
+  Scope:
+    Details: text
+```
+
+Text styles define six heading levels. A heading nested more deeply renders in the
+h6 style (it still has its true depth in the PDF's bookmarks).
+
+### Bookmarks
+
+Every heading becomes a bookmark in the PDF (in the viewer's outline or bookmarks
+panel), nested the way the headings are. In slide mode, each slide is one bookmark,
+named by its title.
+
 ## Paragraphs and line wrapping
 
 Use YAML's block scalar `>` to write a word-wrapped paragraph. Single newlines in the
