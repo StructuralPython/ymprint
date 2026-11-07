@@ -109,6 +109,7 @@ ym live report.yml
   | `_py` | Execute Python and optionally show the source |
   | `_hc` | Typeset Python as handcalcs calculations (`pip install "ymprint[hc]"`) |
   | `_p` | A standalone paragraph with a selectable text style |
+  | `_include` | Build a reusable partial document in place |
   | `_loadjson` | Load variables from a JSON file |
   | `_dumpjson` | Write variables to a JSON file |
   | `_table` | A table from computed data, with formats, sorting and row colours |

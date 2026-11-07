@@ -1,0 +1,324 @@
+_doc:
+  body:
+    font: NotoSans
+  headings:
+    font: NotoSans
+
+"Design: Scoped includes (`_include`)":
+  - "Status: implemented in YMPrint 0.11.0. Heading levels for partials and for `_hc` are covered in include_headings.md."
+  - >
+    This note proposes a way to write a reusable piece of a document once, keep it in a
+    library outside the project, and include it in any document, with parameters and
+    with its own variable scope.
+
+  - Motivation:
+    - >
+      A common pattern is a `.py` calculation that computes some values and builds a
+      matplotlib figure, shown in a document with an `_hc` block (using `path:`) followed
+      by a `_matplotfig` block. The Python can already live in its own file through
+      `_hc: path:` and `_data`, but the YAML around it (the `_hc` block, the
+      `_matplotfig` block, headings, captions, notes) has to be written again in every
+      document that uses the calculation.
+    - >
+      YAML anchors (`&` / `*`) cannot solve this, because they only work inside a single
+      file. A custom block registered on a `Ymprint` app can get part of the way (see
+      below), but the block interface is missing what a correct include needs.
+
+  - What is possible today:
+    - >
+      A custom block can load another YAML file and build it with `build_story`, because
+      block converters receive the full render `context`:
+    - _code:
+        source: |
+          @app.block("_include")
+          def include(block_key, block_value, context):
+              path = context["data"].path(block_value["path"])
+              return build_story(load_yaml(path), context)
+        width_ratio: 0.95
+        caption: A minimal include as a custom block
+    - "This works for simple cases, but has limits that come from the block interface:"
+    - _ul:
+        - >
+          Heading levels restart at h1, and the active `_textstyle` resets to default:
+          `build_story` passes neither `level` nor `current_style` to block converters.
+        - >
+          Paths inside the partial resolve against the main document's folder, so the
+          partial's companion `.py` must be declared in the project's `_data`.
+        - There is no way to pass parameters, and `_vars` / `_data` front matter in the partial is not handled.
+        - Every value the partial computes goes into the document's variables, so a second include overwrites the first.
+
+  - Goals:
+    - _ul:
+        - A partial is a YAML file with content and optional front matter, stored anywhere (for example a shared library folder).
+        - Including a partial behaves as if its content were written at that spot, at the current heading level and text style.
+        - A partial carries its own files (its `.py`, images, JSON), with paths relative to the partial.
+        - A partial takes parameters, with defaults.
+        - A partial can run in its own variable scope, so it can be included several times in one document.
+        - "`ym live` and `ym build` treat the partial and its files as inputs of the document."
+
+  - Non-goals:
+    - _ul:
+        - Partials do not carry page or style configuration (`_doc`, `_style`, `_tablestyle`).
+        - Partials do not declare `_export` or `_render`. Only whole documents do.
+        - Partials do not declare produced data (`from:` in `_data`).
+
+  - Source syntax:
+    - The partial:
+      - >
+        A partial is an ordinary YMPrint content file. It may begin with `_data` (files
+        it uses, relative to the partial) and `_vars` (parameter defaults).
+      - _code:
+          source: |
+            # ~/eng-lib/partials/beam_check.yml
+            _data:
+              calc: beam_check.py        # relative to THIS file
+            _vars:
+              caption: Bending moment diagram
+              theme: "#0B5F66"
+            Beam check:
+              - _hc:
+                  path: calc
+                  theme_color: $theme
+              - _matplotfig:
+                  fig: $fig
+                  caption: "{{ caption }}"
+          width_ratio: 0.95
+          caption: A partial with its own calculation and parameter defaults
+    - Declaring it:
+      - >
+        As with `_hc: path:`, documents contain names, not paths. The project config
+        declares the partial once, under `_data`:
+      - _code:
+          source: |
+            # project.ymprint.yml
+            _data:
+              beam_check: ../../eng-lib/partials/beam_check.yml
+          width_ratio: 0.95
+          caption: The project config names the partial
+      - >
+        A later option is a library search path (for example a `_partials` directory list
+        in the project or user config). It isn't needed for a first version.
+    - Including it:
+      - _code:
+          source: |
+            Beam B01:
+              - _include:
+                  path: beam_check
+                  namespace: b1
+                  with:
+                    span: 6.0
+                    w: 12.5
+                    caption: B01 bending moment
+              - "Governing moment: {{ b1.M_f }}"
+
+            Beam B02:
+              - _include:
+                  path: beam_check
+                  namespace: b2
+                  with: {span: 4.5, w: 9.0}
+          width_ratio: 0.95
+          caption: Including the same partial twice, each in its own scope
+      - "Options:"
+      - _ul:
+          - "`path` (required): the `_data` name of the partial, or an absolute path. A relative path is an error, as with `_hc`."
+          - "`with`: parameters. They override the partial's `_vars` defaults. `$var` values are substituted as in any block."
+          - "`namespace`: run the partial in its own scope and put its variables under this name afterwards."
+      - >
+        The short form `_include: beam_check` (a bare name) is the same as
+        `_include: {path: beam_check}`. As with blocks, `_include_<id>` keeps keys
+        unique within one mapping.
+
+  - Key implementation details:
+    - A structural key, not a block:
+      - >
+        `_include` is handled in `build_story` (`src/ymprint/story_builder.py`) in the
+        same place as `_textstyle` and `_ul` / `_ol`, before heading and block dispatch.
+        That is the only place where `level` and `current_style` are known. It handles
+        both forms: the mapping key (`_include: ...`) and the single-key list item
+        (`- _include: ...`), following `_extract_list_block`.
+      - _code:
+          source: |
+            include = _extract_include(k, v)
+            if include is not None:
+                story.extend(build_include(include, context, level, current_style))
+                continue
+          width_ratio: 0.95
+          caption: In the build_story loop
+      - >
+        The partial's content is built with
+        `build_story(content, context, level=level, current_style=current_style)`. A
+        top-level heading in the partial then lands one level below the heading that
+        holds the `_include`, just like content written directly in that place. A
+        `_textstyle` inside the partial applies only inside the partial, because
+        `current_style` is passed as a parameter rather than stored as shared state.
+      - >
+        `_include` is added to `RESERVED_CODES` in `src/ymprint/blocks/registry.py`, so
+        no app can register a block with that code.
+    - Loading and validating the partial:
+      - _ul:
+          - >
+            Resolve `path` with `context["data"].path(name)`. This records the partial
+            as an input, so `ym live` watches it and `ym build` hashes it. An absolute
+            path is resolved directly and recorded with `record_file`.
+          - >
+            Load with `load_yaml`, so the partial gets the same nested-bullet fixes and
+            the same `YamlSyntaxError` (which names the partial's file) as a document.
+          - >
+            Pop `_data` and `_vars` from the partial. Raise an authoring error if it
+            contains `_doc`, `_style`, `_tablestyle`, `_export` or `_render`, naming the
+            partial and the document that included it.
+          - >
+            Cache the parsed partial per render, keyed by resolved path, and deep-copy it
+            for each use. Including it ten times parses it once.
+    - Paths relative to the partial:
+      - >
+        While the partial is built, `context["base_dir"]` points at the partial's
+        folder, so `_img`, `_loadjson`, `_dumpjson` and image links resolve beside the
+        partial. The old value is restored in a `finally`. Swapping keys in `context`
+        and restoring them is the general pattern (see the helper below).
+      - >
+        The partial's `_data` is parsed with
+        `parse_data_declarations(partial_data, partial_dir, partial_path, ...)`. Its
+        paths are relative to the partial, and its names are layered over the parent
+        catalog in a child `DataCatalog`:
+      - _code:
+          source: |
+            child = DataCatalog(
+                sources={**parent.sources, **local_sources},
+                project_root=parent.project_root,
+                reads=parent.reads,  # shared with the parent
+                files=parent.files,
+            )
+          width_ratio: 0.95
+          caption: The child catalog shares the parent's read records
+      - >
+        Because `ym_handcalcs` resolves `_hc: path:` through `context["data"]`, swapping
+        in the child catalog is all `path: calc` needs to find the partial's own
+        `beam_check.py`. No change to ym-handcalcs is required.
+      - >
+        `YmContext` (the `ym` variable) is a frozen dataclass that holds the catalog.
+        The partial gets
+        `dataclasses.replace(ym, catalog=child)`, so `ym.path("calc")` also works inside
+        the partial.
+    - Build tracking for partial-local data:
+      - >
+        `ym build` records every source a step reads by name (through
+        `DATA_ACCESS_HOOK` and `Builder._on_access`). When it checks whether a step is
+        stale, it looks each recorded name up in the project catalog. A name declared
+        only inside a partial would show up as "data source 'calc' is no longer
+        declared" and force a rebuild every time.
+      - >
+        The fix: mark sources parsed from a partial as local (a `local: bool` field on
+        `DataSource`). `DataCatalog.load` and `DataCatalog.path` call `record_file` for
+        a local source instead of `_notify_access`. The file is still hashed as an input
+        of the step, and its name never reaches the build records. This is also why
+        partials can't declare `from:`.
+    - Variable scoping:
+      - >
+        `_py` and `_hc` run `exec(source, globals=context["vars"], ...)`. `exec` needs a
+        real `dict` (here a `DocumentVars`, a `dict` subclass that loads `_data` sources
+        lazily) as its globals, so a `ChainMap` can't stand in for the scope. Each mode
+        builds the partial's variables like this:
+      - _ul:
+          - >
+            Shared (no `namespace`): the partial runs in the document's own
+            `context["vars"]`, after applying its `_vars` defaults (only for names not
+            already set) and then `with`. Everything it computes stays in the document's
+            variables, and a second include overwrites them.
+          - >
+            Scoped (`namespace: b1`): the partial runs in a new
+            `DocumentVars(parent, catalog=child)`, which is a shallow copy of the
+            document's variables, then the `_vars` defaults, then `with`, then `ym`.
+            Afterwards, the names the partial created or rebound are stored in
+            `parent["b1"]`. The document's other variables are unchanged.
+      - >
+        In scoped mode, "created or rebound" means any key whose value object differs
+        (by identity) from the snapshot taken before the partial ran, plus the `with`
+        parameters. Mutations of shared objects, such as appending to a list from the
+        parent, are visible to the parent. The copy is shallow, the same way `exec`
+        globals already behave. The docs must say so.
+      - >
+        A partial that needs a value from the document should get it through `with`.
+        Reading parent variables implicitly works (they are in the copy), but makes the
+        partial depend on the document it is used in.
+      - >
+        Recommendation: build both modes. The scoped mode is the one to recommend,
+        because it lets a partial be included several times. The shared mode is the
+        same as writing the content inline, which helps when a partial sets up
+        variables for the rest of the document.
+    - Context swap helper:
+      - _code:
+          source: |
+            @contextmanager
+            def swapped(context, **values):
+                saved = {key: context[key] for key in values}
+                context.update(values)
+                try:
+                    yield
+                finally:
+                    context.update(saved)
+
+            with swapped(context, base_dir=partial_dir, data=child, vars=scope):
+                story = build_story(content, context, level=level, current_style=current_style)
+          width_ratio: 0.95
+          caption: Restores the document's context even when the partial fails
+      - >
+        Jinja is rendered when each paragraph is converted, against `context["vars"]`.
+        Because the build happens inside the swap, `{{ caption }}` in the partial reads
+        the partial's scope with nothing else to do. The same goes for `$var` values,
+        which `retrieve_block_variables` looks up in `context["vars"]`.
+    - Cycles and nesting:
+      - >
+        Partials may include partials. An include stack (resolved paths) is kept in
+        `context` and checked on entry. A partial that includes itself, directly or
+        through others, raises an error showing the whole chain, for example
+        "report.yml → beam_check.yml → beam_check.yml".
+    - Errors:
+      - >
+        A new `IncludeError(YmprintAuthoringError)` in `src/ymprint/errors.py` reports
+        a missing name, a forbidden key, or a cycle. Errors raised inside the partial
+        (a `PythonBlockError` or `BlockError`) get a note naming the partial and the
+        include chain, so the CLI shows where the failing block is.
+    - Slide mode:
+      - >
+        In slide mode, each top-level heading is a slide. An `_include` at level 0
+        expands in place: each top-level heading of the partial becomes a slide, and it
+        counts toward `slide_count` so the first-slide handling stays right. An
+        `_include` inside a slide adds content to that slide, the same as anywhere else.
+
+  - Files touched:
+    - _ul:
+        - "`src/ymprint/story_builder.py`: recognize `_include` (`_extract_include`), call `build_include`, handle slide mode."
+        - "`src/ymprint/includes.py` (new): resolve, load, validate and cache partials; child catalog and scope; context swap; include stack."
+        - "`src/ymprint/blocks/registry.py`: add `_include` to `RESERVED_CODES`."
+        - "`src/ymprint/data_sources.py`: a `local` flag on `DataSource`; local sources are recorded as files, not names."
+        - "`src/ymprint/errors.py`: `IncludeError`."
+        - "`docs/guide/partials.md` (new) and `docs/reference/blocks.md`: guide and reference entry."
+        - "`tests/`: see the test plan."
+
+  - Test plan:
+    - _ul:
+        - A heading inside a partial renders one level below the heading that holds the include. The active `_textstyle` is inherited and does not leak back out.
+        - "`_img` and `_loadjson` in a partial resolve relative to the partial, and `base_dir` is restored afterwards, including after an error."
+        - "A partial's `_hc: path:` finds a `.py` declared in the partial's own `_data`."
+        - "`with` overrides `_vars` defaults. `$var` in `with` passes the object itself."
+        - Two scoped includes of one partial give independent `b1` / `b2` results and leave the document's variables unchanged.
+        - A shared include leaves its results in the document's variables.
+        - Self-inclusion and an A → B → A cycle raise `IncludeError` with the chain.
+        - Forbidden keys (`_doc`, `_export`, ...) in a partial raise `IncludeError`.
+        - The render's inputs include the partial and its local files. `ym build` doesn't report a partial-local name as "no longer declared", and rebuilds the document when the partial or its `.py` changes.
+        - A partial included at level 0 in slide mode produces one slide per top-level heading.
+
+  - Open questions:
+    - _ul:
+        - Should a library search path (`_partials`) be added now, or wait until declaring each partial in `_data` turns out to be tedious?
+        - "Should scoped mode copy back only names the partial creates, or the whole scope? (This proposal: names created or rebound, plus `with`.)"
+        - Should a partial be able to declare which parameters are required (for example `_params` listing names without defaults), so a missing one is a clear error rather than an undefined Jinja variable?
+        - Should a partial be able to switch text style or page template for its own content only, or is that always the document's choice?
+
+  - Estimate:
+    - >
+      About 150 to 250 lines of core code (most of it in the new `includes.py`), plus
+      tests and docs. Variable scoping and build tracking for partial-local data are
+      the parts that need the most care. Everything else follows existing patterns in
+      `story_builder.py` and `data_sources.py`.

@@ -174,6 +174,10 @@ class DataSource:
     producers: tuple[pathlib.Path, ...] = ()
     store_dir: Optional[pathlib.Path] = None
     project_root: Optional[pathlib.Path] = None
+    # Declared in a partial's `_data` (see ymprint.includes). A local source is
+    # recorded as a file read, not by name: `ym build` checks recorded names
+    # against the project's sources, which don't include it.
+    local: bool = False
 
     def output_for(self, producer: pathlib.Path) -> pathlib.Path:
         """The file 'producer' writes its output for this source to."""
@@ -391,6 +395,10 @@ class DataCatalog:
     def load(self, name: str) -> Any:
         """Returns a fresh copy of data source 'name', recording the read."""
         source = self.get_source(name)
+        if source.local:
+            data = source.load()
+            self.files.update(source.files())
+            return data
         _notify_access(source)
         data = source.load()
         self.reads[name] = source.files()
@@ -400,6 +408,9 @@ class DataCatalog:
         """Returns the file data source 'name' is read from, recording the read."""
         source = self.get_source(name)
         files = source.files()
+        if source.local:
+            self.files.update(files)
+            return files[0]
         _notify_access(source)
         if len(files) != 1:
             raise DataSourceError(

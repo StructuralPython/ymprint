@@ -48,6 +48,7 @@ Scope: >
   A single paragraph under the "Scope" heading.
 ```
 
+(heading-levels)=
 ### Heading levels
 
 A heading's level is the number of headings above it, plus one. Lists and mappings
