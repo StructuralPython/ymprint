@@ -108,3 +108,32 @@ def register_fonts() -> None:
                     f"{font_family}-BoldItalic", f"{font_family}-BoldOblique", bold
                 ),
             )
+
+# The bundled family with the widest symbol coverage: used for any character a
+# chosen font can't draw (e.g. the bullet glyphs ‣ ⁃ ∘, which Helvetica lacks).
+FALLBACK_FONT = "DejaVuSans"
+
+
+def font_has_glyph(font_name: str, char: str) -> bool:
+    """
+    Returns True if the registered font 'font_name' can draw 'char'.
+
+    ReportLab doesn't fail on a missing glyph: it silently draws a ZapfDingbats
+    black square ("tofu") instead, so check before relying on a font.
+    """
+    try:
+        font = pdfmetrics.getFont(font_name)
+    except KeyError:
+        return False
+    char_to_glyph = getattr(getattr(font, "face", None), "charToGlyph", None)
+    if char_to_glyph is not None:
+        # A TrueType font: its own character map.
+        return ord(char) in char_to_glyph
+    if font_name in ("Symbol", "ZapfDingbats"):
+        return False
+    # A standard Type 1 font (Helvetica, Times, Courier): WinAnsi characters only.
+    try:
+        char.encode("cp1252")
+    except UnicodeEncodeError:
+        return False
+    return True

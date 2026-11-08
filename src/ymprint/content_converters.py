@@ -11,10 +11,14 @@ from reportlab.platypus import (
     ListFlowable,
     KeepTogether,
 )
+from xml.sax.saxutils import escape
+
+from reportlab.lib.fonts import tt2ps
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from jinja2 import Template, Environment, DebugUndefined
 from ymprint.config.docstyles import ReportStyles
+from ymprint.config.font_registry import FALLBACK_FONT, font_has_glyph
 from .markdown.inline import convert_inline_markdown
 
 
@@ -115,6 +119,23 @@ def _expand_list_items(items) -> list:
     return expanded
 
 
+def _bullet_symbol_markup(symbol: str, font_name: str) -> str:
+    """
+    The bold bullet 'symbol' as markup. A symbol the bullet font can't draw (in
+    either its regular or bold face) is drawn in the fallback font instead of
+    as tofu.
+    """
+    escaped = escape(symbol)
+    faces = [font_name]
+    try:
+        faces.append(tt2ps(font_name, 1, 0))
+    except ValueError:
+        pass
+    if all(all(font_has_glyph(face, char) for char in symbol) for face in faces):
+        return f"<b>{escaped}</b>"
+    return f'<font name="{FALLBACK_FONT}"><b>{escaped}</b></font>'
+
+
 def convert_ul(value: list[str], context: dict, level: int = 0, current_style: str = "default") -> list[ListFlowable]:
     ymp_style = _family_model(context, current_style)
     text_spacing = ymp_style.body.spacing
@@ -127,6 +148,7 @@ def convert_ul(value: list[str], context: dict, level: int = 0, current_style: s
     bul_symbols = ymp_style.body.bullets.symbols
     level_index = level % len(bul_symbols)
     bul_symbol = bul_symbols[level_index]
+    bullet_markup = _bullet_symbol_markup(bul_symbol, ymp_style.body.bullets.font)
     bul_color = ymp_style.body.bullets.rl_color
     bullet_color_hex = "#{:02x}{:02x}{:02x}".format(
         int(bul_color.red),
@@ -142,7 +164,7 @@ def convert_ul(value: list[str], context: dict, level: int = 0, current_style: s
             bullet_contents.extend(sub_bullets)
         else:
             rendered = _list_item_text(elem, context)
-            bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}"><b>{bul_symbol}</b></bullet>{rendered}', bullet_style)
+            bullet_content = Paragraph(f'<bullet color="{bullet_color_hex}">{bullet_markup}</bullet>{rendered}', bullet_style)
             bullet_contents.append(bullet_content)
             
     return [ListFlowable(bullet_contents, start=0, bulletType='bullet', spaceAfter=space_around)]
@@ -150,9 +172,13 @@ def convert_ul(value: list[str], context: dict, level: int = 0, current_style: s
 def convert_ol(value: list | dict, context: dict, level: int = 0, current_style: str = "default") -> list[ListFlowable]:
     sheet = _family_sheet(context, current_style)
     ymp_style = _family_model(context, current_style)
-    # Size the number to the active body text size so it matches the text style.
+    # Number in the body font, at the body text size, so the numbers match the text.
+    # (`bullets.font` is for bullet symbols.)
     bullet_style = ParagraphStyle(
-        'ol-item', parent=sheet['body'], bulletFontSize=ymp_style.body.size
+        'ol-item',
+        parent=sheet['body'],
+        bulletFontName=ymp_style.body.font,
+        bulletFontSize=ymp_style.body.size,
     )
     bul_color = ymp_style.body.bullets.rl_color
     bullet_color_hex = "#{:02x}{:02x}{:02x}".format(
