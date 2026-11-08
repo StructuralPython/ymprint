@@ -167,7 +167,7 @@ _style:
     spacing: 1.7            # line spacing ratio
     align: left             # left | center | right | justify
     bullets:
-      font: Helvetica
+      font: DejaVuSans      # has every symbol below
       size: 10
       color: black
       symbols: "•‣⁃∘"        # bullet glyphs by nesting depth
@@ -207,7 +207,7 @@ _style:
 | `spacing` | Line-spacing ratio. |
 | `align` | Text alignment — `left`, `center`, `right`, or `justify` (default `left`). |
 | `underline` | `true` to underline body paragraphs (default `false`). |
-| `bullets` | Bullet styling — glyph hierarchy (`symbols`), colour, size, and indentation of the bullet (`indent-bullet`) and its text (`indent-text`). |
+| `bullets` | Bullet styling — font, glyph hierarchy (`symbols`), colour, size, and indentation of the bullet (`indent-bullet`) and its text (`indent-text`). A symbol the bullet font can't draw is drawn in `DejaVuSans` instead. Numbers in `_ol` use the body font. |
 
 :::{note}
 `align` and `underline` are available on `body`, `headings`, and every named style. Both are

@@ -49,6 +49,11 @@ _style:
     font: Times 
 ```
 
+The standard fonts cover Western European characters only. Bullet symbols are drawn in
+`DejaVuSans` by default, and any symbol that a chosen bullet font can't draw falls back to
+`DejaVuSans`, so bullets never render as black squares. For body text with Greek letters
+or other symbols, choose a bundled font such as `DejaVuSans`.
+
 ## Inline code font
 
 Inline `` `code` `` spans always render in `DejaVuSansMono` on a light-grey background,

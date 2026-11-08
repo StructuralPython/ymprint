@@ -22,7 +22,8 @@ _style:
     size: 10 # pts
     spacing: 1.7 # pts
     bullets:
-      font: Helvetica
+      # DejaVuSans has all of the bullet symbols below (Helvetica has only •).
+      font: DejaVuSans
       size: 10
       color: black
       symbols: "•‣⁃∘"
