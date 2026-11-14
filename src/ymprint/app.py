@@ -31,6 +31,7 @@ from .fanout import (
     build_instances, matches, render_specs,
 )
 from .exports import write_exports
+from .plugins import plugin_blocks
 from .render import (
     ContextHook, RenderEvent, RenderHook, RenderHooks, RenderMode,
     document_variables, load_source, render_document,
@@ -60,6 +61,9 @@ class Ymprint:
         to the document or passed explicitly.
     'builtin_blocks': start from a copy of ymprint's built-in blocks (True) or
         from an empty registry (False).
+    'plugin_blocks': also render the blocks of installed plugins (the
+        `ymprint.blocks` entry-point group). They never replace a block the
+        application has; see render_blocks().
     'starter_document': the document live mode offers to create when the source
         does not exist; `{title}` is replaced with the file's stem.
     """
@@ -70,12 +74,14 @@ class Ymprint:
         *,
         config_path: Optional[PathLike] = None,
         builtin_blocks: bool = True,
+        plugin_blocks: bool = True,
         starter_document: str = STARTER_DOCUMENT,
     ):
         self.name = name
         self.starter_document = starter_document
         self.config_path = pathlib.Path(config_path) if config_path is not None else None
         self.blocks: BlockRegistry = BUILTIN_BLOCKS.copy() if builtin_blocks else BlockRegistry()
+        self.plugin_blocks = plugin_blocks
         self.hooks = RenderHooks()
 
     def __repr__(self) -> str:
@@ -90,6 +96,21 @@ class Ymprint:
     def block(self, code: str, *, override: bool = False) -> Callable[[BlockConverter], BlockConverter]:
         """Decorator form of register_block()."""
         return self.blocks.block(code, override=override)
+
+    def render_blocks(self) -> BlockRegistry:
+        """
+        Returns the blocks a render uses: this application's own blocks plus,
+        with 'plugin_blocks', each installed plugin block whose code this
+        application doesn't already have. Blocks registered on the application,
+        built-in or its own, always win.
+        """
+        if not self.plugin_blocks:
+            return self.blocks
+        registry = self.blocks.copy()
+        for code, convert in plugin_blocks().items():
+            if code not in registry:
+                registry.register(code, convert)
+        return registry
 
     # --- hooks -------------------------------------------------------------------
 
@@ -199,7 +220,7 @@ class Ymprint:
             base_dir=base_dir, discover_config=discover_config, trigger=trigger, mode=mode,
             output=output, project_root=project_root, vars=vars, params=params,
         )
-        render_document(event, data, self.blocks, self.hooks)
+        render_document(event, data, self.render_blocks(), self.hooks)
         return event
 
     def _event(
@@ -347,7 +368,7 @@ class Ymprint:
                 discover_config=discover_config, mode=mode, vars=instance.params, params=instance.params,
             )
             try:
-                render_document(event, data, self.blocks, self.hooks)
+                render_document(event, data, self.render_blocks(), self.hooks)
             except Exception as exc:
                 # One failing parameter set must not stop the others.
                 run.failures.append(RenderFailure(instance, exc))

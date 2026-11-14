@@ -54,7 +54,8 @@ def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> l
         raise BlockError(
             block_key,
             f"Unknown block {block_code!r} (from key {block_key!r}). "
-            f"Available blocks: {sorted(blocks.codes())}",
+            f"Available blocks: {sorted(blocks.codes())}. A block from another package "
+            "is available once that package is installed.",
         )
     block_value_w_python_objects = retrieve_block_variables(block_value, context)
     try:
