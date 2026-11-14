@@ -118,6 +118,19 @@ register never leak into `ym` or into another application. To replace a built-in
 block, pass `override=True`. Registering a code that already exists otherwise raises
 `BlockExistsError`. To start with no blocks at all, use `Ymprint(builtin_blocks=False)`.
 
+Blocks from installed packages (see [Installed blocks](../reference/api.md#plugin-blocks))
+are added at render time for codes your application doesn't have, so a block you
+register always wins over a plugin's. To render only your own blocks, use
+`Ymprint(plugin_blocks=False)`.
+
+To share a block with every ymprint user, not only your application's, publish it
+in the `ymprint.blocks` entry-point group of your package:
+
+```toml
+[project.entry-points."ymprint.blocks"]
+_beam = "calcsheet.blocks:beam_block"
+```
+
 ## Render hooks
 
 Hooks run on **every** render: `convert`, `live` (each refresh) and `app.render()`.

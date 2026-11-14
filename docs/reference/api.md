@@ -21,6 +21,7 @@ Ymprint(
     *,
     config_path: str | Path | None = None,
     builtin_blocks: bool = True,
+    plugin_blocks: bool = True,
     starter_document: str = STARTER_DOCUMENT,
 )
 ```
@@ -30,6 +31,7 @@ Ymprint(
 | `name` | The application's name, used as its CLI name. |
 | `config_path` | The application's config file or directory (house style). Layered above YMPrint's defaults and below the user's config. |
 | `builtin_blocks` | Start from a copy of the built-in blocks (`True`) or an empty registry (`False`). |
+| `plugin_blocks` | Also render the blocks of [installed packages](#plugin-blocks) (`True`), for codes the application doesn't have itself. |
 | `starter_document` | The document `live` offers to create when the source doesn't exist. `{title}` is replaced with the file name. |
 
 | Member | Description |
@@ -37,6 +39,7 @@ Ymprint(
 | `blocks` | This application's `BlockRegistry`. |
 | `register_block(code, convert, *, override=False)` | Adds a block. |
 | `@block(code, *, override=False)` | Decorator form of `register_block`. |
+| `render_blocks()` | The blocks a render uses: `blocks`, plus each installed plugin block whose code isn't in `blocks` (with `plugin_blocks=True`). |
 | `@before_render` | Registers `fn(event)` to run before every render. |
 | `@on_context` | Registers `fn(event, context)` to run after the context is built, before content is rendered. Changes to the style models in `context` take effect. |
 | `@after_render` | Registers `fn(event)` to run after every render that wrote the PDF. |
@@ -185,6 +188,39 @@ from ymprint import register_loader
 def setup():
     register_loader("yaml+units", load_yaml_with_quantities)
 ```
+
+(plugin-blocks)=
+### Installed blocks
+
+A package adds blocks by naming each block's converter in the `ymprint.blocks`
+entry-point group. The entry's name is the block code; the leading underscore may be
+left out.
+
+```toml
+# the plugin's pyproject.toml
+[project.entry-points."ymprint.blocks"]
+_beam = "beamz9000.ymprint:beam_block"
+```
+
+Once the package is installed, `ym` and every other application created with
+`plugin_blocks=True` (the default) render `_beam` blocks. The converter has the
+usual block signature, `convert(block_key, block_value, context) -> list[Flowable]`.
+
+- **Applications win.** A plugin block never replaces a block the application has,
+  built-in or registered. An application that registers the same code itself, e.g.
+  with a different converter, keeps its own and gets no `BlockExistsError`.
+- **Imported on first use.** The plugin's module is imported the first time a
+  document uses the block, so installed plugins don't slow down documents that
+  don't use them.
+- **Failures stay local.** If the module fails to import, each use of its blocks
+  raises a `BlockError` that names the package and the reason. Other blocks render
+  as usual.
+- **Invalid or clashing codes** are skipped with a warning: a code that isn't
+  `_` plus letters and digits, a code ymprint reserves, or a second package
+  providing a code another package already provides (the first by distribution name
+  is used).
+
+Turn plugin blocks off for an application with `Ymprint(plugin_blocks=False)`.
 
 ## `ymprint.project`
 

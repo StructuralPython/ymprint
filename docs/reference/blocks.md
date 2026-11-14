@@ -58,6 +58,9 @@ You can add your own blocks by building a [custom application](../guide/custom-a
 | [`_hrule`](#block-hrule) | A customizable horizontal rule. |
 | [`_spacer`](#block-spacer) | Insert vertical whitespace. |
 
+Installed packages can add more blocks; see
+[Installed blocks](api.md#plugin-blocks).
+
 ---
 
 (block-img)=
