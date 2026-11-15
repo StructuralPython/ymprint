@@ -24,6 +24,19 @@ block has run. A `$var` exports the object itself; any other string is a Jinja t
 (its result is text). Mappings and lists can nest. A missing variable is an authoring error
 that names the document and its parameter set.
 
+A `$var.part.part` path exports part of a variable, as the object itself rather than text.
+Each part is a mapping key, a list index, or else an attribute (not one starting with `_`):
+
+```yaml
+_export:
+  model: $b1.model                 # an object inside a mapping
+  Fy_max: $b1.reactions.B.max.Fy   # a number deep inside nested mappings
+  depth: $section.dims.0           # a list item
+```
+
+A part that isn't there is an authoring error naming how far the path got, e.g.
+`` `_export` 'Fy_max' in calc.yml: b1.reactions.B has no key 'max'. ``
+
 The value a reviewer reads in the PDF and the value the next stage uses are the same
 computation.
 

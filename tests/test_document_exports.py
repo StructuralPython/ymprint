@@ -285,3 +285,44 @@ def test_tagged_values_round_trip_through_json(tmp_path):
     assert data["B01"] == {"Vr": Quantity(30.2, "kN"), "n": 2}
     # An unregistered tag is read as a plain dict.
     assert data["other"] == {TYPE_KEY: "unknown", "a": 1}
+
+
+def test_export_paths_reach_into_variables():
+    from ymprint.exports import evaluate_exports
+
+    class Section:
+        name = "W310x39"
+        dims = {"d": [310, 165]}
+        _private = 1
+
+    variables = {"beam": {"model": "M", "reactions": {"B": {"max": {"Fy": 108.56}}}}, "section": Section()}
+    declarations = {
+        "model": "$beam.model",
+        "Fy": "$beam.reactions.B.max.Fy",
+        "name": "$section.name",
+        "width": "$section.dims.d.1",
+        "nested": ["$beam.model"],
+        "price": "$5.00",  # Not a path: kept as text.
+    }
+    assert evaluate_exports(declarations, variables, "calc.yml") == {
+        "model": "M", "Fy": 108.56, "name": "W310x39", "width": 165, "nested": ["M"], "price": "$5.00",
+    }
+
+
+@pytest.mark.parametrize("path, message", [
+    ("$beam.nope", "beam has no key 'nope'"),
+    ("$beam.reactions.B.min", "beam.reactions.B has no key 'min'"),
+    ("$section._private", "section has no key or attribute '_private'"),
+    ("$section.dims.d.5", "section.dims.d has no item 5"),
+    ("$missing.model", "no variable 'missing' is defined"),
+])
+def test_a_broken_export_path_names_where_it_stopped(path, message):
+    from ymprint.exports import evaluate_exports
+
+    class Section:
+        dims = {"d": [310, 165]}
+        _private = 1
+
+    variables = {"beam": {"reactions": {"B": {"max": {}}}}, "section": Section()}
+    with pytest.raises(ExportError, match=message):
+        evaluate_exports({"x": path}, variables, "calc.yml")

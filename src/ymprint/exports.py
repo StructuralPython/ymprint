@@ -3,11 +3,13 @@ Document exports (`_export`): the values a document produces for later stages.
 
     _export:
       Vr: $V_r
+      model: $beam.model
       section: "{{ design[member_name].section }}"
 
 Exports are evaluated after the document's content is built, so every `_py`
-and `_hc` block has run. A `$var` exports the object itself; any other string
-is a Jinja template. The `_data` entries that name the document in their
+and `_hc` block has run. A `$var` exports the object itself, and a
+`$var.part.part` path the object reached through it: a key of a mapping, an
+index of a list, or else an attribute. Any other string is a Jinja template. The `_data` entries that name the document in their
 `from:` receive its exports, written whole by ymprint on each full render.
 """
 from __future__ import annotations
@@ -16,6 +18,7 @@ import json
 import numbers
 import os
 import pathlib
+import re
 import tempfile
 from collections import ChainMap
 from collections.abc import Mapping
@@ -49,12 +52,22 @@ def evaluate_exports(declarations: Any, variables: Mapping, where: str) -> dict:
     return {name: _evaluate(value, variables, where, str(name)) for name, value in declarations.items()}
 
 
+# `$name.part.part`: a variable, then keys, indices or attributes.
+_EXPORT_PATH = re.compile(r"^\$([A-Za-z_]\w*)((?:\.\w+)+)$")
+
+
 def _evaluate(value: Any, variables: Mapping, where: str, name: str) -> Any:
     if isinstance(value, str) and check_for_variable(value, None):
         var_name = value.lstrip("$")
         if var_name not in variables:
             raise ExportError(f"`_export` {name!r} in {where}: no variable {var_name!r} is defined.")
         return variables[var_name]
+    path = _EXPORT_PATH.match(value) if isinstance(value, str) else None
+    if path:
+        var_name, parts = path.group(1), path.group(2)[1:].split(".")
+        if var_name not in variables:
+            raise ExportError(f"`_export` {name!r} in {where}: no variable {var_name!r} is defined.")
+        return _follow(variables[var_name], var_name, parts, where, name)
     if isinstance(value, str):
         if "{" not in value:
             return value
@@ -71,6 +84,25 @@ def _evaluate(value: Any, variables: Mapping, where: str, name: str) -> Any:
     if isinstance(value, list):
         return [_evaluate(v, variables, where, f"{name}[{i}]") for i, v in enumerate(value)]
     return value
+
+
+def _follow(obj: Any, reached: str, parts: list[str], where: str, name: str) -> Any:
+    """'obj' followed through 'parts': each a mapping key, a list index, or else an attribute."""
+    for part in parts:
+        if isinstance(obj, Mapping):
+            if part not in obj:
+                raise ExportError(f"`_export` {name!r} in {where}: {reached} has no key {part!r}.")
+            obj = obj[part]
+        elif isinstance(obj, (list, tuple)) and part.isdigit():
+            if int(part) >= len(obj):
+                raise ExportError(f"`_export` {name!r} in {where}: {reached} has no item {part}.")
+            obj = obj[int(part)]
+        elif hasattr(obj, part) and not part.startswith("_"):
+            obj = getattr(obj, part)
+        else:
+            raise ExportError(f"`_export` {name!r} in {where}: {reached} has no key or attribute {part!r}.")
+        reached = f"{reached}.{part}"
+    return obj
 
 
 # --- serialization -------------------------------------------------------------
