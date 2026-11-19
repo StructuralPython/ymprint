@@ -139,7 +139,7 @@ wheels = [
 
 [[package]]
 name = "handcalcs"
-version = "2.0.0rc2"
+version = "2.0.0rc5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "innerscope" },
@@ -147,9 +147,9 @@ dependencies = [
     { name = "pfst" },
     { name = "platformdirs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ce/1f/b1aef35a2f2a64c56595f2810479a280de7c6b288c7a251ccffb84c6938b/handcalcs-2.0.0rc2.tar.gz", hash = "sha256:622fb475e80675084323877e5bb48d9ec184d09146879b753280686c080d8682", size = 155568, upload-time = "2026-10-29T00:14:07.049Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/38/54/2983e27d70ef84c9975594207736428bf45d20b2fdbd1d32f530c287f964/handcalcs-2.0.0rc5.tar.gz", hash = "sha256:a2dc163679559f45c3064f8841c5c234fb6aa7516744ea70a01c7eb666266dba", size = 191089, upload-time = "2026-11-19T02:44:15.44Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/50/93/2fae4bc9dc6a71d7b3f6c1a721aa9f9d72b01cf03d7418ba86e5cd7b0cbb/handcalcs-2.0.0rc2-py3-none-any.whl", hash = "sha256:904f99e350f9ed1e3823e4e2a97cc06f1ec721b427e1769af66cb11a2e1ef3c7", size = 176379, upload-time = "2026-10-29T00:14:05.646Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/87/4ec1aa695871478acfd9d73ba2c6a2510a0c0d3ad1284554b21c938a8b52/handcalcs-2.0.0rc5-py3-none-any.whl", hash = "sha256:0e4d955cf66a285e98d71d12eceda8021df6a8e5460aa8de2509695186ccbbe0", size = 215655, upload-time = "2026-11-19T02:44:13.555Z" },
 ]
 
 [[package]]
@@ -619,24 +619,25 @@ wheels = [
 
 [[package]]
 name = "wenmode"
-version = "0.8.0"
+version = "0.15.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e0/58/971bd624a2a5e73cd1c89713954d2e6994f29bdab58ab11ecbc57d038f53/wenmode-0.8.0.tar.gz", hash = "sha256:b6a86608c9c58983029bee4943da573026192f2f1fc6ae45773158df4a7aa581", size = 291487, upload-time = "2026-06-29T09:33:58.956Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3b/2f/9538fb2a2ecb35235c2ca62ded3021683fb8afbe7c8cce5df73de678b78f/wenmode-0.15.3.tar.gz", hash = "sha256:ffd930245931b1b0346d7b6e151ad84c21d97b9145c219e4d7fa07981691282f", size = 96010, upload-time = "2026-10-19T10:49:02.852Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/19/85e5c6e0be0bc51696a6a7815e2ee63db4b06284bf313096e406a1271c6a/wenmode-0.8.0-py3-none-any.whl", hash = "sha256:f495eb209cf6ae115e9f4ecde2f3edb9a72b66e24cbfefd2d7fb1a7e5231f3f0", size = 112537, upload-time = "2026-06-29T09:33:57.67Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/b1/69f1cde3c99d73dd0d1e6f0b6f5b39623e3a40715c451805332cfd7568a8/wenmode-0.15.3-py3-none-any.whl", hash = "sha256:227818ce841e8762c09d594cb7e1829d2ebf22142638236d040e8274cae83c13", size = 143323, upload-time = "2026-10-19T10:49:01.364Z" },
 ]
 
 [[package]]
 name = "ym-handcalcs"
-version = "0.4.0"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "handcalcs" },
     { name = "reportlab" },
+    { name = "wenmode" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5b/77/6ce987f54df13ccfe885ee2a50de74a7a7dbea8ad02c8e72a4bb1eddaacc/ym_handcalcs-0.4.0.tar.gz", hash = "sha256:0b1ec440f2111a1e59258e4911fea86ecae3152cdfcf0887f2e04ffbd11e5ebf", size = 39519, upload-time = "2026-11-07T21:14:22.29Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/df/e1/fc26d83069c645430754acc881aeb3fb021314882d8ca2d6a9cf38edd527/ym_handcalcs-0.5.0.tar.gz", hash = "sha256:039e26b518578c88b5df05b12f091eed6535eef7b3ef77d5d10ecbca4b02178e", size = 41826, upload-time = "2026-11-19T03:24:46.103Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/23/26/3f48d77d601822a020456f5617c4117a45a5569a2023f009f7807dc363e0/ym_handcalcs-0.4.0-py3-none-any.whl", hash = "sha256:2df09e8925de75e398f5ed70a1393b10491f74ef460d44949ebe649570d59e27", size = 42158, upload-time = "2026-11-07T21:14:20.942Z" },
+    { url = "https://files.pythonhosted.org/packages/da/25/b2a25b12e417549c205c3597a35d20e682e1f562e06b53f73e540bf9ab5a/ym_handcalcs-0.5.0-py3-none-any.whl", hash = "sha256:98eef0088a2481dfa1a2199bf63babf941f17a94bd6623d5304aa0ed4bd8aba2", size = 44665, upload-time = "2026-11-19T03:24:44.693Z" },
 ]
 
 [[package]]
@@ -681,15 +682,15 @@ requires-dist = [
     { name = "ruamel-yaml", specifier = ">=0.19.1" },
     { name = "typer", specifier = ">=0.26.7" },
     { name = "wenmode", specifier = ">=0.8.0" },
-    { name = "ym-handcalcs", marker = "extra == 'hc'", specifier = ">=0.4.0" },
+    { name = "ym-handcalcs", marker = "extra == 'hc'", specifier = ">=0.5.0" },
 ]
 provides-extras = ["hc"]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "handcalcs", specifier = ">=2.0.0rc2" },
+    { name = "handcalcs", specifier = ">=2.0.0rc5" },
     { name = "matplotlib", specifier = ">=3.11.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "rich", specifier = ">=15.0.0" },
-    { name = "ym-handcalcs", specifier = ">=0.4.0" },
+    { name = "ym-handcalcs", specifier = ">=0.5.0" },
 ]
