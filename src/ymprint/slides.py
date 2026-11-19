@@ -17,6 +17,10 @@ from .outline import mark_outline
 # `_slide` (per-slide settings) and `_frame` (route content to a frame) are structural
 # directives, not registered blocks. A trailing `_suffix` is allowed for uniqueness
 # within a mapping, consistent with other block codes.
+# context key: the page template of the deck's first slide, which the document
+# starts on.
+FIRST_TEMPLATE_KEY = "first_page_template"
+
 SLIDE_DIRECTIVE_PATTERN = re.compile(r"^_(slide|frame)(?:_|$)")
 
 SLIDE_SETTINGS = ("layout", "template")
@@ -244,12 +248,10 @@ def build_slide(title, value, context: dict, current_style: str, first: bool = F
         template_name = doctemplate.resolve_template_id(settings.get("template", starting_template))
     except ValueError as exc:
         raise YMPrintSyntaxException(f"Slide {title!r}: {exc}") from exc
-    if first and template_name != starting_template:
-        raise YMPrintSyntaxException(
-            f"The first slide ({title!r}) always uses the first page template, "
-            f"{starting_template!r}. To start the deck on {template_name!r}, list it "
-            f"first under `_doc: templates:`."
-        )
+    if first:
+        # The document starts on the first slide's template (see render.py), so a
+        # deck can open on a cover template without listing it first.
+        context[FIRST_TEMPLATE_KEY] = template_name
     box_width = context["frames"][template_name]["width"]
     box_height = context["frames"][template_name]["height"]
 

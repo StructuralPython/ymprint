@@ -127,7 +127,8 @@ Thank you:
 
 Settings apply to **that slide only**. A slide that doesn't name a template uses the
 deck's first template, so the first template listed under `_doc.templates` is the deck's
-normal template and the first slide always uses it.
+normal template. The first slide can name any template, so a deck can open on its own
+cover (for example one of several cover designs in a shared config).
 
 A `_textstyle` among a slide's leading items restyles the whole slide, title included:
 

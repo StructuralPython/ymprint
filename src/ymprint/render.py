@@ -21,6 +21,7 @@ from .data_sources import YM_VAR, DataCatalog, DocumentVars, YmContext, build_do
 from .errors import YmprintAuthoringError
 from .exports import evaluate_exports
 from .exceptions import YMPrintSyntaxException
+from .slides import FIRST_TEMPLATE_KEY
 from .story_builder import build_story
 from .yaml_loader import load_yaml
 
@@ -228,7 +229,9 @@ def _build_pdf(
     story = build_story(context["content"], context)
     if export_declarations is not None:
         event.exports = evaluate_exports(export_declarations, context["vars"], describe_render(event))
-    rl_doc, page_template_map = doctemplate.build(event.destination)
+    rl_doc, page_template_map = doctemplate.build(
+        event.destination, first_template=context.get(FIRST_TEMPLATE_KEY)
+    )
     rl_report_buffer = BytesIO()
     rl_doc.build(story, filename=rl_report_buffer)
     rl_report_buffer.seek(0)

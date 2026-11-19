@@ -201,7 +201,8 @@ class DocConfig(PageSizeMixin, LandscapeMixin, BaseModel):
         """Smallest content height across all templates (safe for sizing flowables)."""
         return min(self.available_height(name) for name in self.template_names)
 
-    def build(self, destination: str | pathlib.Path, title: str = "", author: str = ""):
+    def build(self, destination: str | pathlib.Path, title: str = "", author: str = "",
+              first_template: str | None = None):
         """
         Returns a tuple of (BaseDocTemplate, page_template_map).
 
@@ -248,5 +249,10 @@ class DocConfig(PageSizeMixin, LandscapeMixin, BaseModel):
             author=author,
             allowSplitting=1
         )
+
+        if first_template is not None:
+            # The first page uses this template rather than the first one listed
+            # (a slide deck that opens on its cover template).
+            doc._firstPageTemplateIndex = self.template_names.index(first_template)
 
         return doc, page_template_map
