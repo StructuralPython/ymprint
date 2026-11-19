@@ -83,11 +83,13 @@ def test_block_theme_and_size_override_the_text_style():
     assert code_font_size(table) == 20
 
 
-def test_larger_text_gets_more_padding():
+def test_padding_does_not_change_with_the_text_size():
+    # Existing documents keep their code block widths: a larger size makes the
+    # text larger, not the padding (which would clip lines that used to fit).
     _, context = story_and_context({"_style": STYLE, "Code": "x"})
     small = resolve_code_look(context, size=9)
     large = resolve_code_look(context, size=27)
-    assert large.pad_h == pytest.approx(3 * small.pad_h)
+    assert (large.pad_h, large.pad_v) == (small.pad_h, small.pad_v) == (12, 10)
 
 
 @pytest.mark.parametrize("block", ["_code", "_py"])
