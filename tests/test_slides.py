@@ -298,16 +298,40 @@ def test_unknown_slide_template_is_an_authoring_error():
         slide_story({"A": ["a"], "B": [{"_slide": {"template": "nope"}}]})
 
 
-def test_first_slide_cannot_switch_template():
-    doc = {
-        **SLIDE_DOC,
-        "templates": {
-            "content": {"margins": {"top": 20, "left": 20, "right": 20, "bottom": 20}},
-            "cover": {"margins": {"top": 20, "left": 20, "right": 20, "bottom": 20}},
-        },
-    }
-    with pytest.raises(YMPrintSyntaxException, match="list it first"):
-        slide_story({"A": [{"_slide": {"template": "cover"}}, "a"]}, doc=doc)
+def text_x_positions(page) -> dict[str, float]:
+    """{text: x} for each piece of text drawn on a page."""
+    found = {}
+
+    def visit(text, cm, tm, font_dict, font_size):
+        if text.strip():
+            found[text.strip()] = tm[4] * cm[0] + cm[4]
+
+    page.extract_text(visitor_text=visit)
+    return found
+
+
+def test_first_slide_can_open_on_another_template(tmp_path):
+    # The cover template is listed second; the deck still opens on it, and a slide
+    # without a template goes back to the first one listed.
+    reader = render(tmp_path, """
+        _doc:
+          page-size: [960, 540]
+          slides: true
+          templates:
+            content:
+              margins: {top: 20, left: 40, right: 40, bottom: 20}
+            cover:
+              margins: {top: 20, left: 400, right: 40, bottom: 20}
+        Cover slide:
+          - _slide: {template: cover}
+          - Alpha
+        Content slide:
+          - Bravo
+    """)
+    cover = text_x_positions(reader.pages[0])
+    content = text_x_positions(reader.pages[1])
+    assert cover["Alpha"] == pytest.approx(400, abs=1)
+    assert content["Bravo"] == pytest.approx(40, abs=1)
 
 
 def test_unknown_slide_setting_is_an_authoring_error():
