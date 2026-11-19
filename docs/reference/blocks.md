@@ -202,12 +202,17 @@ _code:
         - cell_size
 ```
 
-| Parameter | Required | Meaning |
-| --- | --- | --- |
-| `source` | ✅ | The literal text to display. Use a YAML block scalar (`|`) to preserve line breaks. |
+| Parameter | Required | Default | Meaning |
+| --- | --- | --- | --- |
+| `source` | ✅ | — | The literal text to display. Use a YAML block scalar (`|`) to preserve line breaks. |
 | `line_numbers` | | — | Show line numbers alongside the rendered source. |
 | `caption` | | — | Caption shown with the rendered code. |
 | `width_ratio` | | `0.75` | Width of the rendered code block relative to the content width. |
+| `theme` | | from the text style | `light` (for white pages) or `dark` (for dark pages and slides). |
+| `size` | | from the text style | Text size in points. The padding grows with it. |
+
+The theme and size default to the active text style's [`code` settings](#style-code), so
+a dark text style can make every code block in it dark.
 
 To **run** code instead of just showing it, use [`_py`](#block-py).
 
@@ -250,6 +255,8 @@ Both the `|` and `>` character are part of the YAML spec.
 | `caption` | | — | Caption shown with the rendered code. |
 | `namespace` | | — | Nest the created variables under this name (access as `{{namespace.var}}`). Without it, variables land at the top level. |
 | `width_ratio` | | `0.75` | Width of the rendered code block relative to the content width. |
+| `theme` | | from the text style | `light` or `dark`, as for [`_code`](#block-code). |
+| `size` | | from the text style | Text size in points, as for `_code`. |
 
 :::{warning}
 `_py` runs `exec()` in the **same** Python environment as YMPrint. External subprocess

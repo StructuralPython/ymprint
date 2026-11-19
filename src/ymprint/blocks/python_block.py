@@ -1,7 +1,7 @@
 from reportlab.platypus import Table, KeepTogether
 from . import content_box
-from .code_block_styles import python_code_block
-from ..errors import PythonBlockError
+from .code_block_styles import CodeLookError, python_code_block
+from ..errors import BlockError, PythonBlockError
 from typing import Callable
 
 
@@ -27,7 +27,14 @@ def convert_python_block(block_key: str, block_value: dict, context: dict) -> li
         # keeps the source and traceback for a compact, actionable report.
         raise PythonBlockError(block_key, source, e) from e
     if block_value.get("echo", True):
-        code_block = python_code_block(source, available_width * width_ratio, context, caption=caption, show_line_numbers=line_numbers)
+        try:
+            code_block = python_code_block(
+                source, available_width * width_ratio, context, caption=caption,
+                show_line_numbers=line_numbers,
+                theme=block_value.get('theme'), size=block_value.get('size'),
+            )
+        except CodeLookError as exc:
+            raise BlockError(block_key, str(exc)) from exc
         code_block.spaceBefore = space_around
         code_block.spaceAfter = space_around
         return [KeepTogether(code_block)]
