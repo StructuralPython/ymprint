@@ -37,11 +37,8 @@ FONT_MONO_OBLIQUE = "DejaVuSansMono-Oblique"
 
 LINE_NUM_WIDTH = 28   # pt: the least width of the line-number column
 GUTTER_WIDTH = 8      # pt: gap between line numbers and code
-CELL_PAD_H = 12       # pt: least left/right padding of the block
-CELL_PAD_V = 10       # pt: least top/bottom padding of the block
-
-# The size a block's padding is designed at; larger text gets more padding.
-_PADDING_DESIGN_SIZE = 9.0
+CELL_PAD_H = 12       # pt: left/right padding of the block
+CELL_PAD_V = 10       # pt: top/bottom padding of the block
 
 
 # ---------------------------------------------------------------------------
@@ -133,11 +130,11 @@ class CodeLook:
 
     @property
     def pad_h(self) -> float:
-        return max(CELL_PAD_H, CELL_PAD_H * self.size / _PADDING_DESIGN_SIZE)
+        return CELL_PAD_H
 
     @property
     def pad_v(self) -> float:
-        return max(CELL_PAD_V, CELL_PAD_V * self.size / _PADDING_DESIGN_SIZE)
+        return CELL_PAD_V
 
 
 def resolve_code_look(context: dict, theme: Optional[str] = None, size=None) -> CodeLook:

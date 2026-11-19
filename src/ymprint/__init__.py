@@ -1,6 +1,6 @@
 """Desktop publishing in YAML with Python."""
 
-__version__ = "0.14.0"
+__version__ = "0.14.1"
 
 from ymprint import config
 from ymprint import blocks

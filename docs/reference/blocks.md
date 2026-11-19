@@ -209,7 +209,7 @@ _code:
 | `caption` | | — | Caption shown with the rendered code. |
 | `width_ratio` | | `0.75` | Width of the rendered code block relative to the content width. |
 | `theme` | | from the text style | `light` (for white pages) or `dark` (for dark pages and slides). |
-| `size` | | from the text style | Text size in points. The padding grows with it. |
+| `size` | | from the text style | Text size in points. |
 
 The theme and size default to the active text style's [`code` settings](#style-code), so
 a dark text style can make every code block in it dark.
