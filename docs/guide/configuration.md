@@ -214,6 +214,30 @@ _style:
 inherited by named styles like any other field.
 :::
 
+(style-code)=
+### Code
+
+`code` sets how [`_code`](#block-code) and [`_py`](#block-py) blocks look:
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `theme` | `light` | `light` (Paper Light, for white pages) or `dark` (Ink Dark, for dark pages and slides). |
+| `size` | 0.9 × `body.size` | Code text size in points. |
+| `spacing` | `1.55` | Line spacing, as a multiple of `size`. |
+
+```yaml
+_style:
+  code: {size: 9}
+  styles:
+    dark-slide:
+      body: {color: "#f3effa"}
+      code: {theme: dark, size: 24}
+```
+
+Like `body` and `headings`, `code` is inherited by named styles, so after
+`_textstyle: dark-slide` every code block is dark and 24 pt. A block's own `theme` and
+`size` win over the style.
+
 (style-named)=
 ### Named text styles
 
@@ -239,8 +263,8 @@ _style:
         ratio: major third
 ```
 
-Switching to a named style swaps the **whole family** — body paragraphs, bullet lists, and
-the derived `h1`…`h6` headings all follow the active style. Because heading sizes are derived
+Switching to a named style swaps the **whole family** — body paragraphs, bullet lists,
+the derived `h1`…`h6` headings and code blocks all follow the active style. Because heading sizes are derived
 from `body.size` (`body.size × ratio`), a named style with a smaller `body.size` also shrinks
 its headings.
 

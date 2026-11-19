@@ -1,198 +1,206 @@
 """
 code_block_styles.py
 ====================
-ReportLab styles and flowable builder for Python code blocks.
+ReportLab styles and flowable builders for the `_code` and `_py` blocks.
 
-Features
---------
-- Syntax highlighting via Pygments (One Dark-inspired palette)
-- DejaVu Sans Mono — bundled in the ``fonts/`` subdirectory alongside this
-  module, so no system fonts are required on any platform
-- Line numbers, optional caption, horizontal rule separator
+- Two colour themes: "light" (Paper Light, for white pages) and "dark" (Ink
+  Dark, for dark pages and slides). Pygments highlights `_py` source.
+- DejaVu Sans Mono, bundled with ymprint (registered by register_fonts()).
+- Line numbers, an optional caption bar, and a size in points.
 
-Dependencies
-------------
-    pip install reportlab pygments
-
-Package layout
---------------
-    your_package/
-        code_block_styles.py
-        fonts/
-            DejaVuSansMono.ttf
-            DejaVuSansMono-Bold.ttf
-            DejaVuSansMono-Oblique.ttf
-
-Usage
------
-    from code_block_styles import python_code_block, register_fonts
-
-    register_fonts()   # call once at program start
-
-    block = python_code_block(
-        code=\"\"\"
-    def greet(name: str) -> str:
-        return f"Hello, {name}!"
-    \"\"\",
-        col_width=440,
-        caption="example.py",
-    )
-    story.append(block)
+The theme, size and line spacing come from the active text style's `code`
+settings (see CodeStyle in config/docstyles.py), and a block can override the
+theme and size. resolve_code_look() works out which apply.
 """
-import pathlib
+from __future__ import annotations
+
+from dataclasses import dataclass
 from typing import Optional
 
-from pygments import highlight as _hl
 from pygments.lexers import PythonLexer
-from pygments.formatters import RawTokenFormatter   # gives us (ttype, value) pairs
-from pygments.token import (
-    Token, Comment, Keyword, Name, Number, Operator,
-    Punctuation, String, Literal,
-)
-from pygments.lexers import PythonLexer
+from pygments.token import Token
 
 from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Paragraph, Table, TableStyle, Spacer, XPreformatted
+from reportlab.platypus import Paragraph, Table, TableStyle, XPreformatted
 
-# ---------------------------------------------------------------------------
-# Font registration
-# ---------------------------------------------------------------------------
+from ..config.docstyles import CODE_THEMES
 
-# Bundled fonts directory — sits alongside this module file.
-# Ship the fonts/ subdirectory with your package; no system fonts required.
-_FONTS_DIR = pathlib.Path(__file__).parents[1] / "config" / "fonts" 
-FONT_MONO         = "DejaVuSansMono"
-FONT_MONO_BOLD    = "DejaVuSansMono-Bold"
+FONT_MONO = "DejaVuSansMono"
+FONT_MONO_BOLD = "DejaVuSansMono-Bold"
 FONT_MONO_OBLIQUE = "DejaVuSansMono-Oblique"
 
-_FONT_FILES = {
-    FONT_MONO: f"{FONT_MONO}.ttf",
-    FONT_MONO_BOLD: f"{FONT_MONO_BOLD}.ttf",
-    FONT_MONO_OBLIQUE: f"{FONT_MONO_OBLIQUE}.ttf",
-}
+# ---------------------------------------------------------------------------
+# Layout tokens
+# ---------------------------------------------------------------------------
 
+LINE_NUM_WIDTH = 28   # pt: the least width of the line-number column
+GUTTER_WIDTH = 8      # pt: gap between line numbers and code
+CELL_PAD_H = 12       # pt: least left/right padding of the block
+CELL_PAD_V = 10       # pt: least top/bottom padding of the block
 
-# def register_fonts() -> None:
-#     """
-#     Register the bundled DejaVu Sans Mono TTF faces with ReportLab.
-
-#     Prepends the package-local ``fonts/`` directory to ReportLab's
-#     ``TTFSearchPath`` so that ``TTFont('DejaVuSansMono', 'DejaVuSansMono.ttf')``
-#     resolves to the bundled copy on any platform, regardless of what system
-#     fonts are installed.
-
-#     Call once at program start before building any flowables.
-
-#     Raises
-#     ------
-#     FileNotFoundError
-#         If the bundled ``fonts/`` directory or any expected TTF file is missing.
-#         This indicates a broken package installation rather than a missing system
-#         font, so we raise rather than silently fall back.
-#     """
-#     if not _FONTS_DIR.exists():
-#         raise FileNotFoundError(
-#             f"Bundled fonts directory not found: {_FONTS_DIR}\n"
-#             "Ensure the 'fonts/' directory is distributed alongside this module."
-#         )
-
-#     # Prepend so our bundled copies take priority over any system-installed
-#     # versions of the same filename.
-#     import reportlab.rl_config as rl_config
-#     if _FONTS_DIR not in rl_config.TTFSearchPath:
-#         rl_config.TTFSearchPath.insert(0, str(_FONTS_DIR.resolve()))
-
-#     for name, filename in _FONT_FILES.items():
-#         font_path = _FONTS_DIR / filename
-#         if not font_path.exists():
-#             raise FileNotFoundError(
-#                 f"Bundled font file missing: {font_path.resolve()}\n"
-#                 "Ensure all DejaVu Sans Mono TTF files are present in fonts/."
-#             )
-#         pdfmetrics.registerFont(TTFont(name, filename))
+# The size a block's padding is designed at; larger text gets more padding.
+_PADDING_DESIGN_SIZE = 9.0
 
 
 # ---------------------------------------------------------------------------
-# Design tokens
+# Themes
 # ---------------------------------------------------------------------------
-
-# CODE_FONT_SIZE   = 9
-# CODE_LEADING     = CODE_FONT_SIZE * 1.55
-LINE_NUM_WIDTH   = 28          # pt — column reserved for line numbers
-GUTTER_WIDTH     = 8           # pt — gap between line numbers and code
-CELL_PAD_H       = 12          # pt — left/right padding of the outer block
-CELL_PAD_V       = 10          # pt — top/bottom padding of the outer block
-# CAPTION_FONT     = "Helvetica"
-# CAPTION_FONT_SIZE = 8
-
 
 class _PaperLight:
     """
-    Paper Light — a print-optimised light theme for code blocks.
+    Paper Light: a print-optimised light theme for white pages.
 
-    Designed for white/transparent backgrounds. All syntax colours are
-    tested for WCAG AA contrast against white (#FFFFFF).
-
-    Inspired by GitHub Light and Xcode's default light theme, with ink
-    colours shifted warmer to read naturally on paper.
+    All syntax colours meet WCAG AA contrast against white. Inspired by GitHub
+    Light and Xcode's default light theme, with ink colours shifted warmer to
+    read naturally on paper.
     """
     # Background / chrome
-    BG           = colors.HexColor("#FFFFFF")   # transparent / white page
-    GUTTER_BG    = colors.HexColor("#F3F4F6")   # grey-100 — subtle gutter tint
-    BORDER       = colors.HexColor("#D1D5DB")   # grey-300 — light but visible
-    CAPTION_BG   = colors.HexColor("#F3F4F6")   # matches gutter
+    BG = colors.HexColor("#FFFFFF")
+    GUTTER_BG = colors.HexColor("#F3F4F6")
+    BORDER = colors.HexColor("#D1D5DB")
+    CAPTION_BG = colors.HexColor("#F3F4F6")
 
     # Text
-    DEFAULT      = colors.HexColor("#24292F")   # near-black — GitHub's body ink
-    LINE_NUM     = colors.HexColor("#9CA3AF")   # grey-400 — recedes from code
-    CAPTION_TEXT = colors.HexColor("#6B7280")   # grey-500
+    DEFAULT = colors.HexColor("#24292F")
+    LINE_NUM = colors.HexColor("#9CA3AF")
+    CAPTION_TEXT = colors.HexColor("#6B7280")
 
     # Syntax
-    KEYWORD      = colors.HexColor("#8250DF")   # purple   — GitHub Light keyword
-    BUILTIN      = colors.HexColor("#CF222E")   # red      — built-ins & exceptions
-    DECORATOR    = colors.HexColor("#0550AE")   # blue     — decorators
-    FUNCTION     = colors.HexColor("#6639BA")   # violet   — function names
-    CLASS_NAME   = colors.HexColor("#953800")   # burnt orange — class names
-    STRING       = colors.HexColor("#0A3069")   # deep blue — strings (not green;
-                                                #   green ink fades on paper)
-    NUMBER       = colors.HexColor("#0550AE")   # blue     — numeric literals
-    COMMENT      = colors.HexColor("#57606A")   # grey-600 — muted but readable
-    OPERATOR     = colors.HexColor("#CF222E")   # red      — operators
-    PUNCTUATION  = colors.HexColor("#24292F")   # same as default
-    CONSTANT     = colors.HexColor("#0550AE")   # blue     — True/False/None
+    KEYWORD = colors.HexColor("#8250DF")
+    BUILTIN = colors.HexColor("#CF222E")
+    DECORATOR = colors.HexColor("#0550AE")
+    FUNCTION = colors.HexColor("#6639BA")
+    CLASS_NAME = colors.HexColor("#953800")
+    STRING = colors.HexColor("#0A3069")   # deep blue: green ink fades on paper
+    NUMBER = colors.HexColor("#0550AE")
+    COMMENT = colors.HexColor("#57606A")
+    OPERATOR = colors.HexColor("#CF222E")
+    PUNCTUATION = colors.HexColor("#24292F")
+    CONSTANT = colors.HexColor("#0550AE")
+
+
+class _InkDark:
+    """
+    Ink Dark: a dark theme for dark pages and slides.
+
+    A blue-black ground a step lighter than near-black pages, so the block
+    still reads as a card on them. Syntax colours are soft pastels (in the
+    Material Palenight family), each at least WCAG AA against the ground.
+    """
+    # Background / chrome
+    BG = colors.HexColor("#1B1E28")
+    GUTTER_BG = colors.HexColor("#222632")
+    BORDER = colors.HexColor("#353B4B")
+    CAPTION_BG = colors.HexColor("#222632")
+
+    # Text
+    DEFAULT = colors.HexColor("#E4E7EF")
+    LINE_NUM = colors.HexColor("#6E7790")
+    CAPTION_TEXT = colors.HexColor("#A3ABC0")
+
+    # Syntax
+    KEYWORD = colors.HexColor("#C792EA")
+    BUILTIN = colors.HexColor("#F78C6C")
+    DECORATOR = colors.HexColor("#82AAFF")
+    FUNCTION = colors.HexColor("#82AAFF")
+    CLASS_NAME = colors.HexColor("#FFCB6B")
+    STRING = colors.HexColor("#C3E88D")
+    NUMBER = colors.HexColor("#F78C6C")
+    COMMENT = colors.HexColor("#8A93A8")
+    OPERATOR = colors.HexColor("#89DDFF")
+    PUNCTUATION = colors.HexColor("#BFC7D5")
+    CONSTANT = colors.HexColor("#FF9CAC")
+
+
+THEMES = {"light": _PaperLight, "dark": _InkDark}
+assert set(THEMES) == set(CODE_THEMES)
+
+
+class CodeLookError(ValueError):
+    """A code block's theme or size is not valid."""
+
+
+@dataclass(frozen=True)
+class CodeLook:
+    """What a code block looks like: its theme, text size and leading (pt)."""
+    theme: type
+    size: float
+    leading: float
+    caption_font: str
+    caption_size: float
+
+    @property
+    def pad_h(self) -> float:
+        return max(CELL_PAD_H, CELL_PAD_H * self.size / _PADDING_DESIGN_SIZE)
+
+    @property
+    def pad_v(self) -> float:
+        return max(CELL_PAD_V, CELL_PAD_V * self.size / _PADDING_DESIGN_SIZE)
+
+
+def resolve_code_look(context: dict, theme: Optional[str] = None, size=None) -> CodeLook:
+    """
+    The look of a code block built here: the active text style's `code` settings,
+    with the block's own 'theme' and 'size' (when given) over them. Raises
+    CodeLookError for an unknown theme or a size that isn't a positive number.
+    """
+    from . import section  # ymprint.blocks; imported here to avoid a cycle
+
+    families = context["styles"].get("families") or {}
+    family_entry = families.get(section(context)["text_style"]) or families.get("default")
+    family = family_entry["ymprint"] if family_entry else context["styles"]["ymprint"]
+    code = family.code
+    body = family.body
+
+    theme_name = code.theme if theme is None else theme
+    if theme_name not in THEMES:
+        raise CodeLookError(
+            f"Unknown code theme {theme_name!r}. Use one of: {', '.join(THEMES)}."
+        )
+    if size is None:
+        size = code.size if code.size is not None else body.size * 0.9
+    if isinstance(size, bool) or not isinstance(size, (int, float)) or size <= 0:
+        raise CodeLookError(f"A code block's size is a positive number of points. Got: {size!r}.")
+    return CodeLook(
+        theme=THEMES[theme_name],
+        size=float(size),
+        leading=float(size) * code.spacing,
+        caption_font=body.font,
+        caption_size=body.size * 0.8,
+    )
+
 
 # ---------------------------------------------------------------------------
-# Token → colour mapping
+# Token → colour and font
 # ---------------------------------------------------------------------------
 
-def _token_color(ttype) -> colors.Color:
-    """Map a Pygments token type to a ReportLab colour."""
+def _token_color(ttype, theme) -> colors.Color:
+    """Map a Pygments token type to a colour of 'theme'."""
     if ttype in Token.Keyword or ttype in Token.Keyword.Namespace:
-        return _PaperLight.KEYWORD
+        return theme.KEYWORD
     if ttype in Token.Keyword.Constant:
-        return _PaperLight.CONSTANT
+        return theme.CONSTANT
     if ttype in Token.Name.Builtin or ttype in Token.Name.Exception:
-        return _PaperLight.BUILTIN
+        return theme.BUILTIN
     if ttype in Token.Name.Decorator:
-        return _PaperLight.DECORATOR
+        return theme.DECORATOR
     if ttype in Token.Name.Function or ttype in Token.Name.Function.Magic:
-        return _PaperLight.FUNCTION
+        return theme.FUNCTION
     if ttype in Token.Name.Class:
-        return _PaperLight.CLASS_NAME
+        return theme.CLASS_NAME
     if ttype in Token.Literal.String or ttype in Token.String:
-        return _PaperLight.STRING
+        return theme.STRING
     if ttype in Token.Literal.Number or ttype in Token.Number:
-        return _PaperLight.NUMBER
+        return theme.NUMBER
     if ttype in Token.Comment:
-        return _PaperLight.COMMENT
+        return theme.COMMENT
     if ttype in Token.Operator:
-        return _PaperLight.OPERATOR
+        return theme.OPERATOR
     if ttype in Token.Punctuation:
-        return _PaperLight.PUNCTUATION
-    return _PaperLight.DEFAULT
+        return theme.PUNCTUATION
+    return theme.DEFAULT
 
 
 def _token_font(ttype) -> str:
@@ -204,55 +212,30 @@ def _token_font(ttype) -> str:
     return FONT_MONO
 
 
-# ---------------------------------------------------------------------------
-# XML escaping for ReportLab Paragraph markup
-# ---------------------------------------------------------------------------
-
 def _escape(text: str) -> str:
-    return (
-        text
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    """XML-escapes text for ReportLab paragraph markup."""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-# ---------------------------------------------------------------------------
-# Core: tokenise + build per-line Paragraph markup
-# ---------------------------------------------------------------------------
-
-def _tokenise_to_lines(code: str) -> list[str]:
+def _tokenise_to_lines(code: str, theme) -> list[str]:
     """
-    Tokenise ``code`` with Pygments and return a list of ReportLab
-    Paragraph XML strings — one per source line, with inline colour spans.
+    Tokenises Python 'code' with Pygments and returns one ReportLab paragraph
+    string per source line, with inline colour spans from 'theme'.
     """
     lexer = PythonLexer(stripnl=False, ensurenl=True)
-    tokens = list(lexer.get_tokens(code))
-
-    # Walk tokens, building up line buffers
-    lines: list[list[str]] = [[]]   # list of lines; each line is a list of spans
-
-    for ttype, value in tokens:
-        col   = _token_color(ttype)
-        font  = _token_font(ttype)
-        hex_c = col.hexval()# if hasattr(col, 'hexval') else col.hexColor()
-
-        # Split on newlines — a single token may span multiple lines
-        parts = value.split("\n")
-        for i, part in enumerate(parts):
+    lines: list[list[str]] = [[]]
+    for ttype, value in lexer.get_tokens(code):
+        hex_c = _token_color(ttype, theme).hexval()
+        font = _token_font(ttype)
+        # A single token may span several lines.
+        for i, part in enumerate(value.split("\n")):
             if i > 0:
-                lines.append([])   # start a new line
+                lines.append([])
             if part:
-                span = (
-                    f'<font name="{font}" color="{hex_c}">'
-                    f'{_escape(part)}</font>'
-                )
-                lines[-1].append(span)
-
-    # Remove a trailing empty line that Pygments always appends
+                lines[-1].append(f'<font name="{font}" color="{hex_c}">{_escape(part)}</font>')
+    # Pygments always appends a newline.
     if lines and lines[-1] == []:
         lines.pop()
-
     return ["".join(spans) if spans else " " for spans in lines]
 
 
@@ -260,15 +243,14 @@ def _tokenise_to_lines(code: str) -> list[str]:
 # Paragraph styles
 # ---------------------------------------------------------------------------
 
-def _code_line_style(context: dict) -> ParagraphStyle:
-    body_size = context['styles']['ymprint'].body.size
+def _code_line_style(look: CodeLook) -> ParagraphStyle:
     return ParagraphStyle(
         name="code_line",
         fontName=FONT_MONO,
-        fontSize=body_size * 0.9,
-        leading=body_size * 0.9 * 1.55,
-        textColor=_PaperLight.DEFAULT,
-        backColor=_PaperLight.BG,
+        fontSize=look.size,
+        leading=look.leading,
+        textColor=look.theme.DEFAULT,
+        backColor=look.theme.BG,
         spaceBefore=0,
         spaceAfter=0,
         leftIndent=0,
@@ -278,15 +260,14 @@ def _code_line_style(context: dict) -> ParagraphStyle:
     )
 
 
-def _line_number_style(context: dict) -> ParagraphStyle:
-    body_size = context['styles']['ymprint'].body.size
+def _line_number_style(look: CodeLook) -> ParagraphStyle:
     return ParagraphStyle(
         name="code_line_number",
         fontName=FONT_MONO,
-        fontSize=body_size * 0.9,
-        leading=body_size * 0.9 * 1.55,
-        textColor=_PaperLight.LINE_NUM,
-        backColor=_PaperLight.GUTTER_BG,
+        fontSize=look.size,
+        leading=look.leading,
+        textColor=look.theme.LINE_NUM,
+        backColor=look.theme.GUTTER_BG,
         alignment=2,   # right-align numbers
         spaceBefore=0,
         spaceAfter=0,
@@ -302,16 +283,14 @@ def _gutter_width(last_line_number: int, lnum_style: ParagraphStyle) -> float:
     return max(LINE_NUM_WIDTH, digits_width + GUTTER_WIDTH + 2)
 
 
-def _caption_style(context: dict) -> ParagraphStyle:
-    body_size = context['styles']['ymprint'].body.size
-    body_font = context['styles']['ymprint'].body.font
+def _caption_style(look: CodeLook) -> ParagraphStyle:
     return ParagraphStyle(
         name="code_caption",
-        fontName=body_font,
-        fontSize=body_size * 0.8,
-        leading=body_size * 0.8 * 1.4,
-        textColor=_PaperLight.CAPTION_TEXT,
-        backColor=_PaperLight.CAPTION_BG,
+        fontName=look.caption_font,
+        fontSize=look.caption_size,
+        leading=look.caption_size * 1.4,
+        textColor=look.theme.CAPTION_TEXT,
+        backColor=look.theme.CAPTION_BG,
         alignment=0,
         spaceBefore=0,
         spaceAfter=0,
@@ -322,79 +301,108 @@ def _caption_style(context: dict) -> ParagraphStyle:
 # Table styles
 # ---------------------------------------------------------------------------
 
-def _code_table_style(n_rows: int, show_line_numbers: bool) -> TableStyle:
+def _code_table_style(look: CodeLook, show_line_numbers: bool) -> TableStyle:
     """TableStyle for the inner grid (line numbers | code)."""
+    theme = look.theme
     cmds = [
-        # Backgrounds
-        ("BACKGROUND",    (0, 0), (-1, -1), _PaperLight.BG),
-        ("BACKGROUND",    (0, 0), (0, -1),  _PaperLight.GUTTER_BG),
-
-        # No borders between cells
-        ("BOX",           (0, 0), (-1, -1), 0, colors.transparent),
-        ("INNERGRID",     (0, 0), (-1, -1), 0, colors.transparent),
-
-        # Tight cell padding — leading handles vertical spacing
-        ("LEFTPADDING",   (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
-        ("TOPPADDING",    (0, 0), (-1, -1), 0),
+        ("BACKGROUND", (0, 0), (-1, -1), theme.BG),
+        ("BACKGROUND", (0, 0), (0, -1), theme.GUTTER_BG if show_line_numbers else theme.BG),
+        ("BOX", (0, 0), (-1, -1), 0, colors.transparent),
+        ("INNERGRID", (0, 0), (-1, -1), 0, colors.transparent),
+        # Tight cell padding: the leading handles vertical spacing.
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-
-        # Right-pad the gutter column to create the gap
-        ("RIGHTPADDING",  (0, 0), (0,  -1), GUTTER_WIDTH),
-
-        # Align everything to the top of each cell
-        ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+        # The gap after the gutter column.
+        ("RIGHTPADDING", (0, 0), (0, -1), GUTTER_WIDTH),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
     ]
-
-    if not show_line_numbers:
-        # Hide gutter background when line numbers are off
-        cmds.append(("BACKGROUND", (0, 0), (0, -1), _PaperLight.BG))
-
     return TableStyle(cmds)
 
 
-def _outer_table_style(has_caption: bool) -> TableStyle:
+def _outer_table_style(look: CodeLook, has_caption: bool) -> TableStyle:
     """TableStyle for the outer wrapper (optional caption bar + code grid)."""
+    theme = look.theme
     cmds = [
-        ("BACKGROUND",    (0, 0), (-1, -1), _PaperLight.BG),
-        ("BOX",           (0, 0), (-1, -1), 1,   _PaperLight.BORDER),
-        ("INNERGRID",     (0, 0), (-1, -1), 0,   colors.transparent),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
-        ("TOPPADDING",    (0, 0), (-1, -1), 0),
+        ("BACKGROUND", (0, 0), (-1, -1), theme.BG),
+        ("BOX", (0, 0), (-1, -1), 1, theme.BORDER),
+        ("INNERGRID", (0, 0), (-1, -1), 0, colors.transparent),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
-        ("VALIGN",        (0, 0), (-1, -1), "TOP"),
-        ("ROUNDEDCORNERS", [4, 4, 4, 4])
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("ROUNDEDCORNERS", [4, 4, 4, 4]),
     ]
-
     if has_caption:
-        # Caption row: background + bottom separator line
         cmds += [
-            ("BACKGROUND",    (0, 0), (0, 0),  _PaperLight.CAPTION_BG),
-            ("LINEBELOW",     (0, 0), (0, 0),  0.5, _PaperLight.BORDER),
-            ("LEFTPADDING",   (0, 0), (0, 0),  CELL_PAD_H),
-            ("RIGHTPADDING",  (0, 0), (0, 0),  CELL_PAD_H),
-            ("TOPPADDING",    (0, 0), (0, 0),  6),
-            ("BOTTOMPADDING", (0, 0), (0, 0),  6),
+            ("BACKGROUND", (0, 0), (0, 0), theme.CAPTION_BG),
+            ("LINEBELOW", (0, 0), (0, 0), 0.5, theme.BORDER),
+            ("LEFTPADDING", (0, 0), (0, 0), look.pad_h),
+            ("RIGHTPADDING", (0, 0), (0, 0), look.pad_h),
+            ("TOPPADDING", (0, 0), (0, 0), 6),
+            ("BOTTOMPADDING", (0, 0), (0, 0), 6),
         ]
         code_row = 1
     else:
         code_row = 0
-
-    # Code grid row: add breathing-room padding inside the dark background
     cmds += [
-        ("LEFTPADDING",   (0, code_row), (0, code_row), CELL_PAD_H),
-        ("RIGHTPADDING",  (0, code_row), (0, code_row), CELL_PAD_H),
-        ("TOPPADDING",    (0, code_row), (0, code_row), CELL_PAD_V),
-        ("BOTTOMPADDING", (0, code_row), (0, code_row), CELL_PAD_V),
+        ("LEFTPADDING", (0, code_row), (0, code_row), look.pad_h),
+        ("RIGHTPADDING", (0, code_row), (0, code_row), look.pad_h),
+        ("TOPPADDING", (0, code_row), (0, code_row), look.pad_v),
+        ("BOTTOMPADDING", (0, code_row), (0, code_row), look.pad_v),
     ]
-
     return TableStyle(cmds)
 
 
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
+def _code_table(
+    markup_lines: list[str],
+    col_width: float,
+    look: CodeLook,
+    caption: Optional[str],
+    show_line_numbers: bool,
+    first_line: int,
+) -> Table:
+    line_style = _code_line_style(look)
+    lnum_style = _line_number_style(look)
+    n_lines = len(markup_lines)
+
+    if show_line_numbers:
+        gutter_w = _gutter_width(first_line + n_lines - 1, lnum_style)
+        code_w = col_width - gutter_w - GUTTER_WIDTH - (look.pad_h * 2)
+    else:
+        gutter_w = 0
+        code_w = col_width - (look.pad_h * 2)
+
+    inner_rows = []
+    for i, markup in enumerate(markup_lines):
+        code_para = XPreformatted(markup, line_style)
+        if show_line_numbers:
+            inner_rows.append([Paragraph(str(first_line + i), lnum_style), code_para])
+        else:
+            inner_rows.append([code_para])
+
+    inner_table = Table(
+        inner_rows,
+        colWidths=[gutter_w, code_w] if show_line_numbers else [code_w],
+        style=_code_table_style(look, show_line_numbers),
+    )
+    if caption:
+        caption_para = Paragraph(f"  {_escape(caption)}", _caption_style(look))
+        outer_rows = [[caption_para], [inner_table]]
+    else:
+        outer_rows = [[inner_table]]
+    return Table(
+        outer_rows,
+        colWidths=[col_width],
+        style=_outer_table_style(look, has_caption=bool(caption)),
+    )
+
 
 def python_code_block(
     code: str,
@@ -404,82 +412,18 @@ def python_code_block(
     caption: Optional[str] = None,
     show_line_numbers: bool = True,
     first_line: int = 1,
+    theme: Optional[str] = None,
+    size: Optional[float] = None,
 ) -> Table:
     """
-    Build and return a ReportLab ``Table`` flowable for a Python code block.
-
-    Parameters
-    ----------
-    code : str
-        Raw Python source code (may include leading/trailing newlines).
-    col_width : float
-        Total available width in points (e.g. page width minus margins).
-    caption : str, optional
-        Filename or short description shown in a header bar above the code.
-        Pass ``None`` to omit the caption bar entirely.
-    show_line_numbers : bool
-        Whether to render a gutter column with line numbers. Default: True.
-    first_line : int
-        Number to assign to the first line. Default: 1.
-
-    Returns
-    -------
-    Table
-        A ReportLab Platypus flowable ready to append to a story.
-
-    Notes
-    -----
-    Call ``register_fonts()`` once before using this function so that
-    DejaVu Sans Mono is available. If the TTF files are not found,
-    the function falls back to Courier automatically.
+    A ReportLab Table showing Python 'code', syntax-highlighted, 'col_width'
+    points wide, with an optional 'caption' bar and line numbers. 'theme' and
+    'size' override the active text style's code settings.
     """
-
-    code = code.strip("\n")   # remove leading/trailing blank lines
-    markup_lines = _tokenise_to_lines(code)
-    n_lines      = len(markup_lines)
-
-    line_style   = _code_line_style(context)
-    lnum_style   = _line_number_style(context)
-
-    # --- Build inner grid rows ---
-    if show_line_numbers:
-        gutter_w = _gutter_width(first_line + n_lines - 1, lnum_style)
-        code_w   = col_width - gutter_w - GUTTER_WIDTH - (CELL_PAD_H * 2)
-    else:
-        gutter_w = 0
-        code_w   = col_width - (CELL_PAD_H * 2)
-
-    inner_rows = []
-    for i, markup in enumerate(markup_lines):
-        line_num_para = Paragraph(str(first_line + i), lnum_style)
-        code_para     = XPreformatted(markup, line_style)
-        if show_line_numbers:
-            inner_rows.append([line_num_para, code_para])
-        else:
-            inner_rows.append([code_para])
-
-    col_widths = [gutter_w, code_w] if show_line_numbers else [code_w]
-
-    inner_table = Table(
-        inner_rows,
-        colWidths=col_widths,
-        style=_code_table_style(n_lines, show_line_numbers),
-    )
-
-    # --- Wrap in outer table (adds padding, border, optional caption) ---
-    if caption:
-        caption_para = Paragraph(f"  {_escape(caption)}", _caption_style(context))
-        outer_rows   = [[caption_para], [inner_table]]
-    else:
-        outer_rows = [[inner_table]]
-
-    outer_table = Table(
-        outer_rows,
-        colWidths=[col_width],
-        style=_outer_table_style(has_caption=bool(caption)),
-    )
-
-    return outer_table
+    look = resolve_code_look(context, theme, size)
+    code = code.strip("\n")
+    return _code_table(_tokenise_to_lines(code, look.theme), col_width, look, caption,
+                       show_line_numbers, first_line)
 
 
 def generic_code_block(
@@ -490,78 +434,15 @@ def generic_code_block(
     caption: Optional[str] = None,
     show_line_numbers: bool = True,
     first_line: int = 1,
+    theme: Optional[str] = None,
+    size: Optional[float] = None,
 ) -> Table:
     """
-    Build and return a ReportLab ``Table`` flowable for a Python code block.
-
-    Parameters
-    ----------
-    code : str
-        Raw Python source code (may include leading/trailing newlines).
-    col_width : float
-        Total available width in points (e.g. page width minus margins).
-    caption : str, optional
-        Filename or short description shown in a header bar above the code.
-        Pass ``None`` to omit the caption bar entirely.
-    show_line_numbers : bool
-        Whether to render a gutter column with line numbers. Default: True.
-    first_line : int
-        Number to assign to the first line. Default: 1.
-
-    Returns
-    -------
-    Table
-        A ReportLab Platypus flowable ready to append to a story.
-
-    Notes
-    -----
-    Call ``register_fonts()`` once before using this function so that
-    DejaVu Sans Mono is available. If the TTF files are not found,
-    the function falls back to Courier automatically.
+    A ReportLab Table showing 'code' verbatim (no highlighting), 'col_width'
+    points wide, with an optional 'caption' bar and line numbers. 'theme' and
+    'size' override the active text style's code settings.
     """
-    code = code.strip("\n")   # remove leading/trailing blank lines
-    markup_lines = code.split("\n")
-    n_lines      = len(markup_lines)
-
-    line_style   = _code_line_style(context)
-    lnum_style   = _line_number_style(context)
-
-    # --- Build inner grid rows ---
-    if show_line_numbers:
-        gutter_w = _gutter_width(first_line + n_lines - 1, lnum_style)
-        code_w   = col_width - gutter_w - GUTTER_WIDTH - (CELL_PAD_H * 2)
-    else:
-        gutter_w = 0
-        code_w   = col_width - (CELL_PAD_H * 2)
-
-    inner_rows = []
-    for i, markup in enumerate(markup_lines):
-        line_num_para = Paragraph(str(first_line + i), lnum_style)
-        code_para     = XPreformatted(_escape(markup), line_style)
-        if show_line_numbers:
-            inner_rows.append([line_num_para, code_para])
-        else:
-            inner_rows.append([code_para])
-
-    col_widths = [gutter_w, code_w] if show_line_numbers else [code_w]
-
-    inner_table = Table(
-        inner_rows,
-        colWidths=col_widths,
-        style=_code_table_style(n_lines, show_line_numbers),
-    )
-
-    # --- Wrap in outer table (adds padding, border, optional caption) ---
-    if caption:
-        caption_para = Paragraph(f"  {_escape(caption)}", _caption_style(context))
-        outer_rows   = [[caption_para], [inner_table]]
-    else:
-        outer_rows = [[inner_table]]
-
-    outer_table = Table(
-        outer_rows,
-        colWidths=[col_width],
-        style=_outer_table_style(has_caption=bool(caption)),
-    )
-
-    return outer_table
+    look = resolve_code_look(context, theme, size)
+    code = code.strip("\n")
+    lines = [_escape(line) for line in code.split("\n")]
+    return _code_table(lines, col_width, look, caption, show_line_numbers, first_line)

@@ -1,6 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, Field, ConfigDict, BeforeValidator
-from typing import TypeAlias, Annotated, Optional
+from typing import TypeAlias, Annotated, Literal, Optional
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.styles import StyleSheet1
 
@@ -86,6 +86,21 @@ class BodyTextStyle(SpacingMixin, TextStyle):
     bullets: BulletStyle
 
 
+CODE_THEMES = ("light", "dark")
+
+
+class CodeStyle(BaseModel):
+    """
+    How `_code` and `_py` blocks look in a text style family: the colour theme,
+    the text size in points (default: 0.9 x the family's body size) and the line
+    spacing as a multiple of the size. A block's own `theme` and `size` win.
+    """
+    model_config = ConfigDict(populate_by_name=True)
+    theme: Literal["light", "dark"] = "light"
+    size: Optional[float] = Field(default=None, gt=0)
+    spacing: float = Field(default=1.55, gt=0)
+
+
 def _deep_merge(base: dict, override: dict) -> dict:
     """
     Returns a new dict: 'override' recursively merged onto 'base'. Nested dicts are
@@ -105,6 +120,7 @@ class StyleFamily(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     body: BodyTextStyle
     headings: HeadingStyle
+    code: CodeStyle = Field(default_factory=CodeStyle)
 
     def build_sheet(self) -> StyleSheet1:
         """
@@ -150,12 +166,12 @@ class StyleFamily(BaseModel):
 
 class ReportStyles(StyleFamily):
     # Named text families. Each value is a *sparse* override of the default family
-    # (this instance's body + headings); unspecified fields are inherited.
+    # (this instance's body, headings and code); unspecified fields are inherited.
     styles: dict[str, dict] = Field(default_factory=dict)
 
     @property
     def default_family(self) -> StyleFamily:
-        return StyleFamily(body=self.body, headings=self.headings)
+        return StyleFamily(body=self.body, headings=self.headings, code=self.code)
 
     def build(self) -> StyleSheet1:
         """Returns the default family's stylesheet (back-compat)."""
