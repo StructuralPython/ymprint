@@ -40,8 +40,22 @@ def test_hc_block_renders_with_the_default_app(tmp_path):
     default_app.render(document, destination)
     with pymupdf.open(destination) as pdf:
         text = " ".join("".join(page.get_text() for page in pdf).split())
-    assert "M = w · L · L / 8 = 3 · 6 · 6 / 8 = 13.5" in text
+    # Divisions are stacked fractions: the text reads numerator, then denominator.
+    assert "M = w · L · L 8 = 3 · 6 · 6 8 = 13.5" in text
     assert "The moment is 13.5." in text
+
+
+@needs_hc
+def test_hc_block_can_write_fractions_inline(tmp_path):
+    document = {
+        "_vars": {"w": 3},
+        "Beam": [{"_hc": {"source": "L = 6\nM = w * L * L / 8\n", "fractions": "inline"}}],
+    }
+    destination = tmp_path / "beam.pdf"
+    default_app.render(document, destination)
+    with pymupdf.open(destination) as pdf:
+        text = " ".join("".join(page.get_text() for page in pdf).split())
+    assert "M = w · L · L / 8 = 3 · 6 · 6 / 8 = 13.5" in text
 
 
 @needs_hc
@@ -53,7 +67,7 @@ def test_hc_block_shows_a_section_on_a_condition(tmp_path, w, flexure_shown):
     default_app.render({"_vars": {"w": w}, "Beam": [{"_hc": source}]}, destination)
     with pymupdf.open(destination) as pdf:
         text = " ".join("".join(page.get_text() for page in pdf).split())
-    assert "M = w · 62 / 8" in text
+    assert "M = w · 62 8" in text
     assert ("Zreq" in text) == flexure_shown
     assert "R = w · 3" in text
 

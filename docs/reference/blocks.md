@@ -321,6 +321,7 @@ _hc_moment:
 | `base_size` | | the body text size | Font size, in points, that every calculation style scales from. |
 | `namespace` | | — | Put the results in `_vars[namespace]` (read as `{{ namespace.var }}`, or `namespace["var"]` in Python) instead of the top level. |
 | `headings` | | `document` | How `## ...` heading comments render: `document`, `calc` or `flat`. See below. Needs ym-handcalcs 0.4.0. |
+| `fractions` | | `stacked` | `stacked` draws a division as a fraction, its numerator over its denominator; `inline` writes `a / b`. A division in an exponent is always inline, and a line too wide for stacked fractions writes them inline. Needs ym-handcalcs 0.6.0. |
 
 With `path`, the calculation lives in its own `.py` file. Declare the file once in the
 project's `_data`, then use its name:
