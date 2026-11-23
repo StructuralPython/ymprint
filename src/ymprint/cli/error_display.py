@@ -2,7 +2,8 @@
 
 Python-block tracebacks are truncated to their *top and bottom*: the first few
 frames (the calling context — which block triggered the failure) and the last
-few frames (the exact line that blew up), with the middle collapsed. This keeps
+few frames (the exact line that blew up), with the middle collapsed, except for
+frames in the document's own code (a function an earlier block defined, say). This keeps
 even a deep stack readable while still telling the author both *where their
 document caused it* and *what to fix*.
 """
@@ -14,7 +15,13 @@ from typing import Optional
 from rich.console import Group, RenderableType
 from rich.text import Text
 
-from ..errors import BlockError, PythonBlockError, YamlSyntaxError, YmprintAuthoringError
+from ..errors import (
+    BlockError,
+    PythonBlockError,
+    YamlSyntaxError,
+    YmprintAuthoringError,
+    block_key_of,
+)
 
 # How many stack frames to keep from each end before collapsing the middle.
 HEAD_FRAMES = 2
@@ -74,7 +81,7 @@ def _format_python_error(exc: PythonBlockError) -> RenderableType:
     ]
 
     if isinstance(original, SyntaxError):
-        # A SyntaxError fails at compile time, so there is no `<string>` frame in
+        # A SyntaxError fails at compile time, so there is no frame of the block in
         # the traceback. Use the exception's own line/offset instead, and detect
         # the common cause: forgetting the `|` block scalar, which folds the code
         # into a single line.
@@ -83,11 +90,12 @@ def _format_python_error(exc: PythonBlockError) -> RenderableType:
     else:
         frames = traceback.extract_tb(original.__traceback__)
         source_lines = exc.source.splitlines()
-        failing = _failing_source_line(frames, source_lines)
+        own = _own_filename(frames)
+        failing = _failing_source_line(frames, source_lines, own)
         if failing is not None:
             parts.append(failing)
         parts.append(Text("Traceback (most relevant frames):", style="dim"))
-        parts.extend(_compact_frames(frames, source_lines))
+        parts.extend(_compact_frames(frames, source_lines, own))
         message = str(original)
 
     parts.append(Text(f"{type(original).__name__}: {message}", style="bold red"))
@@ -121,21 +129,53 @@ def _syntax_error_parts(
     return parts
 
 
-def _frame_source(frame: traceback.FrameSummary, source_lines: list[str]) -> Optional[str]:
-    """Text of the frame's line, mapping exec'd `<string>` frames to the block."""
+def _own_filename(frames: list[traceback.FrameSummary]) -> Optional[str]:
+    """The filename the failing block's source was compiled as.
+
+    A block's source runs as a module, so its outermost frame is the first
+    `<module>` frame; anything below that came from the block's own code or
+    from code it called.
+    """
+    for frame in frames:
+        if frame.name == "<module>":
+            return frame.filename
+    return None
+
+
+def _is_author_code(frame: traceback.FrameSummary) -> bool:
+    """A frame in a document's code (a block's source), not in a library."""
+    return frame.filename.startswith("<") and frame.filename.endswith(">")
+
+
+def _frame_source(
+    frame: traceback.FrameSummary, source_lines: list[str], own: Optional[str]
+) -> Optional[str]:
+    """Text of the frame's line; frames of the failing block map to its source."""
     if frame.line:
         return frame.line.strip()
-    if frame.filename == "<string>" and 1 <= frame.lineno <= len(source_lines):
+    if frame.filename == own and 1 <= frame.lineno <= len(source_lines):
         return source_lines[frame.lineno - 1].strip()
     return None
 
 
-def _render_frame(frame: traceback.FrameSummary, source_lines: list[str]) -> Text:
-    where = "your Python block" if frame.filename == "<string>" else frame.filename
+def _frame_where(frame: traceback.FrameSummary, own: Optional[str]) -> str:
+    if frame.filename == own:
+        return "your Python block"
+    key = block_key_of(frame.filename)
+    if key is not None:
+        return f"an earlier block '{key}'"
+    if _is_author_code(frame):
+        return "an earlier block"
+    return frame.filename
+
+
+def _render_frame(
+    frame: traceback.FrameSummary, source_lines: list[str], own: Optional[str] = None
+) -> Text:
     text = Text("  ")
-    text.append(where, style="cyan")
+    text.append(_frame_where(frame, own), style="cyan")
     text.append(f", line {frame.lineno}, in {frame.name}", style="dim")
-    line = _frame_source(frame, source_lines)
+    line = _frame_source(frame, source_lines, own)
     if line:
         text.append("\n      ")
         text.append(line, style="white")
@@ -143,26 +183,39 @@ def _render_frame(frame: traceback.FrameSummary, source_lines: list[str]) -> Tex
 
 
 def _compact_frames(
-    frames: list[traceback.FrameSummary], source_lines: list[str]
+    frames: list[traceback.FrameSummary],
+    source_lines: list[str],
+    own: Optional[str] = None,
 ) -> list[RenderableType]:
-    if len(frames) <= HEAD_FRAMES + TAIL_FRAMES:
-        return [_render_frame(f, source_lines) for f in frames]
-
-    hidden = len(frames) - HEAD_FRAMES - TAIL_FRAMES
-    head = [_render_frame(f, source_lines) for f in frames[:HEAD_FRAMES]]
-    tail = [_render_frame(f, source_lines) for f in frames[-TAIL_FRAMES:]]
-    marker = Text(f"  … {hidden} frame(s) hidden …", style="dim italic")
-    return [*head, marker, *tail]
+    """The first and last frames, and every frame in the document's own code."""
+    count = len(frames)
+    shown = [
+        i < HEAD_FRAMES or i >= count - TAIL_FRAMES or _is_author_code(frame)
+        for i, frame in enumerate(frames)
+    ]
+    parts: list[RenderableType] = []
+    hidden = 0
+    for frame, show in zip(frames, shown):
+        if not show:
+            hidden += 1
+            continue
+        if hidden:
+            parts.append(Text(f"  … {hidden} frame(s) hidden …", style="dim italic"))
+            hidden = 0
+        parts.append(_render_frame(frame, source_lines, own))
+    return parts
 
 
 def _failing_source_line(
-    frames: list[traceback.FrameSummary], source_lines: list[str]
+    frames: list[traceback.FrameSummary],
+    source_lines: list[str],
+    own: Optional[str] = None,
 ) -> Optional[Text]:
-    """Highlight the author's own line that raised (the deepest `<string>` frame)."""
-    string_frames = [f for f in frames if f.filename == "<string>"]
-    if not string_frames:
+    """Highlight the block's own line that raised (its deepest frame)."""
+    own_frames = [f for f in frames if f.filename == own]
+    if not own_frames:
         return None
-    lineno = string_frames[-1].lineno
+    lineno = own_frames[-1].lineno
     if not (1 <= lineno <= len(source_lines)):
         return None
     text = Text()

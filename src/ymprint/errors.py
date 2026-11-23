@@ -8,8 +8,35 @@ and is allowed to propagate as a normal traceback.
 """
 from __future__ import annotations
 
+import hashlib
+import linecache
 import pathlib
 from typing import Optional
+
+# The blocks whose source was compiled by `block_filename`: filename -> block key.
+_BLOCK_FILENAMES: dict[str, str] = {}
+
+
+def block_filename(block_key: str, source: str) -> str:
+    """A filename to compile a block's source with, so tracebacks show its lines.
+
+    The source is registered with :mod:`linecache` under this name, so every
+    frame in the block (including frames in functions it defines, called from
+    later blocks) shows its own line, and the error display can tell which block
+    a frame came from.
+    """
+    digest = hashlib.sha1(source.encode("utf-8")).hexdigest()[:10]
+    filename = f"<ymprint {block_key} {digest}>"
+    lines = source.splitlines(keepends=True)
+    # mtime None: linecache.checkcache leaves the entry alone.
+    linecache.cache[filename] = (len(source), None, lines, filename)
+    _BLOCK_FILENAMES[filename] = block_key
+    return filename
+
+
+def block_key_of(filename: str) -> Optional[str]:
+    """The key of the block compiled as 'filename' by `block_filename`, if any."""
+    return _BLOCK_FILENAMES.get(filename)
 
 
 class YmprintAuthoringError(Exception):
