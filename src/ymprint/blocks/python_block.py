@@ -1,7 +1,7 @@
 from reportlab.platypus import Table, KeepTogether
 from . import content_box
 from .code_block_styles import CodeLookError, python_code_block
-from ..errors import BlockError, PythonBlockError
+from ..errors import BlockError, PythonBlockError, block_filename
 from typing import Callable
 
 
@@ -21,7 +21,10 @@ def convert_python_block(block_key: str, block_value: dict, context: dict) -> li
         context['vars'][namespace] = {}
     local_namespace = context['vars'][namespace] if namespace is not None else context['vars']
     try:
-        exec(source, globals=context['vars'], locals=local_namespace)
+        # A filename of its own (not "<string>"), so a traceback through a function
+        # this block defines shows this block's lines, not the failing block's.
+        code = compile(source, block_filename(block_key, source), "exec")
+        exec(code, globals=context['vars'], locals=local_namespace)
     except Exception as e:
         # The author's own code raised — surface it as an authoring error that
         # keeps the source and traceback for a compact, actionable report.

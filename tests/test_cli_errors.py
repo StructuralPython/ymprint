@@ -147,3 +147,25 @@ def test_convert_reports_empty_document_without_traceback(tmp_path):
     result = runner.invoke(app, ["convert", str(empty)])
     assert result.exit_code == 1
     assert "Traceback (most recent call last)" not in result.stdout
+
+
+# ── a function from an earlier block ──────────────────────────────────────────
+
+def test_frame_in_an_earlier_block_shows_that_blocks_line():
+    # An earlier block defines a function; a later block calls it and fails.
+    context = {
+        "vars": {},
+        "frames": {"all_pages": {"width": 400}},
+        "styles": {"ymprint": type("S", (), {"body": type("B", (), {"spacing": 1.1, "size": 10})()})()},
+    }
+    earlier = "def half(x):\n    y = 1\n    z = 2\n    return x / 0\n"
+    convert_python_block("_helpers", {"source": earlier, "echo": False}, context)
+    later = "a = 1\nb = 2\nc = 3\nd = half(a)\n"
+    with pytest.raises(PythonBlockError) as info:
+        convert_python_block("_py", {"source": later, "echo": False}, context)
+    text = _render(info.value)
+    assert "→ line 4: d = half(a)" in text  # the later block's failing line
+    assert "an earlier block '_helpers', line 4, in half" in text
+    assert "return x / 0" in text  # the earlier block's own line
+    # The later block's line 4 is not shown as the earlier block's line.
+    assert text.count("d = half(a)") == 2  # the header and its own frame
