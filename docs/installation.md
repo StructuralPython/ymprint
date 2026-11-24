@@ -77,13 +77,7 @@ calculations. It comes from the separate
 pip install "ymprint[hc]"
 ```
 
-ym-handcalcs needs handcalcs 2.0, which is currently a pre-release. pip installs it
-automatically. uv only installs a pre-release when you ask for it by name, so add it with
-`--with`:
-
-```bash
-uv tool install "ymprint[hc]" --with "handcalcs>=2.0.0rc5"
-```
+or, with uv, `uv tool install "ymprint[hc]"`. ym-handcalcs brings handcalcs 2.0 with it.
 
 YMPrint registers `_hc` automatically when ym-handcalcs is installed.
 
