@@ -57,6 +57,7 @@ You can add your own blocks by building a [custom application](../guide/custom-a
 | [`_slide` / `_frame`](#block-slide) | Choose a slide's layout and template; route content into a frame. Slide mode only. |
 | [`_hrule`](#block-hrule) | A customizable horizontal rule. |
 | [`_spacer`](#block-spacer) | Insert vertical whitespace. |
+| [`_help`](#block-help) | Help for a block, or a look at a value, over the page while you write. |
 
 Installed packages can add more blocks; see
 [Installed blocks](api.md#plugin-blocks).
@@ -718,3 +719,37 @@ The value is the height of the space in points.
 A `_spacer: 0` is a handy trick to stop a
 paragraph being misinterpreted as a bullet when it's immediately followed by a list.
 :::
+
+---
+
+(block-help)=
+## `_help` — Help while you write
+
+Shows help over the page, in a box that is hard to miss, while you write a document in
+[`ym live`](cli.md#ym-live). Put it anywhere content goes:
+
+```yaml
+Beam B1:
+  - _help:            # every block and document key, one line each
+  - _help: _table     # one block or key: what it does, its keys and an example
+  - _help: $beam      # a value: its type, its size and its contents
+```
+
+| Value | Shows |
+| --- | --- |
+| nothing, or `blocks` | Every block (built in, from your application and from installed packages) and document key (`_vars`, `_data`, `_ul`, ...), with a line about each. |
+| a block or key name | Its help: what it does, the keys it takes and an example. A block from a [custom application](../guide/custom-applications.md) shows its function's docstring. A misspelt name suggests the closest ones: `Unknown block _imgg: did you mean _img?` |
+| `$var` | The variable's type and size (`dict, 3 items`) and its value, printed like Python's `pprint`. An undefined variable lists the variables that are defined at that point. |
+| anything else | The value the same way. Text is rendered first, so `_help: "{{ beam.span }}"` shows the number. |
+
+The box covers the page the `_help` is on. Several `_help` blocks on one page share one
+box, in order. Help too long for the box continues on extra pages inserted after that
+page. They aren't pages of your document, so they have no background.
+
+`_help` is for writing only:
+
+- `ym live` shows it.
+- `ym convert`, and a render from Python, show it and warn that it is still in the
+  document.
+- `ym build` refuses a document that has one.
+

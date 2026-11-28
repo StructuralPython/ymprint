@@ -48,6 +48,12 @@ class YmprintDocTemplate(BaseDocTemplate):
         self.outline_entries: list[tuple[str, int, int]] = []
         self._outline_level = 0
 
+    def afterPage(self) -> None:
+        # A `_help` block on this page draws its modal over it.
+        from .blocks.help_block import draw_help_pages
+
+        draw_help_pages(self.canv)
+
     def afterFlowable(self, flowable) -> None:
         mark = getattr(flowable, OUTLINE_ATTR, None)
         if mark is None:

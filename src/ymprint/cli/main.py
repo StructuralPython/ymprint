@@ -89,6 +89,9 @@ def build_cli(ym_app: "Ymprint") -> Typer:
             console.print(
                 f"✍️ .... 📝 ... PDF created: {event.destination.resolve()}"
             )
+        for event in events:
+            for warning in event.warnings:
+                console.print(f"[yellow]⚠ {warning}[/yellow]")
         for path in written:
             console.print(f"📤 Exports written: {path}")
         for note in notes:

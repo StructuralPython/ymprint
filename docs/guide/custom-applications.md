@@ -113,6 +113,9 @@ def beam_block(block_key, block_value, context):
     return [mark_outline(title, where["level"]), ...]
 ```
 
+Give your converter a docstring: [`_help: _beam`](../reference/blocks.md#block-help)
+shows it, and the first line is the block's entry in the `_help` block list.
+
 Each application starts from its own **copy** of the built-in blocks, so blocks you
 register never leak into `ym` or into another application. To replace a built-in
 block, pass `override=True`. Registering a code that already exists otherwise raises
@@ -158,8 +161,9 @@ does not run.
 | `config_paths` | The config layers in effect, lowest priority first. |
 | `trigger` | In live mode, the watched file whose change caused this render; otherwise `None`. |
 | `initial` | `True` when `trigger` is `None`. |
-| `mode` | `"convert"`, `"live"` or `"api"`. |
+| `mode` | `"convert"`, `"live"`, `"build"` or `"api"`. |
 | `vars` | Variables merged **over** the document's `_vars`. Fill it in `before_render` to feed data in. |
+| `warnings` | Set by the render: things the author should know that didn't stop it, such as a [`_help`](../reference/blocks.md#block-help) block left in the document. `ym convert` prints them. |
 
 ### Feeding data into a document
 

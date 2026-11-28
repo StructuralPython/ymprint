@@ -116,6 +116,7 @@ ym live report.yml
   | `_pagebreak` | Force a page break |
   | `_hrule` | A configurable horizontal rule |
   | `_spacer` | Insert vertical whitespace |
+  | `_help` | Help for a block, or a look at a value, over the page while you write |
 
 - **Projects**: name project data once in the project config (`_data`) and use it by name
   in every document; render a document once per item (`_render`); declare what a
