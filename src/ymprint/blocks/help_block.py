@@ -222,9 +222,25 @@ def describe(value) -> str:
     return f"{name}, {size} {unit}{'' if size == 1 else 's'}"
 
 
+def plain(value):
+    """
+    Returns 'value' with YAML's mappings and sequences (ruamel's CommentedMap and
+    CommentedSeq) turned into plain dicts and lists, all the way down. pprint only
+    lays out the plain types; a subclass with its own repr prints on one line.
+    """
+    if isinstance(value, dict):
+        return {key: plain(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [plain(item) for item in value]
+    return value
+
+
 def value_section(title: str, value, metrics: "Metrics") -> dict:
     # Formatted now, so a later block that changes the value doesn't change what is shown.
-    text = value if isinstance(value, str) else pprint.pformat(value, width=metrics.chars, sort_dicts=False)
+    if isinstance(value, str):
+        text = value
+    else:
+        text = pprint.pformat(plain(value), width=metrics.chars, sort_dicts=False)
     return {"title": title, "items": [("type", describe(value)), ("pre", text)]}
 
 

@@ -86,6 +86,22 @@ def test_a_variable_shows_its_name_type_and_value():
     assert shown["items"] == [("type", "dict, 2 items"), ("pre", "{'span': 6.0, 'load': 12.5}")]
 
 
+def test_yaml_values_are_laid_out_like_python_ones():
+    from ruamel.yaml import YAML
+
+    rows = YAML().load(
+        "- {Member: B1, Section: W310x39, DCR: 0.82}\n"
+        "- {Member: B2, Section: W310x45, DCR: 0.97}\n"
+        "- {Member: B3, Section: W250x33, DCR: 1.04}\n"
+    )
+    shown = section("$members", {"members": rows})
+    expected = section("$members", {"members": [dict(row) for row in rows]})
+    assert shown == expected
+    assert shown["items"][0] == ("type", "list, 3 items")
+    # One row per line, as pprint lays out a plain list that is too wide for one.
+    assert shown["items"][1][1].splitlines()[0] == "[{'Member': 'B1', 'Section': 'W310x39', 'DCR': 0.82},"
+
+
 def test_an_undefined_variable_lists_the_ones_there_are():
     shown = section("$beem", {"beam": 1, "phi": 0.9})
     assert "No variable 'beem'" in texts(shown)
