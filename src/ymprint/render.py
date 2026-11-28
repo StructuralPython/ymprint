@@ -66,6 +66,9 @@ class RenderEvent:
     # Set by the render: the values of the document's `_export`, or None when it
     # has none.
     exports: Optional[dict] = None
+    # Set by the render: things the author should know that don't stop the render,
+    # e.g. a `_help` block left in the document. `ym convert` prints them.
+    warnings: list[str] = field(default_factory=list)
 
     @property
     def pdf(self) -> pathlib.Path:
@@ -226,6 +229,8 @@ def _build_pdf(
     # half-written background is still watched when the render fails.
     event.inputs |= {path for path in background_paths(context).values() if path is not None}
 
+    # Blocks that behave differently in live mode, convert or build read the event.
+    context["render_event"] = event
     story = build_story(context["content"], context)
     if export_declarations is not None:
         event.exports = evaluate_exports(export_declarations, context["vars"], describe_render(event))

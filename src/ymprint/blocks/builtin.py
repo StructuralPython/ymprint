@@ -9,6 +9,7 @@ from importlib.util import find_spec
 from .registry import BlockRegistry
 from .admonition_block import generate_admonition_block
 from .code_block import convert_code_block
+from .help_block import convert_help_block
 from .hrule_block import convert_hrule
 from .image_block import convert_image_block
 from .json_block import convert_dumpjson_block, convert_loadjson_block
@@ -28,6 +29,7 @@ BUILTIN_BLOCKS = BlockRegistry({
     "_tip": generate_admonition_block("tip"),
     "_note": generate_admonition_block("note"),
     "_code": convert_code_block,
+    "_help": convert_help_block,
     "_hrule": convert_hrule,
     "_img": convert_image_block,
     "_dumpjson": convert_dumpjson_block,

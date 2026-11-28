@@ -57,7 +57,12 @@ def convert_blocks(block_key: str, block_value: YAML_Values, context: dict) -> l
             f"Available blocks: {sorted(blocks.codes())}. A block from another package "
             "is available once that package is installed.",
         )
-    block_value_w_python_objects = retrieve_block_variables(block_value, context)
+    # A block can ask for its value as written (`convert.raw_value = True`), e.g. to
+    # see the names of the `$var`s in it.
+    if getattr(block_converter, "raw_value", False):
+        block_value_w_python_objects = block_value
+    else:
+        block_value_w_python_objects = retrieve_block_variables(block_value, context)
     try:
         flowables = block_converter(block_key, block_value_w_python_objects, context)
     except YmprintAuthoringError:

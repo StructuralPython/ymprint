@@ -34,6 +34,9 @@ ym convert SRC [--dest DEST] [--config-dir DIR] [--var NAME=VALUE ...] [--only N
 If any parameter set fails, the others still render, the failures are listed, and the
 exit code is 1. `--dest` cannot be used with a document that has parameter sets.
 
+A document that still has a [`_help`](blocks.md#block-help) block is rendered with its
+help, and `ym convert` warns that it is there.
+
 **Examples**
 
 ```bash
@@ -99,6 +102,10 @@ is so you can copy it by hand.
 ym live report.yml
 ```
 
+**Help while you write.** Put [`_help`](blocks.md#block-help) in the document (`_help:
+_table`, `_help: $beam`) and the next render shows the help, or the value, in a box over
+that page. Remove it when you're done: `ym build` refuses documents that still have one.
+
 ```text
 YMPrint live mode  watching report.yml — Ctrl+C to quit
 ```
@@ -127,7 +134,8 @@ ym build [TARGET ...] [--all] [--dry-run] [--project DIR]
 | `--dry-run` | Print what would be built and why, without building. |
 | `--project` | A directory inside the project. Default: the current directory. |
 
-The exit code is 1 if any step failed.
+The exit code is 1 if any step failed. A document with a [`_help`](blocks.md#block-help)
+block fails: `_help` is for writing, not for builds.
 
 ## `ym graph`
 
